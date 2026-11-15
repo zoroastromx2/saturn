@@ -569,6 +569,23 @@ body:not(.ui-collapsed) .ui-icon-close {
   width: 100%;
 }
 
+#mission-selector {
+  box-sizing: border-box;
+  color-scheme: dark;
+  background-color: rgba(14, 13, 10, 0.88);
+  color: #e6ddc8;
+}
+
+#mission-selector option {
+  background-color: #12110e;
+  color: #e6ddc8;
+}
+
+#mission-selector option:checked {
+  background-color: #2b2316;
+  color: #f6e8c7;
+}
+
 .mission-description {
   margin: 2px 0 0;
   color: var(--helio-muted);
@@ -909,6 +926,23 @@ body:not(.ui-collapsed) .ui-icon-close {
   background: rgba(255, 255, 255, 0.45);
   color: #1f1a12;
   color-scheme: light;
+}
+
+#ui-container.light #mission-selector {
+  color-scheme: light;
+  border-color: rgba(125, 95, 40, 0.28);
+  background-color: rgba(248, 243, 232, 0.92);
+  color: #1f1a12;
+}
+
+#ui-container.light #mission-selector option {
+  background-color: #f6efe0;
+  color: #1f1a12;
+}
+
+#ui-container.light #mission-selector option:checked {
+  background-color: #e6d7b8;
+  color: #1a140b;
 }
 
 #ui-container.light .glass-input::-webkit-calendar-picker-indicator {
