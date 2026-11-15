@@ -11,6 +11,7 @@ import { SaturnSimulator } from './core/SaturnSimulator.js';
 import { TitanSimulator } from './core/TitanSimulator.js';
 import { EnceladusSimulator } from './core/EnceladusSimulator.js';
 import { MimasSimulator } from './core/MimasSimulator.js';
+import { FRingSimulator } from './core/FRingSimulator.js';
 import { ComparisonMode } from './core/ComparisonMode.js';
 import { CameraController } from './core/CameraController.js';
 import { TelemetryController } from './core/TelemetryController.js';
@@ -18,7 +19,7 @@ import { getLanguage, setLanguage, t } from './core/Localization.js';
 import './style.css';
 
 let scene, camera, renderer, composer, labelRenderer, controls, cameraController, listener;
-let saturnSim, titanSim, enceladusSim, mimasSim, comparisonMode, telemetryController;
+let saturnSim, titanSim, enceladusSim, mimasSim, fRingSim, comparisonMode, telemetryController;
 let audioEnabled = false;
 let timeScale = 1.0;
 let orbitalTime = 0.0;
@@ -86,6 +87,7 @@ async function bootstrapApp() {
     enceladusSim.update(0);
     mimasSim = new MimasSimulator(scene, saturnSim, saturnSim.scaleFactor, assets, listener);
     mimasSim.update(0);
+    fRingSim = new FRingSimulator(scene, saturnSim, saturnSim.scaleFactor);
     comparisonMode = new ComparisonMode(scene, saturnSim, camera, assets);
     telemetryController = new TelemetryController(camera, cameraController, saturnSim.scaleFactor);
 
@@ -281,6 +283,9 @@ function tick() {
   }
   if (mimasSim) {
     mimasSim.update(orbitalTime);
+  }
+  if (fRingSim) {
+    fRingSim.update(orbitalTime);
   }
 
   // Sigue al objetivo activo y actualiza la inercia de OrbitControls.
