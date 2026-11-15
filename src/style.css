@@ -352,7 +352,7 @@ body {
   z-index: 10;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 16px;
   padding: 24px;
   pointer-events: none;
@@ -462,7 +462,8 @@ body:not(.ui-collapsed) .ui-icon-close {
 
 #hud,
 #telemetry-hud,
-#time-controls {
+#time-controls,
+#stats-hud {
   color: var(--helio-text);
   background: linear-gradient(180deg, rgba(14, 13, 10, 0.94), rgba(8, 8, 7, 0.93));
   border: 1px solid var(--helio-line);
@@ -485,7 +486,7 @@ body:not(.ui-collapsed) .ui-icon-close {
   gap: 12px;
   width: min(300px, 100%);
   box-sizing: border-box;
-  max-height: calc(100vh - 140px);
+  max-height: 100%;
   padding: 12px;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -605,11 +606,18 @@ body:not(.ui-collapsed) .ui-icon-close {
   text-shadow: 0 0 10px rgba(213, 185, 123, 0.3);
 }
 
-.header-lang-btn {
+.header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 6px;
+}
+
+.header-lang-btn,
+.header-theme-btn {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  margin-left: 6px;
   padding: 7px 10px;
   border: 1px solid var(--helio-line);
   border-radius: 2px;
@@ -631,24 +639,39 @@ body:not(.ui-collapsed) .ui-icon-close {
     color 150ms ease;
 }
 
-.header-lang-btn:hover {
+.header-lang-btn:hover,
+.header-theme-btn:hover {
   background: rgba(185, 154, 93, 0.14);
   border-color: rgba(213, 185, 123, 0.78);
   color: #f4e7c8;
 }
 
-.header-lang-btn:focus-visible {
+.header-lang-btn:focus-visible,
+.header-theme-btn:focus-visible {
   outline: 1px solid var(--helio-gold-bright);
   outline-offset: 2px;
 }
 
-.header-lang-btn .lang-icon {
+.header-lang-btn .lang-icon,
+.header-theme-btn .theme-icon {
   width: 14px;
   height: 14px;
   flex: none;
   fill: none;
   stroke: var(--helio-gold);
   stroke-width: 1.25;
+}
+
+.header-theme-btn .theme-icon-sun {
+  display: none;
+}
+
+.header-theme-btn[data-theme='light'] .theme-icon-moon {
+  display: none;
+}
+
+.header-theme-btn[data-theme='light'] .theme-icon-sun {
+  display: block;
 }
 
 .header-lang-btn .lang-options {
@@ -670,6 +693,132 @@ body:not(.ui-collapsed) .ui-icon-close {
 .header-lang-btn[data-active-lang='en'] .lang-opt[data-lang='en'] {
   color: var(--helio-gold-bright);
   text-shadow: 0 0 10px rgba(213, 185, 123, 0.35);
+}
+
+/* Light theme overrides for #ui-container */
+#ui-container.light {
+  --helio-gold: #7d5f28;
+  --helio-gold-bright: #5e4417;
+  --helio-text: #231e16;
+  --helio-muted: #665b47;
+  --helio-line: rgba(125, 95, 40, 0.36);
+}
+
+#ui-container.light #app-header {
+  padding: 10px 14px;
+  border: 1px solid var(--helio-line);
+  border-radius: 2px;
+  background: linear-gradient(180deg, rgba(248, 244, 234, 0.92), rgba(238, 231, 215, 0.9));
+  color: var(--helio-gold-bright);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.28),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.65);
+}
+
+#ui-container.light .brand-copy h1 {
+  color: #1f1a12;
+  text-shadow: none;
+}
+
+#ui-container.light #hud,
+#ui-container.light #telemetry-hud,
+#ui-container.light #time-controls,
+#ui-container.light #stats-hud,
+#ui-container.light .header-lang-btn,
+#ui-container.light .header-theme-btn {
+  color: var(--helio-text);
+  background: linear-gradient(180deg, rgba(248, 244, 234, 0.94), rgba(238, 231, 215, 0.92));
+  border-color: var(--helio-line);
+  box-shadow:
+    0 16px 44px rgba(0, 0, 0, 0.28),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.65);
+}
+
+#ui-container.light .header-lang-btn:hover,
+#ui-container.light .header-theme-btn:hover {
+  background: rgba(185, 154, 93, 0.2);
+  border-color: rgba(125, 95, 40, 0.72);
+  color: #17130d;
+}
+
+#ui-container.light .header-lang-btn[data-active-lang='es'] .lang-opt[data-lang='es'],
+#ui-container.light .header-lang-btn[data-active-lang='en'] .lang-opt[data-lang='en'] {
+  color: var(--helio-gold-bright);
+  text-shadow: none;
+}
+
+#ui-container.light .panel-label {
+  border-bottom-color: rgba(125, 95, 40, 0.24);
+}
+
+#ui-container.light .panel-index {
+  color: rgba(125, 95, 40, 0.65);
+}
+
+#ui-container.light #hud .control-row {
+  color: #3a3226;
+  border-bottom-color: rgba(125, 95, 40, 0.16);
+}
+
+#ui-container.light #hud .control-row:hover {
+  color: #17130d;
+  background: rgba(125, 95, 40, 0.1);
+  border-bottom-color: rgba(125, 95, 40, 0.45);
+}
+
+#ui-container.light #hud .control-row.active {
+  background: rgba(125, 95, 40, 0.14);
+}
+
+#ui-container.light #hud .control-row.active .row-state {
+  color: var(--helio-gold-bright);
+  text-shadow: none;
+}
+
+#ui-container.light #hud .row-glyph {
+  color: rgba(125, 95, 40, 0.68);
+}
+
+#ui-container.light #time-controls button {
+  border-color: rgba(125, 95, 40, 0.28);
+  background: rgba(125, 95, 40, 0.05);
+  color: #3a3226;
+}
+
+#ui-container.light #time-controls button:hover {
+  color: #17130d;
+  background: rgba(125, 95, 40, 0.14);
+  border-color: rgba(125, 95, 40, 0.65);
+  box-shadow: inset 0 0 12px rgba(125, 95, 40, 0.08);
+}
+
+#ui-container.light #time-controls button.active {
+  color: #1a140b;
+  background: linear-gradient(180deg, rgba(185, 154, 93, 0.42), rgba(150, 118, 58, 0.24));
+  border-color: rgba(125, 95, 40, 0.85);
+  box-shadow:
+    inset 0 0 10px rgba(185, 154, 93, 0.18),
+    0 0 14px rgba(125, 95, 40, 0.12);
+}
+
+#ui-container.light #telemetry-hud .telemetry-value,
+#ui-container.light #stats-hud .telemetry-value {
+  color: #1f1a12;
+}
+
+#ui-container.light #telemetry-target {
+  color: var(--helio-gold-bright);
+}
+
+#ui-container.light ~ #btn-toggle-ui {
+  border-color: rgba(125, 95, 40, 0.36);
+  background: linear-gradient(180deg, rgba(248, 244, 234, 0.94), rgba(238, 231, 215, 0.92));
+  color: #5e4417;
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.28),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.65);
 }
 
 #time-controls button {
@@ -708,7 +857,7 @@ body:not(.ui-collapsed) .ui-icon-close {
 
 #time-controls {
   grid-column: 2;
-  grid-row: 2;
+  grid-row: 2 / 4;
   justify-self: end;
   align-self: end;
   display: grid;
@@ -738,24 +887,39 @@ body:not(.ui-collapsed) .ui-icon-close {
     0 0 18px rgba(185, 154, 93, 0.1);
 }
 
-#telemetry-hud {
-  grid-column: 2;
-  grid-row: 1;
-  justify-self: end;
+#telemetry-hud,
+#stats-hud {
   display: grid;
   grid-template-columns: minmax(130px, auto) auto;
   gap: 8px 24px;
   min-width: 300px;
+  box-sizing: border-box;
   padding: 12px 16px;
   line-height: 1.4;
   pointer-events: none;
 }
 
-#telemetry-hud .panel-label {
+#telemetry-hud {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+}
+
+#stats-hud {
+  grid-column: 1;
+  grid-row: 3;
+  justify-self: start;
+  align-self: end;
+  gap: 6px 24px;
+}
+
+#telemetry-hud .panel-label,
+#stats-hud .panel-label {
   margin-bottom: 2px;
 }
 
-#telemetry-hud .telemetry-label {
+#telemetry-hud .telemetry-label,
+#stats-hud .telemetry-label {
   padding-top: 1px;
   color: var(--helio-muted);
   font-size: 9px;
@@ -763,7 +927,8 @@ body:not(.ui-collapsed) .ui-icon-close {
   text-transform: uppercase;
 }
 
-#telemetry-hud .telemetry-value {
+#telemetry-hud .telemetry-value,
+#stats-hud .telemetry-value {
   color: #e6ddc8;
   font-family: var(--mono);
   font-size: 12px;
@@ -817,14 +982,15 @@ body.show-labels .celestial-label {
     letter-spacing: 0.18em;
   }
 
-  #telemetry-hud {
+  #telemetry-hud,
+  #stats-hud {
     min-width: 260px;
   }
 }
 
 @media (max-width: 760px) {
   #ui-container {
-    grid-template-rows: auto auto 1fr auto;
+    grid-template-rows: auto auto auto auto auto;
   }
 
   #app-header {
@@ -839,7 +1005,13 @@ body.show-labels .celestial-label {
 
   #time-controls {
     grid-column: 1 / -1;
+    grid-row: 5;
+  }
+
+  #stats-hud {
+    grid-column: 1 / -1;
     grid-row: 4;
+    width: 100%;
   }
 
   #hud {
@@ -869,7 +1041,8 @@ body.show-labels .celestial-label {
     visibility: hidden;
   }
 
-  #app-header {
+  #app-header,
+  #ui-container.light #app-header {
     padding-right: 56px;
   }
 }
@@ -891,14 +1064,20 @@ body.show-labels .celestial-label {
     flex-wrap: wrap;
   }
 
-  .header-lang-btn {
+  .header-actions {
     margin-left: 0;
+    gap: 6px;
+  }
+
+  .header-lang-btn,
+  .header-theme-btn {
     padding: 5px 8px;
     gap: 5px;
     font-size: 9px;
   }
 
-  .header-lang-btn .lang-icon {
+  .header-lang-btn .lang-icon,
+  .header-theme-btn .theme-icon {
     width: 12px;
     height: 12px;
   }
@@ -917,21 +1096,25 @@ body.show-labels .celestial-label {
     display: none;
   }
 
-  #telemetry-hud {
+  #telemetry-hud,
+  #stats-hud {
     min-width: 0;
     padding: 9px 11px;
     gap: 6px 14px;
   }
 
-  #telemetry-hud .panel-label {
+  #telemetry-hud .panel-label,
+  #stats-hud .panel-label {
     display: none;
   }
 
-  #telemetry-hud .telemetry-label {
+  #telemetry-hud .telemetry-label,
+  #stats-hud .telemetry-label {
     font-size: 8px;
   }
 
-  #telemetry-hud .telemetry-value {
+  #telemetry-hud .telemetry-value,
+  #stats-hud .telemetry-value {
     font-size: 10px;
   }
 
@@ -949,7 +1132,7 @@ body.show-labels .celestial-label {
 
 @media (max-height: 540px) and (max-width: 1024px) {
   #ui-container {
-    grid-template-rows: auto auto auto auto;
+    grid-template-rows: auto auto auto auto auto;
     align-content: start;
     overflow-y: auto;
     overscroll-behavior: contain;

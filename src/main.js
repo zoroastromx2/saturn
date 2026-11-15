@@ -19,18 +19,21 @@ import { FRingSimulator } from './core/FRingSimulator.js';
 import { ComparisonMode } from './core/ComparisonMode.js';
 import { CameraController } from './core/CameraController.js';
 import { TelemetryController } from './core/TelemetryController.js';
+import { StatsController } from './core/StatsController.js';
 import { getLanguage, setLanguage, t } from './core/Localization.js';
 import './style.css';
 
 let scene, camera, renderer, composer, labelRenderer, controls, cameraController, listener;
 let saturnSim, titanSim, enceladusSim, mimasSim;
 let tethysSim, dioneSim, rheaSim, iapetusSim;
-let fRingSim, comparisonMode, telemetryController;
+let fRingSim, comparisonMode, telemetryController, statsController;
 let audioEnabled = false;
 let timeScale = 1.0;
 let orbitalTime = 0.0;
 let simulationDate = new Date();
 let uiCollapsed = false;
+let currentTheme = 'dark';
+const THEME_STORAGE_KEY = 'saturn-sim-theme';
 const clock = new THREE.Clock();
 const surfaceMountPosition = new THREE.Vector3();
 const MOBILE_UI_QUERY = '(max-width: 1024px), (pointer: coarse)';
@@ -134,6 +137,8 @@ async function bootstrapApp() {
     fRingSim = new FRingSimulator(scene, saturnSim, saturnSim.scaleFactor);
     comparisonMode = new ComparisonMode(scene, saturnSim, camera, assets);
     telemetryController = new TelemetryController(camera, cameraController, saturnSim.scaleFactor, saturnSim.sunDirection);
+    statsController = new StatsController(renderer);
+    statsController.refresh();
 
     // 4. Iluminar la Tierra con la misma dirección solar que usan los shaders
     const sunLight = new THREE.DirectionalLight(0xffffff, 2.6);
@@ -163,6 +168,9 @@ async function bootstrapApp() {
     const stormBtn = document.getElementById('btn-toggle-hexagon');
     const auroraBtn = document.getElementById('btn-toggle-aurora');
     const languageBtn = document.getElementById('btn-toggle-language');
+    const themeBtn = document.getElementById('btn-toggle-theme');
+    const themeLabel = document.getElementById('theme-label');
+    const uiContainer = document.getElementById('ui-container');
     let stormEnabled = false;
     let auroraEnabled = false;
     const labelsState = document.getElementById('labels-state');
@@ -266,6 +274,29 @@ async function bootstrapApp() {
       if (languageBtn) languageBtn.dataset.activeLang = activeLang;
     };
 
+    const applyTheme = (theme) => {
+      currentTheme = theme === 'light' ? 'light' : 'dark';
+      const isLight = currentTheme === 'light';
+
+      if (uiContainer) {
+        uiContainer.classList.toggle('light', isLight);
+      }
+
+      if (themeBtn) {
+        themeBtn.dataset.theme = currentTheme;
+        themeBtn.setAttribute('aria-pressed', String(isLight));
+        const ariaKey = isLight ? 'theme.toDarkAria' : 'theme.toLightAria';
+        themeBtn.dataset.i18nAriaLabel = ariaKey;
+        themeBtn.setAttribute('aria-label', t(ariaKey));
+      }
+
+      if (themeLabel) {
+        const labelKey = isLight ? 'theme.light' : 'theme.dark';
+        themeLabel.dataset.i18n = labelKey;
+        themeLabel.textContent = t(labelKey);
+      }
+    };
+
     const updateAuroraButton = () => {
       if (!auroraBtn) return;
       auroraBtn.setAttribute('aria-pressed', String(auroraEnabled));
@@ -361,6 +392,8 @@ async function bootstrapApp() {
       updateStormButton();
       updateAuroraButton();
       telemetryController.refresh();
+      statsController.refresh();
+      applyTheme(currentTheme);
     };
 
     document.addEventListener('languagechange', updateDynamicLanguage);
@@ -371,6 +404,28 @@ async function bootstrapApp() {
       });
     }
 
+    if (themeBtn) {
+      themeBtn.addEventListener('click', () => {
+        const nextTheme = currentTheme === 'light' ? 'dark' : 'light';
+        applyTheme(nextTheme);
+        try {
+          localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+        } catch {
+          // Ignorar errores de almacenamiento en entornos restringidos.
+        }
+      });
+    }
+
+    try {
+      const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+      if (savedTheme === 'light' || savedTheme === 'dark') {
+        currentTheme = savedTheme;
+      }
+    } catch {
+      // Usar el tema oscuro por defecto.
+    }
+
+    applyTheme(currentTheme);
     setLanguage('es');
 
     // 7. Iniciar el bucle de renderizado solo cuando todo está listo
@@ -454,6 +509,10 @@ function tick() {
 
   composer.render();
   labelRenderer.render(scene, camera);
+
+  if (statsController) {
+    statsController.update();
+  }
 }
 
 // Arrancar la aplicación

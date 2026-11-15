@@ -23,18 +23,30 @@
           <h1 data-i18n="app.title">Simulador de Saturno</h1>
           <p data-i18n="app.subtitle">Observatorio volumétrico de Saturno / 01</p>
         </div>
-        <button id="btn-toggle-language" class="header-lang-btn" type="button" data-active-lang="es" data-i18n-aria-label="language.toggleAria" aria-label="Cambiar a inglés">
-          <svg class="lang-icon" viewBox="0 0 20 20" aria-hidden="true">
-            <circle cx="10" cy="10" r="7.5" />
-            <ellipse cx="10" cy="10" rx="3.4" ry="7.5" />
-            <path d="M2.8 10h14.4M4.3 6h11.4M4.3 14h11.4" />
-          </svg>
-          <span class="lang-options" aria-hidden="true">
-            <span class="lang-opt" data-lang="es">ES</span>
-            <span class="lang-sep">/</span>
-            <span class="lang-opt" data-lang="en">EN</span>
-          </span>
-        </button>
+        <div class="header-actions">
+          <button id="btn-toggle-language" class="header-lang-btn" type="button" data-active-lang="es" data-i18n-aria-label="language.toggleAria" aria-label="Cambiar a inglés">
+            <svg class="lang-icon" viewBox="0 0 20 20" aria-hidden="true">
+              <circle cx="10" cy="10" r="7.5" />
+              <ellipse cx="10" cy="10" rx="3.4" ry="7.5" />
+              <path d="M2.8 10h14.4M4.3 6h11.4M4.3 14h11.4" />
+            </svg>
+            <span class="lang-options" aria-hidden="true">
+              <span class="lang-opt" data-lang="es">ES</span>
+              <span class="lang-sep">/</span>
+              <span class="lang-opt" data-lang="en">EN</span>
+            </span>
+          </button>
+          <button id="btn-toggle-theme" class="header-theme-btn" type="button" data-theme="dark" aria-pressed="false" data-i18n-aria-label="theme.toLightAria" aria-label="Cambiar a tema claro">
+            <svg class="theme-icon theme-icon-moon" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M15.8 12.6A6.5 6.5 0 0 1 7.4 4.2a6.6 6.6 0 1 0 8.4 8.4Z" />
+            </svg>
+            <svg class="theme-icon theme-icon-sun" viewBox="0 0 20 20" aria-hidden="true">
+              <circle cx="10" cy="10" r="3.8" />
+              <path d="M10 1.8v2.1M10 16.1v2.1M1.8 10h2.1M16.1 10h2.1M4.2 4.2l1.5 1.5M14.3 14.3l1.5 1.5M15.8 4.2l-1.5 1.5M5.7 14.3l-1.5 1.5" />
+            </svg>
+            <span class="theme-label" id="theme-label" data-i18n="theme.dark">Oscuro</span>
+          </button>
+        </div>
       </header>
       <div id="telemetry-hud">
         <div class="panel-label">
@@ -151,6 +163,18 @@
         <button id="btn-time-1" class="active" aria-pressed="true">&gt; x1</button>
         <button id="btn-time-10" aria-pressed="false">&gt;&gt; x10</button>
         <button id="btn-time-100" aria-pressed="false">&gt;&gt;&gt; x100</button>
+      </div>
+      <div id="stats-hud" aria-live="off">
+        <div class="panel-label">
+          <span data-i18n="console.stats">Estadísticas</span>
+          <span class="panel-index">04</span>
+        </div>
+        <span class="telemetry-label" data-i18n="stats.fps">FPS</span>
+        <span id="stats-fps" class="telemetry-value">—</span>
+        <span class="telemetry-label" data-i18n="stats.memory">Memoria activa</span>
+        <span id="stats-memory" class="telemetry-value">—</span>
+        <span class="telemetry-label" data-i18n="stats.gpu">Geometrías / Texturas</span>
+        <span id="stats-gpu" class="telemetry-value">—</span>
       </div>
     </div>
     <button id="btn-toggle-ui" type="button" aria-controls="ui-container" aria-expanded="true" aria-label="Ocultar controles" title="Ocultar controles">
