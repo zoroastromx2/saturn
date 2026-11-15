@@ -10,12 +10,14 @@ const BODY_DATA = {
     radius: CONSTANTS.SATURN.RADIUS_EQUATORIAL,
     period: null,
     velocity: null,
+    eccentricity: CONSTANTS.SATURN.ORBIT_ECCENTRICITY,
     labelKey: 'body.saturn'
   },
   Earth: {
     radius: CONSTANTS.EARTH.RADIUS_EQUATORIAL,
     period: null,
     velocity: null,
+    eccentricity: CONSTANTS.EARTH.ORBIT_ECCENTRICITY,
     labelKey: 'body.earth'
   },
   Titan: {
@@ -25,6 +27,7 @@ const BODY_DATA = {
       CONSTANTS.TITAN.ORBIT_SEMI_MAJOR,
       CONSTANTS.TITAN.ORBIT_PERIOD
     ),
+    eccentricity: CONSTANTS.TITAN.ORBIT_ECCENTRICITY,
     labelKey: 'body.titan'
   },
   Enceladus: {
@@ -34,6 +37,7 @@ const BODY_DATA = {
       CONSTANTS.ENCELADUS.ORBIT_SEMI_MAJOR,
       CONSTANTS.ENCELADUS.ORBIT_PERIOD
     ),
+    eccentricity: CONSTANTS.ENCELADUS.ORBIT_ECCENTRICITY,
     labelKey: 'body.enceladus'
   },
   Mimas: {
@@ -43,6 +47,7 @@ const BODY_DATA = {
       CONSTANTS.MIMAS.ORBIT_SEMI_MAJOR,
       CONSTANTS.MIMAS.ORBIT_PERIOD
     ),
+    eccentricity: CONSTANTS.MIMAS.ORBIT_ECCENTRICITY,
     labelKey: 'body.mimas'
   }
 };
@@ -67,6 +72,7 @@ export class TelemetryController {
     this.periodElement = document.getElementById('telemetry-period');
     this.velocityElement = document.getElementById('telemetry-velocity');
     this.sunDistanceElement = document.getElementById('telemetry-sun-distance');
+    this.eccentricityElement = document.getElementById('telemetry-eccentricity');
   }
 
   update(deltaTime) {
@@ -121,6 +127,14 @@ export class TelemetryController {
         minimumFractionDigits: 4,
         maximumFractionDigits: 4
       })} AU`;
+    }
+    if (this.eccentricityElement) {
+      this.eccentricityElement.innerText = body.eccentricity === null || body.eccentricity === undefined
+        ? '—'
+        : body.eccentricity.toLocaleString(undefined, {
+            minimumFractionDigits: 4,
+            maximumFractionDigits: 4
+          });
     }
   }
 }

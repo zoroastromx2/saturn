@@ -8,22 +8,26 @@ export const CONSTANTS = {
   EARTH: {
     RADIUS_EQUATORIAL: 6378.137,
     RADIUS_POLAR: 6356.752,
-    SUN_DISTANCE_KM: 149597870.7
+    SUN_DISTANCE_KM: 149597870.7,
+    ORBIT_ECCENTRICITY: 0.0167
   },
   ENCELADUS: {
-  RADIUS: 252.1,              // Muy pequeño comparado con Titán
-  ORBIT_SEMI_MAJOR: 237948.0, // Orbita muy cerca, dentro del Anillo E
-  ORBIT_PERIOD: 1.37          // Completa una vuelta en ~1.37 días
+    RADIUS: 252.1,              // Muy pequeño comparado con Titán
+    ORBIT_SEMI_MAJOR: 237948.0, // Orbita muy cerca, dentro del Anillo E
+    ORBIT_PERIOD: 1.37,         // Completa una vuelta en ~1.37 días
+    ORBIT_ECCENTRICITY: 0.0047
   },
   MIMAS: {
     RADIUS: 198.2,
     ORBIT_SEMI_MAJOR: 185520.0,
-    ORBIT_PERIOD: 0.942
+    ORBIT_PERIOD: 0.942,
+    ORBIT_ECCENTRICITY: 0.0196
   },
   TITAN: {
-    RADIUS: 2574.7,             // Radio volumétrico
+    RADIUS: 2574.7,              // Radio volumétrico
     ORBIT_SEMI_MAJOR: 1221870.0, // Distancia orbital (~1.2 millones de km)
-    ORBIT_PERIOD: 15.945         // Días terrestres para una órbita completa
+    ORBIT_PERIOD: 15.945,        // Días terrestres para una órbita completa
+    ORBIT_ECCENTRICITY: 0.0288
   },
   SATURN: {
     RADIUS_EQUATORIAL: 60268.0, 
@@ -34,7 +38,8 @@ export const CONSTANTS = {
     F_RING_WIDTH: 500.0,
     E_RING_INNER: 181000.0,
     E_RING_OUTER: 483000.0,
-    SUN_DISTANCE_KM: 1433530000.0
+    SUN_DISTANCE_KM: 1433530000.0,
+    ORBIT_ECCENTRICITY: 0.0565
   }
   
 };

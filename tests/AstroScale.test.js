@@ -52,4 +52,19 @@ describe('AstroScale - Cálculos Planetarios', () => {
   it('debería lanzar un error si la distancia en km para convertir a AU es negativa', () => {
     expect(() => kmToAU(-1)).toThrow(/no puede ser negativa/);
   });
+
+  it('debería definir excentricidades orbitales elípticas válidas para todos los cuerpos', () => {
+    const eccentricities = [
+      CONSTANTS.SATURN.ORBIT_ECCENTRICITY,
+      CONSTANTS.EARTH.ORBIT_ECCENTRICITY,
+      CONSTANTS.TITAN.ORBIT_ECCENTRICITY,
+      CONSTANTS.ENCELADUS.ORBIT_ECCENTRICITY,
+      CONSTANTS.MIMAS.ORBIT_ECCENTRICITY
+    ];
+
+    eccentricities.forEach((e) => {
+      expect(e).toBeGreaterThanOrEqual(0);
+      expect(e).toBeLessThan(1);
+    });
+  });
 });
