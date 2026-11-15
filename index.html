@@ -23,6 +23,18 @@
           <h1 data-i18n="app.title">Simulador de Saturno</h1>
           <p data-i18n="app.subtitle">Observatorio volumétrico de Saturno / 01</p>
         </div>
+        <button id="btn-toggle-language" class="header-lang-btn" type="button" data-active-lang="es" data-i18n-aria-label="language.toggleAria" aria-label="Cambiar a inglés">
+          <svg class="lang-icon" viewBox="0 0 20 20" aria-hidden="true">
+            <circle cx="10" cy="10" r="7.5" />
+            <ellipse cx="10" cy="10" rx="3.4" ry="7.5" />
+            <path d="M2.8 10h14.4M4.3 6h11.4M4.3 14h11.4" />
+          </svg>
+          <span class="lang-options" aria-hidden="true">
+            <span class="lang-opt" data-lang="es">ES</span>
+            <span class="lang-sep">/</span>
+            <span class="lang-opt" data-lang="en">EN</span>
+          </span>
+        </button>
       </header>
       <div id="telemetry-hud">
         <div class="panel-label">
@@ -102,10 +114,6 @@
             <button id="btn-toggle-audio" class="control-row system-row" type="button" aria-pressed="false">
               <span class="row-label" data-i18n="console.audio">Audio</span>
               <span class="row-state" id="audio-state">OFF</span>
-            </button>
-            <button id="btn-toggle-language" class="control-row system-row language-row" type="button" data-i18n-aria-label="language.toggleAria" aria-label="Cambiar a inglés">
-              <span class="row-label" data-i18n="console.language">Idioma</span>
-              <span class="row-state" id="language-state">EN</span>
             </button>
             <button id="btn-toggle-hexagon" class="control-row system-row" type="button" aria-pressed="false">
               <span class="row-label" data-i18n="console.hexagon">Hexágono</span>
