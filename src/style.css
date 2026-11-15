@@ -859,8 +859,13 @@ body:not(.ui-collapsed) .ui-icon-close {
   border-top-color: rgba(125, 95, 40, 0.2);
 }
 
-#ui-container.light .time-machine-label {
+#ui-container.light .time-machine-label,
+#ui-container.light .time-history-label {
   color: rgba(58, 50, 38, 0.72);
+}
+
+#ui-container.light .time-machine-history {
+  border-top-color: rgba(125, 95, 40, 0.2);
 }
 
 #ui-container.light .glass-input {
@@ -1108,6 +1113,15 @@ body:not(.ui-collapsed) .ui-icon-close {
   -webkit-backdrop-filter: blur(12px);
 }
 
+#time-machine-input {
+  box-sizing: border-box;
+  width: calc(100% - 6px);
+  max-width: 100%;
+  min-width: 0;
+  padding: 6px;
+  justify-self: start;
+}
+
 .glass-input:focus-visible {
   outline: 1px solid var(--helio-gold-bright);
   outline-offset: 2px;
@@ -1116,6 +1130,41 @@ body:not(.ui-collapsed) .ui-icon-close {
 .glass-input::-webkit-calendar-picker-indicator {
   cursor: pointer;
   filter: invert(0.72);
+}
+
+.time-machine-history {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(185, 154, 93, 0.16);
+}
+
+.time-machine-history[hidden] {
+  display: none;
+}
+
+.time-history-label {
+  color: var(--helio-muted);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.time-history-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+#time-controls .time-history-item {
+  flex: 0 0 auto;
+  padding: 4px 7px;
+  font-size: 9px;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
 }
 
 #telemetry-hud,

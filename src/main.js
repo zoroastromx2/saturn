@@ -22,6 +22,12 @@ import { CameraController } from './core/CameraController.js';
 import { TelemetryController } from './core/TelemetryController.js';
 import { StatsController } from './core/StatsController.js';
 import { OrbitPathsController } from './core/OrbitPathsController.js';
+import {
+  loadTimeHistory,
+  parseUtcDateString,
+  pushTimeHistory,
+  saveTimeHistory
+} from './core/TimeHistory.js';
 import { getLanguage, setLanguage, t } from './core/Localization.js';
 import { sliderPositionToScale, scaleToSliderPosition, formatTimeScale } from './math/TimeScale.js';
 import './style.css';
@@ -217,6 +223,10 @@ async function bootstrapApp() {
     const timeSpeedValue = document.getElementById('time-speed-value');
     const timeMachineInput = document.getElementById('time-machine-input');
     const jumpTimeBtn = document.getElementById('btn-jump-time');
+    const timeHistoryContainer = document.getElementById('time-machine-history');
+    const timeHistoryList = document.getElementById('time-history-list');
+    let timeHistory = loadTimeHistory();
+    let activeHistoryDate = null;
     const timeButtons = [
       { element: document.getElementById('btn-time-pause'), scale: 0.0 },
       { element: document.getElementById('btn-time-1'), scale: 1.0 },
@@ -461,19 +471,67 @@ async function bootstrapApp() {
 
     setTimeScale(timeScale);
 
+    const renderTimeHistory = () => {
+      if (!timeHistoryContainer || !timeHistoryList) return;
+
+      timeHistoryContainer.hidden = timeHistory.length === 0;
+      timeHistoryList.replaceChildren();
+
+      timeHistory.forEach((dateStr) => {
+        const itemBtn = document.createElement('button');
+        itemBtn.type = 'button';
+        itemBtn.className = 'time-history-item';
+        itemBtn.dataset.date = dateStr;
+        itemBtn.setAttribute('role', 'listitem');
+        itemBtn.textContent = dateStr;
+        itemBtn.setAttribute('aria-label', `${t('time.historyJumpAria')}: ${dateStr}`);
+
+        const isActive = dateStr === activeHistoryDate;
+        itemBtn.classList.toggle('active', isActive);
+        itemBtn.setAttribute('aria-pressed', String(isActive));
+
+        itemBtn.addEventListener('click', () => {
+          jumpToDateString(dateStr);
+        });
+
+        timeHistoryList.appendChild(itemBtn);
+      });
+    };
+
+    const jumpToDateString = (dateStr) => {
+      const selectedDate = parseUtcDateString(dateStr);
+      if (!selectedDate) return;
+
+      simulationDate = selectedDate;
+      if (timeMachineInput) {
+        timeMachineInput.value = dateStr;
+      }
+      activeHistoryDate = dateStr;
+      timeHistory = pushTimeHistory(timeHistory, dateStr);
+      saveTimeHistory(timeHistory);
+      renderTimeHistory();
+      setTimeScale(0.0);
+      telemetryController?.refresh();
+    };
+
     const jumpToSelectedDate = () => {
       const selectedDateStr = timeMachineInput?.value;
       if (!selectedDateStr) return;
-
-      const selectedDate = new Date(`${selectedDateStr}T00:00:00Z`);
-      if (Number.isNaN(selectedDate.getTime())) return;
-
-      simulationDate = selectedDate;
-      setTimeScale(0.0);
+      jumpToDateString(selectedDateStr);
     };
+
+    renderTimeHistory();
 
     if (jumpTimeBtn) {
       jumpTimeBtn.addEventListener('click', jumpToSelectedDate);
+    }
+
+    if (timeMachineInput) {
+      timeMachineInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          jumpToSelectedDate();
+        }
+      });
     }
 
     const updateDynamicLanguage = () => {
@@ -495,6 +553,7 @@ async function bootstrapApp() {
       updateAuroraButton();
       telemetryController.refresh();
       statsController.refresh();
+      renderTimeHistory();
       applyTheme(currentTheme);
     };
 
