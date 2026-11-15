@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CONSTANTS, calculateOblateness, getEarthToSaturnRatio, toWebGLUnits } from '../src/math/AstroScale';
+import { CONSTANTS, calculateOblateness, getEarthToSaturnRatio, toWebGLUnits, calculateOrbitalVelocity } from '../src/math/AstroScale';
 
 describe('AstroScale - Cálculos Planetarios', () => {
   it('debería calcular el achatamiento (oblateness) de Saturno correctamente (~0.09796)', () => {
@@ -31,5 +31,16 @@ describe('AstroScale - Cálculos Planetarios', () => {
 
   it('debería lanzar un error si se calcula un achatamiento con radio ecuatorial inválido', () => {
     expect(() => calculateOblateness(0, 5000)).toThrow(/mayor a cero/);
+  });
+
+  it('debería calcular correctamente la velocidad orbital media en km/s para Titán, Encélado y Mimas', () => {
+    expect(calculateOrbitalVelocity(CONSTANTS.TITAN.ORBIT_SEMI_MAJOR, CONSTANTS.TITAN.ORBIT_PERIOD)).toBeCloseTo(5.573, 2);
+    expect(calculateOrbitalVelocity(CONSTANTS.ENCELADUS.ORBIT_SEMI_MAJOR, CONSTANTS.ENCELADUS.ORBIT_PERIOD)).toBeCloseTo(12.635, 2);
+    expect(calculateOrbitalVelocity(CONSTANTS.MIMAS.ORBIT_SEMI_MAJOR, CONSTANTS.MIMAS.ORBIT_PERIOD)).toBeCloseTo(14.321, 2);
+  });
+
+  it('debería lanzar un error si el semieje mayor o el período orbital son inválidos', () => {
+    expect(() => calculateOrbitalVelocity(0, 1.37)).toThrow(/mayores a cero/);
+    expect(() => calculateOrbitalVelocity(237948, 0)).toThrow(/mayores a cero/);
   });
 });

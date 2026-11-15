@@ -62,3 +62,17 @@ export function getEarthToSaturnRatio() {
 export function toWebGLUnits(actualKm, scaleFactor = 10000) {
   return actualKm / scaleFactor;
 }
+
+const SECONDS_PER_DAY = 86400.0;
+
+/**
+ * Calcula la velocidad orbital circular media (en km/s) a partir del semieje mayor (km)
+ * y el período orbital (días terrestres).
+ * Fórmula: v = (2 * PI * a) / (T * 86400)
+ */
+export function calculateOrbitalVelocity(semiMajorAxisKm, orbitPeriodDays) {
+  if (semiMajorAxisKm <= 0 || orbitPeriodDays <= 0) {
+    throw new Error("El semieje mayor y el período orbital deben ser mayores a cero.");
+  }
+  return (2 * Math.PI * semiMajorAxisKm) / (orbitPeriodDays * SECONDS_PER_DAY);
+}
