@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CONSTANTS, calculateOblateness, getEarthToSaturnRatio, toWebGLUnits, calculateOrbitalVelocity } from '../src/math/AstroScale';
+import { CONSTANTS, calculateOblateness, getEarthToSaturnRatio, toWebGLUnits, calculateOrbitalVelocity, kmToAU } from '../src/math/AstroScale';
 
 describe('AstroScale - Cálculos Planetarios', () => {
   it('debería calcular el achatamiento (oblateness) de Saturno correctamente (~0.09796)', () => {
@@ -42,5 +42,14 @@ describe('AstroScale - Cálculos Planetarios', () => {
   it('debería lanzar un error si el semieje mayor o el período orbital son inválidos', () => {
     expect(() => calculateOrbitalVelocity(0, 1.37)).toThrow(/mayores a cero/);
     expect(() => calculateOrbitalVelocity(237948, 0)).toThrow(/mayores a cero/);
+  });
+
+  it('debería convertir distancias en km a Unidades Astronómicas (AU)', () => {
+    expect(kmToAU(CONSTANTS.EARTH.SUN_DISTANCE_KM)).toBeCloseTo(1.0, 4);
+    expect(kmToAU(CONSTANTS.SATURN.SUN_DISTANCE_KM)).toBeCloseTo(9.5826, 4);
+  });
+
+  it('debería lanzar un error si la distancia en km para convertir a AU es negativa', () => {
+    expect(() => kmToAU(-1)).toThrow(/no puede ser negativa/);
   });
 });

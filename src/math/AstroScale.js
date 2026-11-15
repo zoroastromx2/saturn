@@ -7,7 +7,8 @@
 export const CONSTANTS = {
   EARTH: {
     RADIUS_EQUATORIAL: 6378.137,
-    RADIUS_POLAR: 6356.752
+    RADIUS_POLAR: 6356.752,
+    SUN_DISTANCE_KM: 149597870.7
   },
   ENCELADUS: {
   RADIUS: 252.1,              // Muy pequeño comparado con Titán
@@ -32,7 +33,8 @@ export const CONSTANTS = {
     F_RING_RADIUS: 140180.0,
     F_RING_WIDTH: 500.0,
     E_RING_INNER: 181000.0,
-    E_RING_OUTER: 483000.0	
+    E_RING_OUTER: 483000.0,
+    SUN_DISTANCE_KM: 1433530000.0
   }
   
 };
@@ -75,4 +77,16 @@ export function calculateOrbitalVelocity(semiMajorAxisKm, orbitPeriodDays) {
     throw new Error("El semieje mayor y el período orbital deben ser mayores a cero.");
   }
   return (2 * Math.PI * semiMajorAxisKm) / (orbitPeriodDays * SECONDS_PER_DAY);
+}
+
+export const ASTRONOMICAL_UNIT_KM = 149597870.7;
+
+/**
+ * Convierte una distancia en kilómetros a Unidades Astronómicas (AU).
+ */
+export function kmToAU(distanceKm) {
+  if (distanceKm < 0) {
+    throw new Error("La distancia en kilómetros no puede ser negativa.");
+  }
+  return distanceKm / ASTRONOMICAL_UNIT_KM;
 }

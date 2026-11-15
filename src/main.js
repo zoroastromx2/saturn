@@ -110,7 +110,7 @@ async function bootstrapApp() {
     mimasSim.update(0);
     fRingSim = new FRingSimulator(scene, saturnSim, saturnSim.scaleFactor);
     comparisonMode = new ComparisonMode(scene, saturnSim, camera, assets);
-    telemetryController = new TelemetryController(camera, cameraController, saturnSim.scaleFactor);
+    telemetryController = new TelemetryController(camera, cameraController, saturnSim.scaleFactor, saturnSim.sunDirection);
 
     // 4. Iluminar la Tierra con la misma dirección solar que usan los shaders
     const sunLight = new THREE.DirectionalLight(0xffffff, 2.6);

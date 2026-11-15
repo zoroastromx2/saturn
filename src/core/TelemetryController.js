@@ -1,5 +1,6 @@
 // src/core/TelemetryController.js
-import { CONSTANTS, calculateOrbitalVelocity } from '../math/AstroScale.js';
+import * as THREE from 'three';
+import { CONSTANTS, calculateOrbitalVelocity, kmToAU } from '../math/AstroScale.js';
 import { t } from './Localization.js';
 
 const UPDATE_INTERVAL = 0.1;
@@ -47,17 +48,25 @@ const BODY_DATA = {
 };
 
 export class TelemetryController {
-  constructor(camera, cameraController, scaleFactor) {
+  constructor(camera, cameraController, scaleFactor, sunDirection = null) {
     this.camera = camera;
     this.cameraController = cameraController;
     this.scaleFactor = scaleFactor;
     this.accumulatedTime = 0;
+
+    this.sunDirection = (sunDirection
+      ? sunDirection.clone()
+      : new THREE.Vector3(1.0, 0.35, 0.35)
+    ).normalize();
+    this.sunPositionKm = this.sunDirection.clone().multiplyScalar(CONSTANTS.SATURN.SUN_DISTANCE_KM);
+    this.bodyPositionKm = new THREE.Vector3();
 
     // Cachear los nodos evita lecturas de layout en el bucle de render.
     this.targetElement = document.getElementById('telemetry-target');
     this.altitudeElement = document.getElementById('telemetry-altitude');
     this.periodElement = document.getElementById('telemetry-period');
     this.velocityElement = document.getElementById('telemetry-velocity');
+    this.sunDistanceElement = document.getElementById('telemetry-sun-distance');
   }
 
   update(deltaTime) {
@@ -82,6 +91,18 @@ export class TelemetryController {
       : this.camera.position.length();
     const altitudeKm = distanceToCore * this.scaleFactor - body.radius;
 
+    let sunDistanceAu;
+    if (targetName === 'Earth') {
+      sunDistanceAu = kmToAU(CONSTANTS.EARTH.SUN_DISTANCE_KM);
+    } else {
+      if (target) {
+        this.bodyPositionKm.copy(target.position).multiplyScalar(this.scaleFactor);
+      } else {
+        this.bodyPositionKm.set(0, 0, 0);
+      }
+      sunDistanceAu = kmToAU(this.sunPositionKm.distanceTo(this.bodyPositionKm));
+    }
+
     this.targetElement.innerText = t(body.labelKey);
     this.altitudeElement.innerText = `${Math.floor(Math.max(0, altitudeKm)).toLocaleString()} km`;
     this.periodElement.innerText = body.period === null
@@ -94,6 +115,12 @@ export class TelemetryController {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
           })} km/s`;
+    }
+    if (this.sunDistanceElement) {
+      this.sunDistanceElement.innerText = `${sunDistanceAu.toLocaleString(undefined, {
+        minimumFractionDigits: 4,
+        maximumFractionDigits: 4
+      })} AU`;
     }
   }
 }
