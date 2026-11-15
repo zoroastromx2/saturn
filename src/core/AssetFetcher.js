@@ -8,6 +8,7 @@ export class AssetFetcher {
     this.audioLoader = options.audioLoader || new THREE.AudioLoader();
     this.retryDelayMs = options.retryDelayMs ?? 250;
     this.maxConcurrency = Math.max(1, options.maxConcurrency ?? 6);
+    this.fetchImpl = options.fetchImpl ?? globalThis.fetch?.bind(globalThis);
     this.activeRequests = 0;
     this.requestQueue = [];
     this.assets = {
@@ -34,7 +35,8 @@ export class AssetFetcher {
       saturnAudioBuffer: null,
       titanAudioBuffer: null,
       enceladusAudioBuffer: null,
-      mimasAudioBuffer: null
+      mimasAudioBuffer: null,
+      minorMoons: null
     };
   }
 
@@ -60,7 +62,8 @@ export class AssetFetcher {
         saturnAudio,
         titanAudio,
         enceladusAudio,
-        mimasAudio
+        mimasAudio,
+        minorMoons
       ] = await Promise.all([
         this.loadTextureAsync(this.assetUrl('textures/saturn_atmosphere_8k.jpg')),
         this.loadTextureAsync(this.assetUrl('textures/saturn_rings_color.png')),
@@ -76,7 +79,8 @@ export class AssetFetcher {
         this.loadAudioAsync(this.assetUrl('audio/saturn_deep_rumble.wav')),
         this.loadAudioAsync(this.assetUrl('audio/titan_winds.wav')),
         this.loadAudioAsync(this.assetUrl('audio/enceladus_ice_crackle.wav')),
-        this.loadAudioAsync(this.assetUrl('audio/mimas_rocky_rumble.wav'))
+        this.loadAudioAsync(this.assetUrl('audio/mimas_rocky_rumble.wav')),
+        this.loadMinorMoons()
       ]);
 
       // Configuración estricta de espacios de color
@@ -119,6 +123,7 @@ export class AssetFetcher {
       this.assets.titanAudioBuffer = titanAudio;
       this.assets.enceladusAudioBuffer = enceladusAudio;
       this.assets.mimasAudioBuffer = mimasAudio;
+      this.assets.minorMoons = minorMoons;
 
       console.log("Texturas cargadas exitosamente.");
       return this.assets;
@@ -170,6 +175,29 @@ export class AssetFetcher {
   assetUrl(path) {
     const base = (typeof import.meta !== 'undefined' && import.meta.env?.BASE_URL) || '/';
     return `${base}${path.replace(/^\/+/, '')}`;
+  }
+
+  async loadMinorMoons() {
+    if (typeof this.fetchImpl !== 'function') {
+      console.warn('No hay fetch disponible para cargar las lunas menores.');
+      return [];
+    }
+
+    try {
+      const response = await this.fetchImpl(this.assetUrl('data/minor_moons.json'));
+      if (response.ok === false) {
+        throw new Error(`Fallo al cargar lunas menores: HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (!Array.isArray(data)) {
+        throw new Error('El catálogo de lunas menores no es un arreglo.');
+      }
+      return data;
+    } catch (error) {
+      console.warn('Catálogo de lunas menores no disponible:', error?.message || error);
+      return [];
+    }
   }
 
   loadSingleTexture(url) {

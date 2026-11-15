@@ -16,6 +16,7 @@ import { DioneSimulator } from './core/DioneSimulator.js';
 import { RheaSimulator } from './core/RheaSimulator.js';
 import { IapetusSimulator } from './core/IapetusSimulator.js';
 import { FRingSimulator } from './core/FRingSimulator.js';
+import { MinorMoonsSimulator } from './core/MinorMoonsSimulator.js';
 import { ComparisonMode } from './core/ComparisonMode.js';
 import { CameraController } from './core/CameraController.js';
 import { TelemetryController } from './core/TelemetryController.js';
@@ -28,7 +29,7 @@ import './style.css';
 let scene, camera, renderer, composer, labelRenderer, controls, cameraController, listener;
 let saturnSim, titanSim, enceladusSim, mimasSim;
 let tethysSim, dioneSim, rheaSim, iapetusSim;
-let fRingSim, comparisonMode, telemetryController, statsController, orbitPathsController;
+let fRingSim, minorMoonsSim, comparisonMode, telemetryController, statsController, orbitPathsController;
 let audioEnabled = false;
 let orbitsEnabled = false;
 let timeScale = 1.0;
@@ -148,6 +149,10 @@ async function bootstrapApp() {
     iapetusSim = new IapetusSimulator(scene, saturnSim, saturnSim.scaleFactor, assets);
     iapetusSim.update(initialDaysSinceJ2000);
     fRingSim = new FRingSimulator(scene, saturnSim, saturnSim.scaleFactor);
+    if (assets.minorMoons?.length === 135) {
+      minorMoonsSim = new MinorMoonsSimulator(scene, assets.minorMoons);
+      minorMoonsSim.update(initialDaysSinceJ2000);
+    }
     comparisonMode = new ComparisonMode(scene, saturnSim, camera, assets);
     telemetryController = new TelemetryController(camera, cameraController, saturnSim.scaleFactor, saturnSim.sunDirection);
     statsController = new StatsController(renderer);
@@ -559,6 +564,9 @@ function tick() {
   }
   if (fRingSim) {
     fRingSim.update(orbitalTime);
+  }
+  if (minorMoonsSim) {
+    minorMoonsSim.update(daysSinceJ2000);
   }
 
   // Sigue al objetivo activo y actualiza la inercia de OrbitControls.
