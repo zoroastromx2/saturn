@@ -21,6 +21,8 @@ export class MimasSimulator {
         uSaturnPolRadius: { value: saturnSimulator.polRadius },
         tColor: { value: assets.mimasColor || WHITE_TEXTURE },
         tNormal: { value: assets.mimasNormal || FLAT_NORMAL_TEXTURE },
+        tAo: { value: assets.mimasAo || WHITE_TEXTURE },
+        uAoIntensity: { value: 1.0 },
         uBaseColor: { value: new THREE.Vector3(1.0, 1.0, 1.0) },
         uAtmosphereStrength: { value: 0.0 },
         uRimPower: { value: 1.2 }

@@ -23,6 +23,8 @@ export class EnceladusSimulator {
         uSaturnPolRadius: { value: saturnSimulator.polRadius },
         tColor: { value: WHITE_TEXTURE },
         tNormal: { value: FLAT_NORMAL_TEXTURE },
+        tAo: { value: WHITE_TEXTURE },
+        uAoIntensity: { value: 1.0 },
         uBaseColor: { value: new THREE.Vector3(1.0, 1.0, 1.0) },
         uAtmosphereStrength: { value: 0.0 },
         uRimPower: { value: 1.2 }

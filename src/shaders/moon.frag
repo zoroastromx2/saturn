@@ -4,6 +4,8 @@ uniform float uSaturnEqRadius;
 uniform float uSaturnPolRadius;
 uniform sampler2D tColor;
 uniform sampler2D tNormal;
+uniform sampler2D tAo;
+uniform float uAoIntensity;
 uniform vec3 uBaseColor;
 uniform float uAtmosphereStrength;
 uniform float uRimPower;
@@ -52,6 +54,9 @@ vec3 perturbNormal(vec3 geometricNormal, vec3 encodedNormal) {
 }
 
 void main() {
+    float ao = texture2D(tAo, vUv).r;
+    ao = mix(1.0, ao, uAoIntensity);
+
     vec3 sunDir = normalize(uSunDirection);
     vec3 normal = perturbNormal(normalize(vNormal), texture2D(tNormal, vUv).xyz);
 
@@ -65,13 +70,14 @@ void main() {
     float distToSaturn = length(uSaturnPosition - vWorldPosition);
     float attenuation = pow(uSaturnEqRadius / max(distToSaturn, 1e-4), 2.0);
 
-    vec3 planetshine = planetshineDiffuse
-                     * saturnIlluminationPhase
-                     * attenuation
-                     * vec3(0.9, 0.8, 0.6)
-                     * 0.55;
-
-    vec3 totalLight = vec3(sunDiffuse) + planetshine;
+    vec3 indirectLight = planetshineDiffuse
+                       * saturnIlluminationPhase
+                       * attenuation
+                       * vec3(0.9, 0.8, 0.6)
+                       * 0.55
+                       * ao;
+    vec3 directLight = vec3(sunDiffuse) * mix(1.0, ao, 0.5);
+    vec3 totalLight = directLight + indirectLight;
     vec3 albedo = texture2D(tColor, vUv).rgb * uBaseColor;
     vec3 color = albedo * totalLight;
 

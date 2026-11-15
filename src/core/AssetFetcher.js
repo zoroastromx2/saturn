@@ -13,6 +13,7 @@ export class AssetFetcher {
       starmap: null,
       mimasColor: null,
       mimasNormal: null,
+      mimasAo: null,
       saturnAudioBuffer: null,
       titanAudioBuffer: null,
       enceladusAudioBuffer: null,
@@ -29,7 +30,7 @@ export class AssetFetcher {
     console.log("Iniciando descarga de texturas de la misión Cassini...");
 
     try {
-      const [saturn, rColor, rAlpha, earth, starmap, mimasColor, mimasNormal, saturnAudio, titanAudio, enceladusAudio, mimasAudio] = await Promise.all([
+      const [saturn, rColor, rAlpha, earth, starmap, mimasColor, mimasNormal, mimasAo, saturnAudio, titanAudio, enceladusAudio, mimasAudio] = await Promise.all([
         this.loadTextureAsync(this.assetUrl('textures/saturn_atmosphere_8k.jpg')),
         this.loadTextureAsync(this.assetUrl('textures/saturn_rings_color.png')),
         // La máscara de densidad/alfa de los anillos (blanco = sólido, negro = vacío)
@@ -38,6 +39,7 @@ export class AssetFetcher {
         this.loadTextureAsync(this.assetUrl('textures/milky_way_8k.jpg')),
         this.loadTextureAsync(this.assetUrl('textures/mimas_color.jpg')),
         this.loadTextureAsync(this.assetUrl('textures/mimas_normal.jpg')),
+        this.loadTextureWithFallback('textures/mimas_ao.jpg', 'textures/mimas_color.jpg'),
         this.loadAudioAsync(this.assetUrl('audio/saturn_deep_rumble.wav')),
         this.loadAudioAsync(this.assetUrl('audio/titan_winds.wav')),
         this.loadAudioAsync(this.assetUrl('audio/enceladus_ice_crackle.wav')),
@@ -55,6 +57,8 @@ export class AssetFetcher {
       mimasColor.wrapS = THREE.RepeatWrapping;
       mimasNormal.colorSpace = THREE.LinearSRGBColorSpace;
       mimasNormal.wrapS = THREE.RepeatWrapping;
+      mimasAo.colorSpace = THREE.LinearSRGBColorSpace;
+      mimasAo.wrapS = THREE.RepeatWrapping;
 
       // Mapas de datos (Alpha/Densidad, Normales) DEBEN mantenerse en Linear
       // Si el alpha se convierte a sRGB, la curva matemática de la sombra fallará
@@ -67,6 +71,7 @@ export class AssetFetcher {
       this.assets.starmap = starmap;
       this.assets.mimasColor = mimasColor;
       this.assets.mimasNormal = mimasNormal;
+      this.assets.mimasAo = mimasAo;
       this.assets.saturnAudioBuffer = saturnAudio;
       this.assets.titanAudioBuffer = titanAudio;
       this.assets.enceladusAudioBuffer = enceladusAudio;
@@ -97,6 +102,12 @@ export class AssetFetcher {
         (err) => reject(new Error(`Fallo al cargar textura: ${url}`))
       );
     });
+  }
+
+  loadTextureWithFallback(primaryPath, fallbackPath) {
+    return this.loadTextureAsync(this.assetUrl(primaryPath)).catch(() =>
+      this.loadTextureAsync(this.assetUrl(fallbackPath))
+    );
   }
 
   loadAudioAsync(url) {

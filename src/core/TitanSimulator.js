@@ -22,6 +22,8 @@ export class TitanSimulator {
         uSaturnPolRadius: { value: saturnSimulator.polRadius },
         tColor: { value: WHITE_TEXTURE },
         tNormal: { value: FLAT_NORMAL_TEXTURE },
+        tAo: { value: WHITE_TEXTURE },
+        uAoIntensity: { value: 1.0 },
         uBaseColor: { value: new THREE.Vector3(0.18, 0.085, 0.025) },
         uAtmosphereStrength: { value: 1.0 },
         uRimPower: { value: 1.2 }
