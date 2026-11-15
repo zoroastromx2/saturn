@@ -22,13 +22,15 @@ export class CameraController {
     this.followDelta = new THREE.Vector3();
     this.focusDistance = 0;
     this.isSurfaceLocked = false;
+    this.surfaceMount = null;
     this.surfaceOrigin = new THREE.Vector3(0, 0, 0);
   }
 
-  focusOn(targetMesh, distanceMultiplier) {
+  focusOn(targetMesh, distanceMultiplier, elevationBias = 0.35) {
     if (!targetMesh) return;
 
     this.isSurfaceLocked = false;
+    this.surfaceMount = null;
     this.controls.enabled = true;
 
     if (this.tween) {
@@ -47,7 +49,7 @@ export class CameraController {
       this.offsetDirection.set(0, 0.5, 1);
     }
     this.offsetDirection.normalize();
-    this.offsetDirection.y += 0.35;
+    this.offsetDirection.y += elevationBias;
     this.offsetDirection.normalize();
 
     this.progress.value = 0;
@@ -74,6 +76,7 @@ export class CameraController {
 
     this.currentTarget = targetSimulator.mesh;
     this.isSurfaceLocked = false;
+    this.surfaceMount = mount;
     this.controls.enabled = false;
 
     this.startPosition.copy(this.camera.position);

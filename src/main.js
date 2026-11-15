@@ -10,6 +10,7 @@ import { AssetFetcher } from './core/AssetFetcher.js';
 import { SaturnSimulator } from './core/SaturnSimulator.js';
 import { TitanSimulator } from './core/TitanSimulator.js';
 import { EnceladusSimulator } from './core/EnceladusSimulator.js';
+import { MimasSimulator } from './core/MimasSimulator.js';
 import { ComparisonMode } from './core/ComparisonMode.js';
 import { CameraController } from './core/CameraController.js';
 import { TelemetryController } from './core/TelemetryController.js';
@@ -17,7 +18,7 @@ import { getLanguage, setLanguage, t } from './core/Localization.js';
 import './style.css';
 
 let scene, camera, renderer, composer, labelRenderer, controls, cameraController, listener;
-let saturnSim, titanSim, enceladusSim, comparisonMode, telemetryController;
+let saturnSim, titanSim, enceladusSim, mimasSim, comparisonMode, telemetryController;
 let audioEnabled = false;
 let timeScale = 1.0;
 let orbitalTime = 0.0;
@@ -83,6 +84,8 @@ async function bootstrapApp() {
     titanSim.update(0);
     enceladusSim = new EnceladusSimulator(scene, saturnSim, saturnSim.scaleFactor, assets, listener);
     enceladusSim.update(0);
+    mimasSim = new MimasSimulator(scene, saturnSim, saturnSim.scaleFactor, assets, listener);
+    mimasSim.update(0);
     comparisonMode = new ComparisonMode(scene, saturnSim, camera, assets);
     telemetryController = new TelemetryController(camera, cameraController, saturnSim.scaleFactor);
 
@@ -102,7 +105,9 @@ async function bootstrapApp() {
     const earthBtn = document.getElementById('btn-earth');
     const titanBtn = document.getElementById('btn-titan');
     const enceladusBtn = document.getElementById('btn-enceladus');
+    const mimasBtn = document.getElementById('btn-mimas');
     const surfaceEnceladusBtn = document.getElementById('btn-surface-enceladus');
+    const surfaceMimasBtn = document.getElementById('btn-surface-mimas');
     const labelsBtn = document.getElementById('btn-toggle-labels');
     const audioBtn = document.getElementById('btn-toggle-audio');
     const languageBtn = document.getElementById('btn-toggle-language');
@@ -139,9 +144,21 @@ async function bootstrapApp() {
       });
     }
 
+    if (mimasBtn) {
+      mimasBtn.addEventListener('click', () => {
+        cameraController.focusOn(mimasSim.mesh, 8.0, 0.0);
+      });
+    }
+
     if (surfaceEnceladusBtn) {
       surfaceEnceladusBtn.addEventListener('click', () => {
         cameraController.landOnSurface(enceladusSim);
+      });
+    }
+
+    if (surfaceMimasBtn) {
+      surfaceMimasBtn.addEventListener('click', () => {
+        cameraController.landOnSurface(mimasSim);
       });
     }
 
@@ -162,7 +179,8 @@ async function bootstrapApp() {
         const ambientSounds = [
           saturnSim.ambientSound,
           titanSim.ambientSound,
-          enceladusSim.ambientSound
+          enceladusSim.ambientSound,
+          mimasSim.ambientSound
         ].filter(Boolean);
 
         if (audioEnabled) {
@@ -206,6 +224,7 @@ async function bootstrapApp() {
       saturnSim.label.element.textContent = t('body.saturn');
       titanSim.label.element.textContent = t('body.titan');
       enceladusSim.label.element.textContent = t('body.enceladus');
+      mimasSim.label.element.textContent = t('body.mimas');
       comparisonMode.label.element.textContent = t('body.earth');
       telemetryController.refresh();
     };
@@ -260,14 +279,17 @@ function tick() {
   if (enceladusSim) {
     enceladusSim.update(orbitalTime, deltaTime);
   }
+  if (mimasSim) {
+    mimasSim.update(orbitalTime);
+  }
 
   // Sigue al objetivo activo y actualiza la inercia de OrbitControls.
   if (cameraController) {
     cameraController.update();
   }
 
-  if (cameraController?.isSurfaceLocked && enceladusSim) {
-    enceladusSim.surfaceCameraMount.getWorldPosition(surfaceMountPosition);
+  if (cameraController?.isSurfaceLocked && cameraController.surfaceMount) {
+    cameraController.surfaceMount.getWorldPosition(surfaceMountPosition);
     camera.position.copy(surfaceMountPosition);
     camera.lookAt(0, 0, 0);
   }

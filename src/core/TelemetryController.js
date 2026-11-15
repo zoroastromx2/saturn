@@ -24,6 +24,11 @@ const BODY_DATA = {
     radius: CONSTANTS.ENCELADUS.RADIUS,
     period: CONSTANTS.ENCELADUS.ORBIT_PERIOD,
     labelKey: 'body.enceladus'
+  },
+  Mimas: {
+    radius: CONSTANTS.MIMAS.RADIUS,
+    period: CONSTANTS.MIMAS.ORBIT_PERIOD,
+    labelKey: 'body.mimas'
   }
 };
 

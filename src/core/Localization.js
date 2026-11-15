@@ -11,6 +11,8 @@ const translations = {
     'nav.focusTitan': 'Enfocar Titán',
     'nav.focusEnceladus': 'Enfocar Encélado',
     'nav.landEnceladus': 'Aterrizar en Encélado',
+    'nav.focusMimas': 'Enfocar Mimas',
+    'nav.landMimas': 'Aterrizar en Mimas',
     'nav.showLabels': 'Mostrar etiquetas',
     'nav.hideLabels': 'Ocultar etiquetas',
     'nav.enableAudio': '🔇 Activar audio',
@@ -23,6 +25,7 @@ const translations = {
     'body.earth': 'Tierra',
     'body.titan': 'Titán',
     'body.enceladus': 'Encélado',
+    'body.mimas': 'Mimas',
     'error.bootstrap': 'Error inicializando el simulador. Revisa la consola.'
   },
   en: {
@@ -37,6 +40,8 @@ const translations = {
     'nav.focusTitan': 'Focus Titan',
     'nav.focusEnceladus': 'Focus Enceladus',
     'nav.landEnceladus': 'Land on Enceladus',
+    'nav.focusMimas': 'Focus Mimas',
+    'nav.landMimas': 'Land on Mimas',
     'nav.showLabels': 'Show labels',
     'nav.hideLabels': 'Hide labels',
     'nav.enableAudio': '🔇 Enable audio',
@@ -49,6 +54,7 @@ const translations = {
     'body.earth': 'Earth',
     'body.titan': 'Titan',
     'body.enceladus': 'Enceladus',
+    'body.mimas': 'Mimas',
     'error.bootstrap': 'Error initializing the simulator. Check the console.'
   }
 };

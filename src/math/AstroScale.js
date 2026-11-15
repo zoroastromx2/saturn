@@ -14,6 +14,11 @@ export const CONSTANTS = {
   ORBIT_SEMI_MAJOR: 237948.0, // Orbita muy cerca, dentro del Anillo E
   ORBIT_PERIOD: 1.37          // Completa una vuelta en ~1.37 días
   },
+  MIMAS: {
+    RADIUS: 198.2,
+    ORBIT_SEMI_MAJOR: 185520.0,
+    ORBIT_PERIOD: 0.942
+  },
   TITAN: {
     RADIUS: 2574.7,             // Radio volumétrico
     ORBIT_SEMI_MAJOR: 1221870.0, // Distancia orbital (~1.2 millones de km)

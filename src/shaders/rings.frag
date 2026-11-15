@@ -17,6 +17,8 @@ uniform vec3 uTitanPosition;
 uniform float uTitanRadius;
 uniform vec3 uEnceladusPosition;
 uniform float uEnceladusRadius;
+uniform vec3 uMimasPosition;
+uniform float uMimasRadius;
 
 varying vec2 vUv;
 varying vec3 vWorldPosition;
@@ -73,6 +75,20 @@ float moonShadow(vec3 point, vec3 sunDir, vec3 moonPosition, float moonRadius) {
     float penumbraSoftness = max(distanceToMoon * 0.001, 1e-4);
     float shadowEdge = sqrt(h);
     return 1.0 - smoothstep(0.0, penumbraSoftness, shadowEdge);
+}
+
+float mimasShadow(vec3 point, vec3 sunDir) {
+    vec3 oc = point - uMimasPosition;
+    float b = dot(oc, sunDir);
+    float c = dot(oc, oc) - (uMimasRadius * uMimasRadius);
+    float h = b * b - c;
+
+    if (h <= 0.0 || b >= 0.0) return 1.0;
+
+    float distanceToMimas = length(oc);
+    float penumbra = max(distanceToMimas * 0.012, 1e-4);
+    float shadowEdge = sqrt(h);
+    return 1.0 - smoothstep(0.0, penumbra, shadowEdge);
 }
 
 // Raymarching local del toro volumétrico del Anillo E.
@@ -198,7 +214,8 @@ void main() {
             float phase = hgPhase(cosTheta, 0.8);
 
             float moonShadowFactor = moonShadow(vWorldPosition, sunDir, uTitanPosition, uTitanRadius)
-                                   * moonShadow(vWorldPosition, sunDir, uEnceladusPosition, uEnceladusRadius);
+                                   * moonShadow(vWorldPosition, sunDir, uEnceladusPosition, uEnceladusRadius)
+                                   * mimasShadow(vWorldPosition, sunDir);
 
             float illumination = 0.45 + 0.9 * phase;
             illumination *= mix(1.0, 0.02, planetShadow(vWorldPosition, sunDir));
@@ -224,7 +241,8 @@ void main() {
             float phase = hgPhase(cosTheta, 0.8);
 
             float moonShadowFactor = moonShadow(vWorldPosition, sunDir, uTitanPosition, uTitanRadius)
-                                   * moonShadow(vWorldPosition, sunDir, uEnceladusPosition, uEnceladusRadius);
+                                   * moonShadow(vWorldPosition, sunDir, uEnceladusPosition, uEnceladusRadius)
+                                   * mimasShadow(vWorldPosition, sunDir);
 
             float illumination = (0.50 + 1.5 * phase)
                                * mix(1.0, 0.02, planetShadow(vWorldPosition, sunDir))

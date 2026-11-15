@@ -13,6 +13,8 @@ uniform vec3 uTitanPosition;
 uniform float uTitanRadius;
 uniform vec3 uEnceladusPosition;
 uniform float uEnceladusRadius;
+uniform vec3 uMimasPosition;
+uniform float uMimasRadius;
 
 
 // Texturas cargadas por AssetFetcher
@@ -35,6 +37,20 @@ float moonShadow(vec3 point, vec3 sunDir, vec3 moonPosition, float moonRadius) {
     return 1.0 - smoothstep(0.0, penumbraSoftness, shadowEdge);
 }
 
+float mimasShadow(vec3 point, vec3 sunDir) {
+    vec3 oc = point - uMimasPosition;
+    float b = dot(oc, sunDir);
+    float c = dot(oc, oc) - (uMimasRadius * uMimasRadius);
+    float h = b * b - c;
+
+    if (h <= 0.0 || b >= 0.0) return 1.0;
+
+    float distanceToMimas = length(oc);
+    float penumbra = max(distanceToMimas * 0.012, 1e-4);
+    float shadowEdge = sqrt(h);
+    return 1.0 - smoothstep(0.0, penumbra, shadowEdge);
+}
+
 void main() {
     // 1. Color base de la atmósfera
     vec3 albedo = texture2D(uSaturnTexture, vUv).rgb;
@@ -42,7 +58,8 @@ void main() {
     vec3 sunDir = normalize(uSunDirection);
 
     float moonShadowFactor = moonShadow(vWorldPosition, sunDir, uTitanPosition, uTitanRadius)
-                           * moonShadow(vWorldPosition, sunDir, uEnceladusPosition, uEnceladusRadius);
+                           * moonShadow(vWorldPosition, sunDir, uEnceladusPosition, uEnceladusRadius)
+                           * mimasShadow(vWorldPosition, sunDir);
 
     // 2. Iluminación difusa base (Lambert) usando la normal del esferoide oblato
     // La luz ambiente mínima es 0.02 para que el lado oscuro no sea negro puro

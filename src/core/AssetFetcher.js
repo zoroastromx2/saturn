@@ -11,9 +11,12 @@ export class AssetFetcher {
       ringAlpha: null,
       earthAlbedo: null, // Para el ComparisonMode
       starmap: null,
+      mimasColor: null,
+      mimasNormal: null,
       saturnAudioBuffer: null,
       titanAudioBuffer: null,
-      enceladusAudioBuffer: null
+      enceladusAudioBuffer: null,
+      mimasAudioBuffer: null
     };
   }
 
@@ -26,16 +29,19 @@ export class AssetFetcher {
     console.log("Iniciando descarga de texturas de la misión Cassini...");
 
     try {
-      const [saturn, rColor, rAlpha, earth, starmap, saturnAudio, titanAudio, enceladusAudio] = await Promise.all([
+      const [saturn, rColor, rAlpha, earth, starmap, mimasColor, mimasNormal, saturnAudio, titanAudio, enceladusAudio, mimasAudio] = await Promise.all([
         this.loadTextureAsync(this.assetUrl('textures/saturn_atmosphere_8k.jpg')),
         this.loadTextureAsync(this.assetUrl('textures/saturn_rings_color.png')),
         // La máscara de densidad/alfa de los anillos (blanco = sólido, negro = vacío)
         this.loadTextureAsync(this.assetUrl('textures/saturn_rings_alpha.png')),
         this.loadTextureAsync(this.assetUrl('textures/earth_daymap_4k.jpg')),
         this.loadTextureAsync(this.assetUrl('textures/milky_way_8k.jpg')),
+        this.loadTextureAsync(this.assetUrl('textures/mimas_color.jpg')),
+        this.loadTextureAsync(this.assetUrl('textures/mimas_normal.jpg')),
         this.loadAudioAsync(this.assetUrl('audio/saturn_deep_rumble.wav')),
         this.loadAudioAsync(this.assetUrl('audio/titan_winds.wav')),
-        this.loadAudioAsync(this.assetUrl('audio/enceladus_ice_crackle.wav'))
+        this.loadAudioAsync(this.assetUrl('audio/enceladus_ice_crackle.wav')),
+        this.loadAudioAsync(this.assetUrl('audio/mimas_rocky_rumble.wav'))
       ]);
 
       // Configuración estricta de espacios de color
@@ -45,6 +51,10 @@ export class AssetFetcher {
       earth.colorSpace = THREE.SRGBColorSpace;
       starmap.colorSpace = THREE.SRGBColorSpace;
       starmap.mapping = THREE.EquirectangularReflectionMapping;
+      mimasColor.colorSpace = THREE.SRGBColorSpace;
+      mimasColor.wrapS = THREE.RepeatWrapping;
+      mimasNormal.colorSpace = THREE.LinearSRGBColorSpace;
+      mimasNormal.wrapS = THREE.RepeatWrapping;
 
       // Mapas de datos (Alpha/Densidad, Normales) DEBEN mantenerse en Linear
       // Si el alpha se convierte a sRGB, la curva matemática de la sombra fallará
@@ -55,9 +65,12 @@ export class AssetFetcher {
       this.assets.ringAlpha = rAlpha;
       this.assets.earthAlbedo = earth;
       this.assets.starmap = starmap;
+      this.assets.mimasColor = mimasColor;
+      this.assets.mimasNormal = mimasNormal;
       this.assets.saturnAudioBuffer = saturnAudio;
       this.assets.titanAudioBuffer = titanAudio;
       this.assets.enceladusAudioBuffer = enceladusAudio;
+      this.assets.mimasAudioBuffer = mimasAudio;
 
       console.log("Texturas cargadas exitosamente.");
       return this.assets;
