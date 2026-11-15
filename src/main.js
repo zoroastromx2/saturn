@@ -13,11 +13,14 @@ import { EnceladusSimulator } from './core/EnceladusSimulator.js';
 import { ComparisonMode } from './core/ComparisonMode.js';
 import { CameraController } from './core/CameraController.js';
 import { TelemetryController } from './core/TelemetryController.js';
+import { getLanguage, setLanguage, t } from './core/Localization.js';
 import './style.css';
 
 let scene, camera, renderer, composer, labelRenderer, controls, cameraController, listener;
 let saturnSim, titanSim, enceladusSim, comparisonMode, telemetryController;
 let audioEnabled = false;
+let timeScale = 1.0;
+let orbitalTime = 0.0;
 const clock = new THREE.Clock();
 const surfaceMountPosition = new THREE.Vector3();
 
@@ -102,6 +105,13 @@ async function bootstrapApp() {
     const surfaceEnceladusBtn = document.getElementById('btn-surface-enceladus');
     const labelsBtn = document.getElementById('btn-toggle-labels');
     const audioBtn = document.getElementById('btn-toggle-audio');
+    const languageBtn = document.getElementById('btn-toggle-language');
+    const timeButtons = [
+      { element: document.getElementById('btn-time-pause'), scale: 0.0 },
+      { element: document.getElementById('btn-time-1'), scale: 1.0 },
+      { element: document.getElementById('btn-time-10'), scale: 10.0 },
+      { element: document.getElementById('btn-time-100'), scale: 100.0 }
+    ].filter(({ element }) => element);
 
     if (saturnBtn) {
       saturnBtn.addEventListener('click', () => {
@@ -138,7 +148,7 @@ async function bootstrapApp() {
     if (labelsBtn) {
       labelsBtn.addEventListener('click', () => {
         const showLabels = document.body.classList.toggle('show-labels');
-        labelsBtn.textContent = showLabels ? 'Ocultar etiquetas' : 'Mostrar etiquetas';
+        labelsBtn.textContent = t(showLabels ? 'nav.hideLabels' : 'nav.showLabels');
       });
     }
 
@@ -159,15 +169,56 @@ async function bootstrapApp() {
           ambientSounds.forEach((sound) => {
             if (!sound.isPlaying) sound.play();
           });
-          audioBtn.textContent = '🔊 Silenciar audio';
+          audioBtn.textContent = t('nav.muteAudio');
         } else {
           ambientSounds.forEach((sound) => {
             if (sound.isPlaying) sound.pause();
           });
-          audioBtn.textContent = '🔇 Activar audio';
+          audioBtn.textContent = t('nav.enableAudio');
         }
       });
     }
+
+    const setTimeScale = (scale, activeButton) => {
+      timeScale = scale;
+
+      timeButtons.forEach(({ element }) => {
+        const isActive = element === activeButton;
+        element.classList.toggle('active', isActive);
+        element.setAttribute('aria-pressed', String(isActive));
+      });
+    };
+
+    timeButtons.forEach(({ element, scale }) => {
+      element.addEventListener('click', () => setTimeScale(scale, element));
+    });
+
+    const updateDynamicLanguage = () => {
+      if (labelsBtn) {
+        labelsBtn.textContent = t(
+          document.body.classList.contains('show-labels') ? 'nav.hideLabels' : 'nav.showLabels'
+        );
+      }
+      if (audioBtn) {
+        audioBtn.textContent = t(audioEnabled ? 'nav.muteAudio' : 'nav.enableAudio');
+      }
+
+      saturnSim.label.element.textContent = t('body.saturn');
+      titanSim.label.element.textContent = t('body.titan');
+      enceladusSim.label.element.textContent = t('body.enceladus');
+      comparisonMode.label.element.textContent = t('body.earth');
+      telemetryController.refresh();
+    };
+
+    document.addEventListener('languagechange', updateDynamicLanguage);
+
+    if (languageBtn) {
+      languageBtn.addEventListener('click', () => {
+        setLanguage(getLanguage() === 'es' ? 'en' : 'es');
+      });
+    }
+
+    setLanguage('es');
 
     // 7. Iniciar el bucle de renderizado solo cuando todo está listo
     window.addEventListener('resize', onWindowResize);
@@ -181,7 +232,7 @@ async function bootstrapApp() {
 
   } catch (error) {
     console.error("Error crítico durante el bootstrap:", error);
-    document.body.innerHTML = `<h2 style="color:red; text-align:center;">Error inicializando el simulador. Revisa la consola.</h2>`;
+    document.body.innerHTML = `<h2 style="color:red; text-align:center;">${t('error.bootstrap')}</h2>`;
   }
 }
 
@@ -198,15 +249,16 @@ function tick() {
 
   // El tiempo alimenta la rotación kepleriana diferencial de los anillos
   const deltaTime = clock.getDelta();
-  const elapsedTime = clock.elapsedTime;
+  orbitalTime += deltaTime * timeScale;
+
   if (saturnSim && saturnSim.ringsMesh) {
-    saturnSim.ringsMesh.material.uniforms.uTime.value = elapsedTime;
+    saturnSim.ringsMesh.material.uniforms.uTime.value = orbitalTime;
   }
   if (titanSim) {
-    titanSim.update(elapsedTime);
+    titanSim.update(orbitalTime);
   }
   if (enceladusSim) {
-    enceladusSim.update(elapsedTime, deltaTime);
+    enceladusSim.update(orbitalTime, deltaTime);
   }
 
   // Sigue al objetivo activo y actualiza la inercia de OrbitControls.

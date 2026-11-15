@@ -1,24 +1,29 @@
 // src/core/TelemetryController.js
 import { CONSTANTS } from '../math/AstroScale.js';
+import { t } from './Localization.js';
 
 const UPDATE_INTERVAL = 0.1;
 
 const BODY_DATA = {
   Saturn: {
     radius: CONSTANTS.SATURN.RADIUS_EQUATORIAL,
-    period: null
+    period: null,
+    labelKey: 'body.saturn'
   },
   Earth: {
     radius: CONSTANTS.EARTH.RADIUS_EQUATORIAL,
-    period: null
+    period: null,
+    labelKey: 'body.earth'
   },
   Titan: {
     radius: CONSTANTS.TITAN.RADIUS,
-    period: CONSTANTS.TITAN.ORBIT_PERIOD
+    period: CONSTANTS.TITAN.ORBIT_PERIOD,
+    labelKey: 'body.titan'
   },
   Enceladus: {
     radius: CONSTANTS.ENCELADUS.RADIUS,
-    period: CONSTANTS.ENCELADUS.ORBIT_PERIOD
+    period: CONSTANTS.ENCELADUS.ORBIT_PERIOD,
+    labelKey: 'body.enceladus'
   }
 };
 
@@ -57,10 +62,10 @@ export class TelemetryController {
       : this.camera.position.length();
     const altitudeKm = distanceToCore * this.scaleFactor - body.radius;
 
-    this.targetElement.innerText = targetName;
+    this.targetElement.innerText = t(body.labelKey);
     this.altitudeElement.innerText = `${Math.floor(Math.max(0, altitudeKm)).toLocaleString()} km`;
     this.periodElement.innerText = body.period === null
       ? '—'
-      : `${body.period.toLocaleString()} days`;
+      : `${body.period.toLocaleString()} ${t('telemetry.days')}`;
   }
 }

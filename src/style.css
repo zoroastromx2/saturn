@@ -333,7 +333,8 @@ body {
 }
 
 #hud,
-#telemetry-hud {
+#telemetry-hud,
+#time-controls {
   background: rgba(20, 20, 25, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
@@ -357,7 +358,8 @@ body {
   pointer-events: auto;
 }
 
-#hud button {
+#hud button,
+#time-controls button {
   padding: 9px 14px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 999px;
@@ -368,14 +370,40 @@ body {
   transition: background 160ms ease, border-color 160ms ease;
 }
 
-#hud button:hover {
+#hud button:hover,
+#time-controls button:hover {
   background: rgba(255, 255, 255, 0.16);
   border-color: rgba(255, 255, 255, 0.28);
 }
 
-#hud button:focus-visible {
+#hud button:focus-visible,
+#time-controls button:focus-visible {
   outline: 2px solid rgba(255, 255, 255, 0.7);
   outline-offset: 2px;
+}
+
+#time-controls {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: end;
+  align-self: end;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  pointer-events: auto;
+}
+
+#time-controls button {
+  padding: 9px 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+#time-controls button.active {
+  background: rgba(126, 190, 255, 0.3);
+  border-color: rgba(160, 215, 255, 0.8);
+  box-shadow: 0 0 14px rgba(110, 180, 255, 0.3);
+  color: #f4fbff;
 }
 
 #telemetry-hud {

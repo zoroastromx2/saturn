@@ -49,6 +49,7 @@ export class EnceladusSimulator {
     this.velocities = new Float32Array(this.maxParticles * 3);
     this.lifetimes = new Float32Array(this.maxParticles);
     this.maxLifetimes = new Float32Array(this.maxParticles);
+    this.plumeTime = 0.0;
     this.initPlume(scene);
 
     // Inyectar uniforms a los shaders (igual que con Titán)
@@ -111,11 +112,12 @@ export class EnceladusSimulator {
     this.saturnUniforms.uEnceladusPosition.value.copy(this.mesh.position);
     this.ringsUniforms.uEnceladusPosition.value.copy(this.mesh.position);
 
-    this.updatePlume(elapsedTime, deltaTime);
+    this.updatePlume(deltaTime);
   }
 
-  updatePlume(elapsedTime, deltaTime) {
-    this.plumeMaterial.uniforms.uTime.value = elapsedTime;
+  updatePlume(deltaTime) {
+    this.plumeTime += deltaTime;
+    this.plumeMaterial.uniforms.uTime.value = this.plumeTime;
 
     const southX = this.mesh.position.x;
     const southY = this.mesh.position.y - this.radius;
