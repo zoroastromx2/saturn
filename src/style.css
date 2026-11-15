@@ -605,8 +605,71 @@ body:not(.ui-collapsed) .ui-icon-close {
   text-shadow: 0 0 10px rgba(213, 185, 123, 0.3);
 }
 
-#hud .language-row .row-state {
-  color: var(--helio-gold);
+.header-lang-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: 6px;
+  padding: 7px 10px;
+  border: 1px solid var(--helio-line);
+  border-radius: 2px;
+  background: linear-gradient(180deg, rgba(14, 13, 10, 0.94), rgba(8, 8, 7, 0.93));
+  color: var(--helio-text);
+  font: 500 10px/1 var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.015);
+  cursor: pointer;
+  pointer-events: auto;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+.header-lang-btn:hover {
+  background: rgba(185, 154, 93, 0.14);
+  border-color: rgba(213, 185, 123, 0.78);
+  color: #f4e7c8;
+}
+
+.header-lang-btn:focus-visible {
+  outline: 1px solid var(--helio-gold-bright);
+  outline-offset: 2px;
+}
+
+.header-lang-btn .lang-icon {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  fill: none;
+  stroke: var(--helio-gold);
+  stroke-width: 1.25;
+}
+
+.header-lang-btn .lang-options {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.header-lang-btn .lang-opt {
+  color: var(--helio-muted);
+  transition: color 150ms ease, text-shadow 150ms ease;
+}
+
+.header-lang-btn .lang-sep {
+  color: rgba(185, 154, 93, 0.4);
+}
+
+.header-lang-btn[data-active-lang='es'] .lang-opt[data-lang='es'],
+.header-lang-btn[data-active-lang='en'] .lang-opt[data-lang='en'] {
+  color: var(--helio-gold-bright);
+  text-shadow: 0 0 10px rgba(213, 185, 123, 0.35);
 }
 
 #time-controls button {
@@ -825,6 +888,19 @@ body.show-labels .celestial-label {
 
   #app-header {
     gap: 9px;
+    flex-wrap: wrap;
+  }
+
+  .header-lang-btn {
+    margin-left: 0;
+    padding: 5px 8px;
+    gap: 5px;
+    font-size: 9px;
+  }
+
+  .header-lang-btn .lang-icon {
+    width: 12px;
+    height: 12px;
   }
 
   .brand-mark {

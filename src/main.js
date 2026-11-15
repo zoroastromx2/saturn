@@ -210,7 +210,9 @@ async function bootstrapApp() {
     };
 
     const updateLanguageState = () => {
+      const activeLang = getLanguage();
       if (languageState) languageState.textContent = t('language.code');
+      if (languageBtn) languageBtn.dataset.activeLang = activeLang;
     };
 
     const updateAuroraButton = () => {

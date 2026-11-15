@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CONSTANTS, calculateOblateness, getEarthToSaturnRatio, toWebGLUnits, calculateOrbitalVelocity, kmToAU } from '../src/math/AstroScale';
+import { CONSTANTS, calculateOblateness, getEarthToSaturnRatio, toWebGLUnits, calculateOrbitalVelocity, calculateApsides, kmToAU } from '../src/math/AstroScale';
 
 describe('AstroScale - Cálculos Planetarios', () => {
   it('debería calcular el achatamiento (oblateness) de Saturno correctamente (~0.09796)', () => {
@@ -51,5 +51,36 @@ describe('AstroScale - Cálculos Planetarios', () => {
 
   it('debería lanzar un error si la distancia en km para convertir a AU es negativa', () => {
     expect(() => kmToAU(-1)).toThrow(/no puede ser negativa/);
+  });
+
+  it('debería definir excentricidades orbitales elípticas válidas para todos los cuerpos', () => {
+    const eccentricities = [
+      CONSTANTS.SATURN.ORBIT_ECCENTRICITY,
+      CONSTANTS.EARTH.ORBIT_ECCENTRICITY,
+      CONSTANTS.TITAN.ORBIT_ECCENTRICITY,
+      CONSTANTS.ENCELADUS.ORBIT_ECCENTRICITY,
+      CONSTANTS.MIMAS.ORBIT_ECCENTRICITY
+    ];
+
+    eccentricities.forEach((e) => {
+      expect(e).toBeGreaterThanOrEqual(0);
+      expect(e).toBeLessThan(1);
+    });
+  });
+
+  it('debería calcular correctamente las distancias de apoápsis y periápsis en km', () => {
+    const titanApsides = calculateApsides(CONSTANTS.TITAN.ORBIT_SEMI_MAJOR, CONSTANTS.TITAN.ORBIT_ECCENTRICITY);
+    expect(titanApsides.apoapsisKm).toBeCloseTo(1257059.856, 2);
+    expect(titanApsides.periapsisKm).toBeCloseTo(1186680.144, 2);
+
+    const enceladusApsides = calculateApsides(CONSTANTS.ENCELADUS.ORBIT_SEMI_MAJOR, CONSTANTS.ENCELADUS.ORBIT_ECCENTRICITY);
+    expect(enceladusApsides.apoapsisKm).toBeCloseTo(239066.356, 2);
+    expect(enceladusApsides.periapsisKm).toBeCloseTo(236829.644, 2);
+  });
+
+  it('debería lanzar un error si los parámetros de calculateApsides son inválidos', () => {
+    expect(() => calculateApsides(0, 0.01)).toThrow(/mayor a cero/);
+    expect(() => calculateApsides(100000, -0.1)).toThrow(/rango/);
+    expect(() => calculateApsides(100000, 1.0)).toThrow(/rango/);
   });
 });
