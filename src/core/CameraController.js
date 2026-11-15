@@ -28,6 +28,12 @@ export class CameraController {
 
   focusOn(targetMesh, distanceMultiplier, elevationBias = 0.35) {
     if (!targetMesh) return;
+    const radius = targetMesh.geometry?.parameters?.radius ?? 1;
+    this.focusOnObject(targetMesh, radius * distanceMultiplier, elevationBias);
+  }
+
+  focusOnObject(targetObject, distance, elevationBias = 0.35) {
+    if (!targetObject) return;
 
     this.isSurfaceLocked = false;
     this.surfaceMount = null;
@@ -37,12 +43,12 @@ export class CameraController {
       this.tween.kill();
     }
 
-    this.currentTarget = targetMesh;
-    this.focusDistance = targetMesh.geometry.parameters.radius * distanceMultiplier;
+    this.currentTarget = targetObject;
+    this.focusDistance = Math.max(0.05, distance);
 
     this.startPosition.copy(this.camera.position);
     this.startTarget.copy(this.controls.target);
-    targetMesh.getWorldPosition(this.targetPosition);
+    targetObject.getWorldPosition(this.targetPosition);
     this.lastTargetPosition.copy(this.targetPosition);
 
     // Mantiene el ángulo de visión actual y añade una ligera elevación.

@@ -17,6 +17,7 @@ import { RheaSimulator } from './core/RheaSimulator.js';
 import { IapetusSimulator } from './core/IapetusSimulator.js';
 import { FRingSimulator } from './core/FRingSimulator.js';
 import { MinorMoonsSimulator } from './core/MinorMoonsSimulator.js';
+import { MissionSimulator } from './core/MissionSimulator.js';
 import { ComparisonMode } from './core/ComparisonMode.js';
 import { CameraController } from './core/CameraController.js';
 import { TelemetryController } from './core/TelemetryController.js';
@@ -35,7 +36,7 @@ import './style.css';
 let scene, camera, renderer, composer, labelRenderer, controls, cameraController, listener;
 let saturnSim, titanSim, enceladusSim, mimasSim;
 let tethysSim, dioneSim, rheaSim, iapetusSim;
-let fRingSim, minorMoonsSim, comparisonMode, telemetryController, statsController, orbitPathsController;
+let fRingSim, minorMoonsSim, missionSim, comparisonMode, telemetryController, statsController, orbitPathsController;
 let audioEnabled = false;
 let orbitsEnabled = false;
 let timeScale = 1.0;
@@ -178,6 +179,7 @@ async function bootstrapApp() {
       titanSim,
       iapetusSim
     ]);
+    missionSim = new MissionSimulator(scene, saturnSim, camera, cameraController, titanSim);
 
     // 4. Iluminar la Tierra con la misma dirección solar que usan los shaders
     const sunLight = new THREE.DirectionalLight(0xffffff, 2.6);
@@ -225,8 +227,13 @@ async function bootstrapApp() {
     const jumpTimeBtn = document.getElementById('btn-jump-time');
     const timeHistoryContainer = document.getElementById('time-machine-history');
     const timeHistoryList = document.getElementById('time-history-list');
+    const missionSelector = document.getElementById('mission-selector');
+    const followProbeBtn = document.getElementById('btn-follow-probe');
+    const followState = document.getElementById('follow-state');
+    const missionDescription = document.getElementById('mission-description');
     let timeHistory = loadTimeHistory();
     let activeHistoryDate = null;
+    let followProbe = false;
     const timeButtons = [
       { element: document.getElementById('btn-time-pause'), scale: 0.0 },
       { element: document.getElementById('btn-time-1'), scale: 1.0 },
@@ -320,6 +327,14 @@ async function bootstrapApp() {
       orbitsBtn.setAttribute('aria-pressed', String(orbitsEnabled));
       orbitsBtn.classList.toggle('active', orbitsEnabled);
       if (orbitsState) orbitsState.textContent = t(orbitsEnabled ? 'state.on' : 'state.off');
+    };
+
+    const updateFollowButton = () => {
+      if (!followProbeBtn) return;
+      followProbeBtn.disabled = !missionSim?.activeMission;
+      followProbeBtn.setAttribute('aria-pressed', String(followProbe));
+      followProbeBtn.classList.toggle('active', followProbe);
+      if (followState) followState.textContent = t(followProbe ? 'state.on' : 'state.off');
     };
 
     const updateAudioButton = () => {
@@ -498,6 +513,13 @@ async function bootstrapApp() {
       });
     };
 
+    const rememberDate = (dateStr) => {
+      activeHistoryDate = dateStr;
+      timeHistory = pushTimeHistory(timeHistory, dateStr);
+      saveTimeHistory(timeHistory);
+      renderTimeHistory();
+    };
+
     const jumpToDateString = (dateStr) => {
       const selectedDate = parseUtcDateString(dateStr);
       if (!selectedDate) return;
@@ -506,10 +528,7 @@ async function bootstrapApp() {
       if (timeMachineInput) {
         timeMachineInput.value = dateStr;
       }
-      activeHistoryDate = dateStr;
-      timeHistory = pushTimeHistory(timeHistory, dateStr);
-      saveTimeHistory(timeHistory);
-      renderTimeHistory();
+      rememberDate(dateStr);
       setTimeScale(0.0);
       telemetryController?.refresh();
     };
@@ -534,6 +553,67 @@ async function bootstrapApp() {
       });
     }
 
+    const selectMission = (missionKey) => {
+      if (!missionKey) {
+        missionSim.clearMission();
+        followProbe = false;
+        updateFollowButton();
+        if (missionDescription) {
+          missionDescription.hidden = true;
+          missionDescription.textContent = '';
+        }
+        return;
+      }
+
+      const mission = missionSim.loadMission(missionKey, getDaysSinceJ2000());
+      if (!mission) return;
+
+      simulationDate = new Date(mission.timestamp);
+      const dateStr = mission.timestamp.slice(0, 10);
+      if (timeMachineInput) {
+        timeMachineInput.value = dateStr;
+      }
+      rememberDate(dateStr);
+
+      titanSim.update(getDaysSinceJ2000());
+      missionSim.update(getDaysSinceJ2000());
+      setTimeScale(100);
+      followProbe = false;
+      updateFollowButton();
+      missionSim.frameMission();
+
+      if (missionDescription) {
+        missionDescription.textContent = `${mission.dateLabel} — ${mission.description}`;
+        missionDescription.hidden = false;
+      }
+      telemetryController?.refresh();
+    };
+
+    if (missionSelector) {
+      missionSelector.addEventListener('change', () => {
+        selectMission(missionSelector.value);
+      });
+    }
+
+    if (followProbeBtn) {
+      followProbeBtn.addEventListener('click', () => {
+        if (!missionSim.activeMission) return;
+        followProbe = !followProbe;
+        updateFollowButton();
+        if (followProbe) {
+          cameraController.focusOnObject(
+            missionSim.probeGroup,
+            missionSim.getFollowDistance(),
+            0.25
+          );
+        } else {
+          missionSim.frameMission();
+        }
+      });
+    }
+
+    updateFollowButton();
+
     const updateDynamicLanguage = () => {
       saturnSim.label.element.textContent = t('body.saturn');
       titanSim.label.element.textContent = t('body.titan');
@@ -547,6 +627,7 @@ async function bootstrapApp() {
       setUiCollapsed(uiCollapsed);
       updateLabelsButton();
       updateOrbitsButton();
+      updateFollowButton();
       updateAudioButton();
       updateLanguageState();
       updateStormButton();
@@ -654,6 +735,9 @@ function tick() {
   }
   if (minorMoonsSim) {
     minorMoonsSim.update(daysSinceJ2000);
+  }
+  if (missionSim) {
+    missionSim.update(daysSinceJ2000);
   }
 
   // Sigue al objetivo activo y actualiza la inercia de OrbitControls.
