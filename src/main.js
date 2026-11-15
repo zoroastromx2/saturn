@@ -21,6 +21,7 @@ import { CameraController } from './core/CameraController.js';
 import { TelemetryController } from './core/TelemetryController.js';
 import { StatsController } from './core/StatsController.js';
 import { getLanguage, setLanguage, t } from './core/Localization.js';
+import { sliderPositionToScale, scaleToSliderPosition, formatTimeScale } from './math/TimeScale.js';
 import './style.css';
 
 let scene, camera, renderer, composer, labelRenderer, controls, cameraController, listener;
@@ -188,6 +189,8 @@ async function bootstrapApp() {
     const languageState = document.getElementById('language-state');
     const hexagonState = document.getElementById('hexagon-state');
     const auroraState = document.getElementById('aurora-state');
+    const timeSlider = document.getElementById('time-speed-slider');
+    const timeSpeedValue = document.getElementById('time-speed-value');
     const timeButtons = [
       { element: document.getElementById('btn-time-pause'), scale: 0.0 },
       { element: document.getElementById('btn-time-1'), scale: 1.0 },
@@ -371,19 +374,45 @@ async function bootstrapApp() {
       });
     }
 
-    const setTimeScale = (scale, activeButton) => {
+    const setTimeScale = (scale, activeButton = null, syncSlider = true) => {
       timeScale = scale;
 
+      const matchedButton =
+        activeButton ??
+        (timeButtons.find(({ scale: preset }) => Math.abs(preset - scale) < 1e-6)?.element || null);
+
       timeButtons.forEach(({ element }) => {
-        const isActive = element === activeButton;
+        const isActive = element === matchedButton;
         element.classList.toggle('active', isActive);
         element.setAttribute('aria-pressed', String(isActive));
       });
+
+      const formatted = formatTimeScale(scale);
+      if (timeSpeedValue) {
+        timeSpeedValue.textContent = formatted;
+      }
+
+      if (timeSlider) {
+        if (syncSlider) {
+          timeSlider.value = String(scaleToSliderPosition(scale));
+        }
+        timeSlider.style.setProperty('--slider-progress', `${Number(timeSlider.value)}%`);
+        timeSlider.setAttribute('aria-valuetext', formatted);
+      }
     };
 
     timeButtons.forEach(({ element, scale }) => {
-      element.addEventListener('click', () => setTimeScale(scale, element));
+      element.addEventListener('click', () => setTimeScale(scale, element, true));
     });
+
+    if (timeSlider) {
+      timeSlider.addEventListener('input', () => {
+        const nextScale = sliderPositionToScale(timeSlider.value);
+        setTimeScale(nextScale, null, false);
+      });
+    }
+
+    setTimeScale(timeScale);
 
     const updateDynamicLanguage = () => {
       saturnSim.label.element.textContent = t('body.saturn');
