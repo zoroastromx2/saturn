@@ -491,7 +491,7 @@ body:not(.ui-collapsed) .ui-icon-close {
 .panel-label {
   grid-column: 1 / -1;
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
   padding: 0 2px 7px;
@@ -500,6 +500,48 @@ body:not(.ui-collapsed) .ui-icon-close {
   font: 500 9px/1.2 var(--mono);
   letter-spacing: 0.2em;
   text-transform: uppercase;
+}
+
+.panel-label-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#hud .panel-toggle {
+  width: auto;
+  min-width: 0;
+  padding: 3px 6px;
+  overflow: visible;
+  border: 1px solid rgba(185, 154, 93, 0.3);
+  border-radius: 1px;
+  background: transparent;
+  color: var(--helio-muted);
+  font: 500 8px/1.15 var(--mono);
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-overflow: clip;
+  white-space: nowrap;
+  box-shadow: none;
+}
+
+#hud .panel-toggle:hover {
+  color: #f2e7d1;
+  background: rgba(185, 154, 93, 0.12);
+  border-color: rgba(213, 185, 123, 0.72);
+  box-shadow: none;
+}
+
+#hud .panel-toggle.active {
+  color: #f6e8c7;
+  background: rgba(190, 155, 90, 0.16);
+  border-color: rgba(213, 185, 123, 0.8);
+  box-shadow: 0 0 10px rgba(185, 154, 93, 0.12);
+}
+
+#hud .panel-toggle:focus-visible {
+  outline: 1px solid var(--helio-gold-bright);
+  outline-offset: 2px;
 }
 
 .panel-index {

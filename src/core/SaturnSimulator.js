@@ -55,7 +55,9 @@ export class SaturnSimulator {
         uRingOuterRadius: { value: this.ringOuter },
         uSunDirection: { value: this.sunDirection },
         uSaturnTexture: { value: this.assets.saturnAlbedo || null },
-        uRingAlphaTex: { value: this.assets.ringAlpha || null }
+        uRingAlphaTex: { value: this.assets.ringAlpha || null },
+        uTime: { value: 0.0 },
+        uAuroraIntensity: { value: 1.5 }
       }
     });
 

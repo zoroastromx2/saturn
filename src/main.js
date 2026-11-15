@@ -133,7 +133,9 @@ async function bootstrapApp() {
     const surfaceMimasBtn = document.getElementById('btn-surface-mimas');
     const labelsBtn = document.getElementById('btn-toggle-labels');
     const audioBtn = document.getElementById('btn-toggle-audio');
+    const auroraBtn = document.getElementById('btn-toggle-aurora');
     const languageBtn = document.getElementById('btn-toggle-language');
+    let auroraEnabled = true;
     const timeButtons = [
       { element: document.getElementById('btn-time-pause'), scale: 0.0 },
       { element: document.getElementById('btn-time-1'), scale: 1.0 },
@@ -182,6 +184,21 @@ async function bootstrapApp() {
     if (surfaceMimasBtn) {
       surfaceMimasBtn.addEventListener('click', () => {
         cameraController.landOnSurface(mimasSim);
+      });
+    }
+
+    const updateAuroraButton = () => {
+      if (!auroraBtn) return;
+      auroraBtn.textContent = t(auroraEnabled ? 'aurora.on' : 'aurora.off');
+      auroraBtn.setAttribute('aria-pressed', String(auroraEnabled));
+      auroraBtn.classList.toggle('active', auroraEnabled);
+    };
+
+    if (auroraBtn) {
+      auroraBtn.addEventListener('click', () => {
+        auroraEnabled = !auroraEnabled;
+        saturnSim.saturnMesh.material.uniforms.uAuroraIntensity.value = auroraEnabled ? 1.5 : 0.0;
+        updateAuroraButton();
       });
     }
 
@@ -250,6 +267,7 @@ async function bootstrapApp() {
       mimasSim.label.element.textContent = t('body.mimas');
       comparisonMode.label.element.textContent = t('body.earth');
       setUiCollapsed(uiCollapsed);
+      updateAuroraButton();
       telemetryController.refresh();
     };
 
@@ -296,6 +314,9 @@ function tick() {
 
   if (saturnSim && saturnSim.ringsMesh) {
     saturnSim.ringsMesh.material.uniforms.uTime.value = orbitalTime;
+  }
+  if (saturnSim && saturnSim.saturnMesh) {
+    saturnSim.saturnMesh.material.uniforms.uTime.value = orbitalTime;
   }
   if (titanSim) {
     titanSim.update(orbitalTime);
