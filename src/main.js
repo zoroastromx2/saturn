@@ -136,8 +136,8 @@ async function bootstrapApp() {
     const stormBtn = document.getElementById('btn-toggle-hexagon');
     const auroraBtn = document.getElementById('btn-toggle-aurora');
     const languageBtn = document.getElementById('btn-toggle-language');
-    let stormEnabled = true;
-    let auroraEnabled = true;
+    let stormEnabled = false;
+    let auroraEnabled = false;
     const labelsState = document.getElementById('labels-state');
     const audioState = document.getElementById('audio-state');
     const languageState = document.getElementById('language-state');
