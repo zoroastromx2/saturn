@@ -76,8 +76,11 @@
           <span class="panel-index">03</span>
         </div>
 
-        <section class="control-section">
-          <div class="control-section-title" data-i18n="console.goTo">Ir a</div>
+        <details class="control-section" open>
+          <summary class="control-section-title">
+            <span data-i18n="console.goTo">Ir a</span>
+            <span class="section-chevron" aria-hidden="true">›</span>
+          </summary>
           <div class="control-list">
             <button id="btn-saturn" class="control-row" type="button" data-i18n-aria-label="nav.focusSaturn" aria-label="Ir a Saturno">
               <span class="row-label" data-i18n="body.saturn">Saturno</span>
@@ -116,10 +119,13 @@
               <span class="row-glyph" aria-hidden="true">›</span>
             </button>
           </div>
-        </section>
+        </details>
 
-        <section class="control-section">
-          <div class="control-section-title" data-i18n="console.landOn">Aterrizar en</div>
+        <details class="control-section" open>
+          <summary class="control-section-title">
+            <span data-i18n="console.landOn">Aterrizar en</span>
+            <span class="section-chevron" aria-hidden="true">›</span>
+          </summary>
           <div class="control-list">
             <button id="btn-surface-enceladus" class="control-row" type="button" data-i18n-aria-label="nav.landEnceladus" aria-label="Aterrizar en Encélado">
               <span class="row-label" data-i18n="body.enceladus">Encélado</span>
@@ -130,10 +136,13 @@
               <span class="row-glyph" aria-hidden="true">›</span>
             </button>
           </div>
-        </section>
+        </details>
 
-        <section class="control-section">
-          <div class="control-section-title" data-i18n="console.system">Sistema</div>
+        <details class="control-section" open>
+          <summary class="control-section-title">
+            <span data-i18n="console.system">Sistema</span>
+            <span class="section-chevron" aria-hidden="true">›</span>
+          </summary>
           <div class="control-list">
             <button id="btn-toggle-labels" class="control-row system-row" type="button" aria-pressed="false">
               <span class="row-label" data-i18n="console.labels">Etiquetas</span>
@@ -152,7 +161,7 @@
               <span class="row-state" id="aurora-state">OFF</span>
             </button>
           </div>
-        </section>
+        </details>
       </nav>
       <div id="time-controls" role="group" aria-label="Controles de tiempo orbital" data-i18n-aria-label="time.controlsAria">
         <div class="panel-label">

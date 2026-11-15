@@ -25,7 +25,7 @@
 
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
-  color-scheme: light dark;
+  color-scheme: dark;
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;
@@ -501,11 +501,47 @@ body:not(.ui-collapsed) .ui-icon-close {
 }
 
 .control-section-title {
-  padding: 0 4px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 4px 6px;
+  border-bottom: 1px solid rgba(185, 154, 93, 0.16);
   color: var(--helio-gold);
   font: 500 8px/1.2 var(--mono);
   letter-spacing: 0.2em;
   text-transform: uppercase;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  transition: color 150ms ease, background 150ms ease;
+}
+
+.control-section-title::-webkit-details-marker {
+  display: none;
+}
+
+.control-section-title:hover {
+  color: var(--helio-gold-bright);
+  background: rgba(185, 154, 93, 0.06);
+}
+
+.control-section-title:focus-visible {
+  outline: 1px solid var(--helio-gold-bright);
+  outline-offset: 1px;
+}
+
+.section-chevron {
+  flex: none;
+  font-size: 12px;
+  line-height: 1;
+  color: rgba(185, 154, 93, 0.7);
+  transition: transform 160ms ease, color 160ms ease;
+}
+
+.control-section[open] > .control-section-title .section-chevron {
+  transform: rotate(90deg);
+  color: var(--helio-gold-bright);
 }
 
 .control-list {
@@ -757,6 +793,18 @@ body:not(.ui-collapsed) .ui-icon-close {
   color: rgba(125, 95, 40, 0.65);
 }
 
+#ui-container.light .control-section-title {
+  border-bottom-color: rgba(125, 95, 40, 0.18);
+}
+
+#ui-container.light .control-section-title:hover {
+  background: rgba(125, 95, 40, 0.08);
+}
+
+#ui-container.light .section-chevron {
+  color: rgba(125, 95, 40, 0.72);
+}
+
 #ui-container.light #hud .control-row {
   color: #3a3226;
   border-bottom-color: rgba(125, 95, 40, 0.16);
@@ -990,35 +1038,59 @@ body.show-labels .celestial-label {
 
 @media (max-width: 760px) {
   #ui-container {
-    grid-template-rows: auto auto auto auto auto;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #app-header,
+  #telemetry-hud,
+  #hud,
+  #stats-hud,
+  #time-controls {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    align-self: stretch;
+    justify-self: stretch;
+    box-sizing: border-box;
+    flex: none;
   }
 
   #app-header {
-    grid-column: 1 / -1;
-    grid-row: 1;
+    order: 1;
   }
 
   #telemetry-hud {
-    grid-column: 1 / -1;
-    grid-row: 2;
-  }
-
-  #time-controls {
-    grid-column: 1 / -1;
-    grid-row: 5;
-  }
-
-  #stats-hud {
-    grid-column: 1 / -1;
-    grid-row: 4;
-    width: 100%;
+    order: 2;
+    pointer-events: auto;
   }
 
   #hud {
-    grid-column: 1 / -1;
-    grid-row: 3;
-    width: 100%;
+    order: 3;
     max-height: none;
+    overflow-y: visible;
+  }
+
+  #time-controls {
+    order: 4;
+  }
+
+  #stats-hud {
+    order: 5;
+    pointer-events: auto;
+  }
+
+  #hud,
+  #telemetry-hud,
+  #time-controls,
+  #stats-hud {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 }
 
@@ -1119,7 +1191,7 @@ body.show-labels .celestial-label {
   }
 
   #time-controls {
-    width: min(320px, 100%);
+    width: 100%;
   }
 }
 
@@ -1132,10 +1204,58 @@ body.show-labels .celestial-label {
 
 @media (max-height: 540px) and (max-width: 1024px) {
   #ui-container {
-    grid-template-rows: auto auto auto auto auto;
-    align-content: start;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
+  }
+
+  #app-header,
+  #telemetry-hud,
+  #hud,
+  #stats-hud,
+  #time-controls {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    align-self: stretch;
+    justify-self: stretch;
+    box-sizing: border-box;
+    flex: none;
+  }
+
+  #app-header {
+    order: 1;
+  }
+
+  #telemetry-hud {
+    order: 2;
+    margin-top: 0;
+    pointer-events: auto;
+  }
+
+  #hud {
+    order: 3;
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  #time-controls {
+    order: 4;
+  }
+
+  #stats-hud {
+    order: 5;
+    pointer-events: auto;
+  }
+
+  #hud,
+  #telemetry-hud,
+  #time-controls,
+  #stats-hud {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 }

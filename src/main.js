@@ -64,6 +64,12 @@ async function bootstrapApp() {
   }
   setUiCollapsed(window.matchMedia(MOBILE_UI_QUERY).matches);
 
+  if (window.matchMedia('(max-width: 760px)').matches) {
+    document.querySelectorAll('#hud details.control-section').forEach((section) => {
+      section.open = false;
+    });
+  }
+
   // 1. Configuración base de Three.js
   const canvas = document.querySelector('#webgl-canvas');
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
