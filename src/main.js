@@ -23,10 +23,31 @@ let saturnSim, titanSim, enceladusSim, mimasSim, fRingSim, comparisonMode, telem
 let audioEnabled = false;
 let timeScale = 1.0;
 let orbitalTime = 0.0;
+let uiCollapsed = false;
 const clock = new THREE.Clock();
 const surfaceMountPosition = new THREE.Vector3();
+const MOBILE_UI_QUERY = '(max-width: 1024px), (pointer: coarse)';
+
+function setUiCollapsed(collapsed) {
+  uiCollapsed = collapsed;
+  document.body.classList.toggle('ui-collapsed', collapsed);
+
+  const button = document.getElementById('btn-toggle-ui');
+  if (!button) return;
+
+  button.setAttribute('aria-expanded', String(!collapsed));
+  const label = t(collapsed ? 'ui.showControls' : 'ui.hideControls');
+  button.setAttribute('aria-label', label);
+  button.setAttribute('title', label);
+}
 
 async function bootstrapApp() {
+  const uiToggleButton = document.getElementById('btn-toggle-ui');
+  if (uiToggleButton) {
+    uiToggleButton.addEventListener('click', () => setUiCollapsed(!uiCollapsed));
+  }
+  setUiCollapsed(window.matchMedia(MOBILE_UI_QUERY).matches);
+
   // 1. Configuración base de Three.js
   const canvas = document.querySelector('#webgl-canvas');
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
@@ -228,6 +249,7 @@ async function bootstrapApp() {
       enceladusSim.label.element.textContent = t('body.enceladus');
       mimasSim.label.element.textContent = t('body.mimas');
       comparisonMode.label.element.textContent = t('body.earth');
+      setUiCollapsed(uiCollapsed);
       telemetryController.refresh();
     };
 
