@@ -198,7 +198,7 @@ function tick() {
     titanSim.update(elapsedTime);
   }
   if (enceladusSim) {
-    enceladusSim.update(elapsedTime);
+    enceladusSim.update(elapsedTime, deltaTime);
   }
 
   // Sigue al objetivo activo y actualiza la inercia de OrbitControls.
