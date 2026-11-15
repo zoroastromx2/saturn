@@ -855,6 +855,25 @@ body:not(.ui-collapsed) .ui-icon-close {
   border-top-color: rgba(125, 95, 40, 0.2);
 }
 
+#ui-container.light .time-machine-row {
+  border-top-color: rgba(125, 95, 40, 0.2);
+}
+
+#ui-container.light .time-machine-label {
+  color: rgba(58, 50, 38, 0.72);
+}
+
+#ui-container.light .glass-input {
+  border-color: rgba(125, 95, 40, 0.28);
+  background: rgba(255, 255, 255, 0.45);
+  color: #1f1a12;
+  color-scheme: light;
+}
+
+#ui-container.light .glass-input::-webkit-calendar-picker-indicator {
+  filter: invert(0.28);
+}
+
 #ui-container.light .time-speed-slider {
   --slider-track: rgba(125, 95, 40, 0.24);
   --slider-fill: #7d5f28;
@@ -1052,6 +1071,51 @@ body:not(.ui-collapsed) .ui-icon-close {
   letter-spacing: 0.04em;
   text-align: right;
   white-space: nowrap;
+}
+
+.time-machine-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin-top: 2px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(185, 154, 93, 0.18);
+}
+
+.time-machine-label {
+  color: var(--helio-muted);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.glass-input {
+  width: 100%;
+  min-width: 0;
+  padding: 7px 8px;
+  border: 1px solid rgba(185, 154, 93, 0.26);
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #e6ddc8;
+  font: 500 10px/1.25 var(--mono);
+  letter-spacing: 0.04em;
+  color-scheme: dark;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-input:focus-visible {
+  outline: 1px solid var(--helio-gold-bright);
+  outline-offset: 2px;
+}
+
+.glass-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(0.72);
 }
 
 #telemetry-hud,

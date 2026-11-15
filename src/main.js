@@ -215,12 +215,18 @@ async function bootstrapApp() {
     const auroraState = document.getElementById('aurora-state');
     const timeSlider = document.getElementById('time-speed-slider');
     const timeSpeedValue = document.getElementById('time-speed-value');
+    const timeMachineInput = document.getElementById('time-machine-input');
+    const jumpTimeBtn = document.getElementById('btn-jump-time');
     const timeButtons = [
       { element: document.getElementById('btn-time-pause'), scale: 0.0 },
       { element: document.getElementById('btn-time-1'), scale: 1.0 },
       { element: document.getElementById('btn-time-10'), scale: 10.0 },
       { element: document.getElementById('btn-time-100'), scale: 100.0 }
     ].filter(({ element }) => element);
+
+    if (timeMachineInput) {
+      timeMachineInput.value = simulationDate.toISOString().slice(0, 10);
+    }
 
     if (saturnBtn) {
       saturnBtn.addEventListener('click', () => {
@@ -454,6 +460,21 @@ async function bootstrapApp() {
     }
 
     setTimeScale(timeScale);
+
+    const jumpToSelectedDate = () => {
+      const selectedDateStr = timeMachineInput?.value;
+      if (!selectedDateStr) return;
+
+      const selectedDate = new Date(`${selectedDateStr}T00:00:00Z`);
+      if (Number.isNaN(selectedDate.getTime())) return;
+
+      simulationDate = selectedDate;
+      setTimeScale(0.0);
+    };
+
+    if (jumpTimeBtn) {
+      jumpTimeBtn.addEventListener('click', jumpToSelectedDate);
+    }
 
     const updateDynamicLanguage = () => {
       saturnSim.label.element.textContent = t('body.saturn');
