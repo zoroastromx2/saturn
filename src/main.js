@@ -154,7 +154,13 @@ async function bootstrapApp() {
       minorMoonsSim.update(initialDaysSinceJ2000);
     }
     comparisonMode = new ComparisonMode(scene, saturnSim, camera, assets);
-    telemetryController = new TelemetryController(camera, cameraController, saturnSim.scaleFactor, saturnSim.sunDirection);
+    telemetryController = new TelemetryController(
+      camera,
+      cameraController,
+      saturnSim.scaleFactor,
+      saturnSim.sunDirection,
+      () => simulationDate
+    );
     statsController = new StatsController(renderer);
     statsController.refresh();
     orbitPathsController = new OrbitPathsController([

@@ -5,6 +5,24 @@ import { t } from './Localization.js';
 
 const UPDATE_INTERVAL = 0.1;
 
+function pad2(value) {
+  return String(value).padStart(2, '0');
+}
+
+export function formatSimulatedDate(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    return '—';
+  }
+
+  const year = String(date.getUTCFullYear()).padStart(4, '0');
+  const month = pad2(date.getUTCMonth() + 1);
+  const day = pad2(date.getUTCDate());
+  const hours = pad2(date.getUTCHours());
+  const minutes = pad2(date.getUTCMinutes());
+  const seconds = pad2(date.getUTCSeconds());
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds} UTC`;
+}
+
 const BODY_DATA = {
   Saturn: {
     radius: CONSTANTS.SATURN.RADIUS_EQUATORIAL,
@@ -129,10 +147,11 @@ const BODY_DATA = {
 };
 
 export class TelemetryController {
-  constructor(camera, cameraController, scaleFactor, sunDirection = null) {
+  constructor(camera, cameraController, scaleFactor, sunDirection = null, simulationDate = null) {
     this.camera = camera;
     this.cameraController = cameraController;
     this.scaleFactor = scaleFactor;
+    this.simulationDate = simulationDate;
     this.accumulatedTime = 0;
 
     this.sunDirection = (sunDirection
@@ -145,6 +164,7 @@ export class TelemetryController {
 
     // Cachear los nodos evita lecturas de layout en el bucle de render.
     this.targetElement = document.getElementById('telemetry-target');
+    this.simDateElement = document.getElementById('telemetry-sim-date');
     this.altitudeElement = document.getElementById('telemetry-altitude');
     this.periodElement = document.getElementById('telemetry-period');
     this.velocityElement = document.getElementById('telemetry-velocity');
@@ -190,6 +210,12 @@ export class TelemetryController {
     }
 
     this.targetElement.innerText = t(body.labelKey);
+    if (this.simDateElement) {
+      const currentSimDate = typeof this.simulationDate === 'function'
+        ? this.simulationDate()
+        : this.simulationDate;
+      this.simDateElement.innerText = formatSimulatedDate(currentSimDate);
+    }
     this.altitudeElement.innerText = `${Math.floor(Math.max(0, altitudeKm)).toLocaleString()} km`;
     this.periodElement.innerText = body.period === null
       ? '—'
