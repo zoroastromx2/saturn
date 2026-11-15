@@ -95,3 +95,20 @@ export function kmToAU(distanceKm) {
   }
   return distanceKm / ASTRONOMICAL_UNIT_KM;
 }
+
+/**
+ * Calcula las distancias de apoápsis y periápsis (en km) para una órbita elíptica.
+ * Fórmulas: r_a = a * (1 + e), r_p = a * (1 - e)
+ */
+export function calculateApsides(semiMajorAxisKm, eccentricity) {
+  if (semiMajorAxisKm <= 0) {
+    throw new Error("El semieje mayor debe ser mayor a cero.");
+  }
+  if (eccentricity < 0 || eccentricity >= 1) {
+    throw new Error("La excentricidad debe estar en el rango [0, 1).");
+  }
+  return {
+    apoapsisKm: semiMajorAxisKm * (1 + eccentricity),
+    periapsisKm: semiMajorAxisKm * (1 - eccentricity)
+  };
+}
