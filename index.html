@@ -39,22 +39,74 @@
       <nav id="hud">
         <div class="panel-label">
           <span data-i18n="console.navigation">Controles</span>
-          <span class="panel-label-meta">
-            <button id="btn-toggle-hexagon" class="panel-toggle active" type="button" aria-pressed="true">Hexágono: ON</button>
-            <button id="btn-toggle-aurora" class="panel-toggle active" type="button" aria-pressed="true">Auroras: ON</button>
-            <span class="panel-index">03</span>
-          </span>
+          <span class="panel-index">03</span>
         </div>
-        <button id="btn-saturn" data-i18n="nav.focusSaturn">Ir a Saturno</button>
-        <button id="btn-earth" data-i18n="nav.focusEarth">Ir a Tierra</button>
-        <button id="btn-titan" data-i18n="nav.focusTitan">Ir a Titán</button>
-        <button id="btn-enceladus" data-i18n="nav.focusEnceladus">Ir a Encélado</button>
-        <button id="btn-mimas" data-i18n="nav.focusMimas">Ir a Mimas</button>
-        <button id="btn-surface-enceladus" data-i18n="nav.landEnceladus">Aterrizar en Encélado</button>
-        <button id="btn-surface-mimas" data-i18n="nav.landMimas">Aterrizar en Mimas</button>
-        <button id="btn-toggle-labels" data-i18n="nav.showLabels">Mostrar etiquetas</button>
-        <button id="btn-toggle-audio" data-i18n="nav.enableAudio">Activar audio</button>
-        <button id="btn-toggle-language" data-i18n="language.toggle" data-i18n-aria-label="language.toggleAria" aria-label="Cambiar a inglés">Idioma · EN</button>
+
+        <section class="control-section">
+          <div class="control-section-title" data-i18n="console.goTo">Ir a</div>
+          <div class="control-list">
+            <button id="btn-saturn" class="control-row" type="button" data-i18n-aria-label="nav.focusSaturn" aria-label="Ir a Saturno">
+              <span class="row-label" data-i18n="body.saturn">Saturno</span>
+              <span class="row-glyph" aria-hidden="true">›</span>
+            </button>
+            <button id="btn-earth" class="control-row" type="button" data-i18n-aria-label="nav.focusEarth" aria-label="Ir a Tierra">
+              <span class="row-label" data-i18n="body.earth">Tierra</span>
+              <span class="row-glyph" aria-hidden="true">›</span>
+            </button>
+            <button id="btn-titan" class="control-row" type="button" data-i18n-aria-label="nav.focusTitan" aria-label="Ir a Titán">
+              <span class="row-label" data-i18n="body.titan">Titán</span>
+              <span class="row-glyph" aria-hidden="true">›</span>
+            </button>
+            <button id="btn-enceladus" class="control-row" type="button" data-i18n-aria-label="nav.focusEnceladus" aria-label="Ir a Encélado">
+              <span class="row-label" data-i18n="body.enceladus">Encélado</span>
+              <span class="row-glyph" aria-hidden="true">›</span>
+            </button>
+            <button id="btn-mimas" class="control-row" type="button" data-i18n-aria-label="nav.focusMimas" aria-label="Ir a Mimas">
+              <span class="row-label" data-i18n="body.mimas">Mimas</span>
+              <span class="row-glyph" aria-hidden="true">›</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="control-section">
+          <div class="control-section-title" data-i18n="console.landOn">Aterrizar en</div>
+          <div class="control-list">
+            <button id="btn-surface-enceladus" class="control-row" type="button" data-i18n-aria-label="nav.landEnceladus" aria-label="Aterrizar en Encélado">
+              <span class="row-label" data-i18n="body.enceladus">Encélado</span>
+              <span class="row-glyph" aria-hidden="true">›</span>
+            </button>
+            <button id="btn-surface-mimas" class="control-row" type="button" data-i18n-aria-label="nav.landMimas" aria-label="Aterrizar en Mimas">
+              <span class="row-label" data-i18n="body.mimas">Mimas</span>
+              <span class="row-glyph" aria-hidden="true">›</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="control-section">
+          <div class="control-section-title" data-i18n="console.system">Sistema</div>
+          <div class="control-list">
+            <button id="btn-toggle-labels" class="control-row system-row" type="button" aria-pressed="false">
+              <span class="row-label" data-i18n="console.labels">Etiquetas</span>
+              <span class="row-state" id="labels-state">OFF</span>
+            </button>
+            <button id="btn-toggle-audio" class="control-row system-row" type="button" aria-pressed="false">
+              <span class="row-label" data-i18n="console.audio">Audio</span>
+              <span class="row-state" id="audio-state">OFF</span>
+            </button>
+            <button id="btn-toggle-language" class="control-row system-row language-row" type="button" data-i18n-aria-label="language.toggleAria" aria-label="Cambiar a inglés">
+              <span class="row-label" data-i18n="console.language">Idioma</span>
+              <span class="row-state" id="language-state">EN</span>
+            </button>
+            <button id="btn-toggle-hexagon" class="control-row system-row active" type="button" aria-pressed="true">
+              <span class="row-label" data-i18n="console.hexagon">Hexágono</span>
+              <span class="row-state" id="hexagon-state">ON</span>
+            </button>
+            <button id="btn-toggle-aurora" class="control-row system-row active" type="button" aria-pressed="true">
+              <span class="row-label" data-i18n="console.auroras">Auroras</span>
+              <span class="row-state" id="aurora-state">ON</span>
+            </button>
+          </div>
+        </section>
       </nav>
       <div id="time-controls" role="group" aria-label="Controles de tiempo orbital" data-i18n-aria-label="time.controlsAria">
         <div class="panel-label">

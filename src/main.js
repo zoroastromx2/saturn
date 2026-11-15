@@ -138,6 +138,11 @@ async function bootstrapApp() {
     const languageBtn = document.getElementById('btn-toggle-language');
     let stormEnabled = true;
     let auroraEnabled = true;
+    const labelsState = document.getElementById('labels-state');
+    const audioState = document.getElementById('audio-state');
+    const languageState = document.getElementById('language-state');
+    const hexagonState = document.getElementById('hexagon-state');
+    const auroraState = document.getElementById('aurora-state');
     const timeButtons = [
       { element: document.getElementById('btn-time-pause'), scale: 0.0 },
       { element: document.getElementById('btn-time-1'), scale: 1.0 },
@@ -189,18 +194,37 @@ async function bootstrapApp() {
       });
     }
 
+    const updateLabelsButton = () => {
+      if (!labelsBtn) return;
+      const visible = document.body.classList.contains('show-labels');
+      labelsBtn.setAttribute('aria-pressed', String(visible));
+      labelsBtn.classList.toggle('active', visible);
+      if (labelsState) labelsState.textContent = t(visible ? 'state.on' : 'state.off');
+    };
+
+    const updateAudioButton = () => {
+      if (!audioBtn) return;
+      audioBtn.setAttribute('aria-pressed', String(audioEnabled));
+      audioBtn.classList.toggle('active', audioEnabled);
+      if (audioState) audioState.textContent = t(audioEnabled ? 'state.on' : 'state.off');
+    };
+
+    const updateLanguageState = () => {
+      if (languageState) languageState.textContent = t('language.code');
+    };
+
     const updateAuroraButton = () => {
       if (!auroraBtn) return;
-      auroraBtn.textContent = t(auroraEnabled ? 'aurora.on' : 'aurora.off');
       auroraBtn.setAttribute('aria-pressed', String(auroraEnabled));
       auroraBtn.classList.toggle('active', auroraEnabled);
+      if (auroraState) auroraState.textContent = t(auroraEnabled ? 'state.on' : 'state.off');
     };
 
     const updateStormButton = () => {
       if (!stormBtn) return;
-      stormBtn.textContent = t(stormEnabled ? 'hexagon.on' : 'hexagon.off');
       stormBtn.setAttribute('aria-pressed', String(stormEnabled));
       stormBtn.classList.toggle('active', stormEnabled);
+      if (hexagonState) hexagonState.textContent = t(stormEnabled ? 'state.on' : 'state.off');
     };
 
     if (stormBtn) {
@@ -221,8 +245,8 @@ async function bootstrapApp() {
 
     if (labelsBtn) {
       labelsBtn.addEventListener('click', () => {
-        const showLabels = document.body.classList.toggle('show-labels');
-        labelsBtn.textContent = t(showLabels ? 'nav.hideLabels' : 'nav.showLabels');
+        document.body.classList.toggle('show-labels');
+        updateLabelsButton();
       });
     }
 
@@ -244,13 +268,12 @@ async function bootstrapApp() {
           ambientSounds.forEach((sound) => {
             if (!sound.isPlaying) sound.play();
           });
-          audioBtn.textContent = t('nav.muteAudio');
         } else {
           ambientSounds.forEach((sound) => {
             if (sound.isPlaying) sound.pause();
           });
-          audioBtn.textContent = t('nav.enableAudio');
         }
+        updateAudioButton();
       });
     }
 
@@ -269,21 +292,15 @@ async function bootstrapApp() {
     });
 
     const updateDynamicLanguage = () => {
-      if (labelsBtn) {
-        labelsBtn.textContent = t(
-          document.body.classList.contains('show-labels') ? 'nav.hideLabels' : 'nav.showLabels'
-        );
-      }
-      if (audioBtn) {
-        audioBtn.textContent = t(audioEnabled ? 'nav.muteAudio' : 'nav.enableAudio');
-      }
-
       saturnSim.label.element.textContent = t('body.saturn');
       titanSim.label.element.textContent = t('body.titan');
       enceladusSim.label.element.textContent = t('body.enceladus');
       mimasSim.label.element.textContent = t('body.mimas');
       comparisonMode.label.element.textContent = t('body.earth');
       setUiCollapsed(uiCollapsed);
+      updateLabelsButton();
+      updateAudioButton();
+      updateLanguageState();
       updateStormButton();
       updateAuroraButton();
       telemetryController.refresh();
