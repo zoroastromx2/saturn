@@ -49,3 +49,28 @@ export function calculateKeplerianPosition(elements, daysSinceJ2000) {
     trueAnomaly
   };
 }
+
+export function sampleKeplerianOrbit(elements, segments = 256) {
+  const { semiMajorAxis, eccentricity = 0 } = elements;
+  if (semiMajorAxis <= 0) {
+    throw new Error('El semieje mayor debe ser mayor a cero.');
+  }
+  if (eccentricity < 0 || eccentricity >= 1) {
+    throw new Error('La excentricidad debe estar en el rango [0, 1).');
+  }
+
+  const count = Math.max(8, Math.floor(segments));
+  const semiLatusRectum = semiMajorAxis * (1 - eccentricity * eccentricity);
+  const points = new Array(count);
+
+  for (let i = 0; i < count; i++) {
+    const trueAnomaly = (i / count) * TWO_PI;
+    const distance = semiLatusRectum / (1 + eccentricity * Math.cos(trueAnomaly));
+    points[i] = {
+      x: Math.cos(trueAnomaly) * distance,
+      z: Math.sin(trueAnomaly) * distance
+    };
+  }
+
+  return points;
+}

@@ -20,6 +20,7 @@ import { ComparisonMode } from './core/ComparisonMode.js';
 import { CameraController } from './core/CameraController.js';
 import { TelemetryController } from './core/TelemetryController.js';
 import { StatsController } from './core/StatsController.js';
+import { OrbitPathsController } from './core/OrbitPathsController.js';
 import { getLanguage, setLanguage, t } from './core/Localization.js';
 import { sliderPositionToScale, scaleToSliderPosition, formatTimeScale } from './math/TimeScale.js';
 import './style.css';
@@ -27,8 +28,9 @@ import './style.css';
 let scene, camera, renderer, composer, labelRenderer, controls, cameraController, listener;
 let saturnSim, titanSim, enceladusSim, mimasSim;
 let tethysSim, dioneSim, rheaSim, iapetusSim;
-let fRingSim, comparisonMode, telemetryController, statsController;
+let fRingSim, comparisonMode, telemetryController, statsController, orbitPathsController;
 let audioEnabled = false;
+let orbitsEnabled = false;
 let timeScale = 1.0;
 let orbitalTime = 0.0;
 let simulationDate = new Date();
@@ -150,6 +152,15 @@ async function bootstrapApp() {
     telemetryController = new TelemetryController(camera, cameraController, saturnSim.scaleFactor, saturnSim.sunDirection);
     statsController = new StatsController(renderer);
     statsController.refresh();
+    orbitPathsController = new OrbitPathsController([
+      mimasSim,
+      enceladusSim,
+      tethysSim,
+      dioneSim,
+      rheaSim,
+      titanSim,
+      iapetusSim
+    ]);
 
     // 4. Iluminar la Tierra con la misma dirección solar que usan los shaders
     const sunLight = new THREE.DirectionalLight(0xffffff, 2.6);
@@ -175,6 +186,7 @@ async function bootstrapApp() {
     const surfaceEnceladusBtn = document.getElementById('btn-surface-enceladus');
     const surfaceMimasBtn = document.getElementById('btn-surface-mimas');
     const labelsBtn = document.getElementById('btn-toggle-labels');
+    const orbitsBtn = document.getElementById('btn-toggle-orbits');
     const audioBtn = document.getElementById('btn-toggle-audio');
     const stormBtn = document.getElementById('btn-toggle-hexagon');
     const auroraBtn = document.getElementById('btn-toggle-aurora');
@@ -185,6 +197,7 @@ async function bootstrapApp() {
     let stormEnabled = false;
     let auroraEnabled = false;
     const labelsState = document.getElementById('labels-state');
+    const orbitsState = document.getElementById('orbits-state');
     const audioState = document.getElementById('audio-state');
     const languageState = document.getElementById('language-state');
     const hexagonState = document.getElementById('hexagon-state');
@@ -274,6 +287,13 @@ async function bootstrapApp() {
       if (labelsState) labelsState.textContent = t(visible ? 'state.on' : 'state.off');
     };
 
+    const updateOrbitsButton = () => {
+      if (!orbitsBtn) return;
+      orbitsBtn.setAttribute('aria-pressed', String(orbitsEnabled));
+      orbitsBtn.classList.toggle('active', orbitsEnabled);
+      if (orbitsState) orbitsState.textContent = t(orbitsEnabled ? 'state.on' : 'state.off');
+    };
+
     const updateAudioButton = () => {
       if (!audioBtn) return;
       audioBtn.setAttribute('aria-pressed', String(audioEnabled));
@@ -344,6 +364,15 @@ async function bootstrapApp() {
       labelsBtn.addEventListener('click', () => {
         document.body.classList.toggle('show-labels');
         updateLabelsButton();
+      });
+    }
+
+    if (orbitsBtn) {
+      orbitsBtn.addEventListener('click', () => {
+        orbitsEnabled = !orbitsEnabled;
+        orbitPathsController.setEnabled(orbitsEnabled);
+        orbitPathsController.setActiveTarget(cameraController.currentTarget);
+        updateOrbitsButton();
       });
     }
 
@@ -426,6 +455,7 @@ async function bootstrapApp() {
       comparisonMode.label.element.textContent = t('body.earth');
       setUiCollapsed(uiCollapsed);
       updateLabelsButton();
+      updateOrbitsButton();
       updateAudioButton();
       updateLanguageState();
       updateStormButton();
@@ -544,6 +574,9 @@ function tick() {
 
   if (telemetryController) {
     telemetryController.update(deltaTime);
+  }
+  if (orbitPathsController && cameraController) {
+    orbitPathsController.setActiveTarget(cameraController.currentTarget);
   }
 
   composer.render();
