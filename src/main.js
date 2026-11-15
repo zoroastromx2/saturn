@@ -116,10 +116,14 @@ async function bootstrapApp() {
     // 2. Bloquear la inicialización gráfica hasta que las texturas estén en RAM
     const fetcher = new AssetFetcher();
     const assets = await fetcher.loadAllAssets();
-    scene.background = assets.starmap;
-    scene.backgroundIntensity = 0.15;
-    scene.environment = assets.starmap;
-    scene.environmentIntensity = 1.0;
+    if (assets.starmap) {
+      scene.background = assets.starmap;
+      scene.backgroundIntensity = 0.15;
+      scene.environment = assets.starmap;
+      scene.environmentIntensity = 1.0;
+    } else {
+      scene.background = new THREE.Color(0x02030a);
+    }
 
     // 3. Inyectar dependencias a los simuladores
     // Le pasamos los assets para que SaturnSimulator los asigne a los uniforms de GLSL

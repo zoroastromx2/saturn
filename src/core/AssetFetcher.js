@@ -1,10 +1,15 @@
 // src/core/AssetFetcher.js
 import * as THREE from 'three';
+import { WHITE_TEXTURE, FLAT_NORMAL_TEXTURE } from './MoonTextures.js';
 
 export class AssetFetcher {
-  constructor() {
-    this.textureLoader = new THREE.TextureLoader();
-    this.audioLoader = new THREE.AudioLoader();
+  constructor(options = {}) {
+    this.textureLoader = options.textureLoader || new THREE.TextureLoader();
+    this.audioLoader = options.audioLoader || new THREE.AudioLoader();
+    this.retryDelayMs = options.retryDelayMs ?? 250;
+    this.maxConcurrency = Math.max(1, options.maxConcurrency ?? 6);
+    this.activeRequests = 0;
+    this.requestQueue = [];
     this.assets = {
       saturnAlbedo: null,
       ringColor: null,
@@ -34,24 +39,36 @@ export class AssetFetcher {
   }
 
   /**
-   * Carga todas las texturas requeridas de forma asíncrona.
-   * El agente debe asegurar que esta promesa se resuelva en main.js
-   * antes de inicializar SaturnSimulator.
+   * Carga todas las texturas requeridas de forma asíncrona con concurrencia acotada,
+   * reintentos automáticos y respaldos seguros para evitar fallos transitorios de red.
    */
   async loadAllAssets() {
     console.log("Iniciando descarga de texturas de la misión Cassini...");
 
     try {
-      const [saturn, rColor, rAlpha, earth, starmap, mimasColor, mimasNormal, mimasAo, tethys, dione, rhea, iapetus, saturnAudio, titanAudio, enceladusAudio, mimasAudio] = await Promise.all([
+      const [
+        saturn,
+        rColor,
+        rAlpha,
+        earth,
+        starmap,
+        mimas,
+        tethys,
+        dione,
+        rhea,
+        iapetus,
+        saturnAudio,
+        titanAudio,
+        enceladusAudio,
+        mimasAudio
+      ] = await Promise.all([
         this.loadTextureAsync(this.assetUrl('textures/saturn_atmosphere_8k.jpg')),
         this.loadTextureAsync(this.assetUrl('textures/saturn_rings_color.png')),
         // La máscara de densidad/alfa de los anillos (blanco = sólido, negro = vacío)
         this.loadTextureAsync(this.assetUrl('textures/saturn_rings_alpha.png')),
-        this.loadTextureAsync(this.assetUrl('textures/earth_daymap_4k.jpg')),
-        this.loadTextureAsync(this.assetUrl('textures/milky_way_8k.jpg')),
-        this.loadTextureAsync(this.assetUrl('textures/mimas_color.jpg')),
-        this.loadTextureAsync(this.assetUrl('textures/mimas_normal.jpg')),
-        this.loadTextureWithFallback('textures/mimas_ao.jpg', 'textures/mimas_color.jpg'),
+        this.loadOptionalTexture('textures/earth_daymap_4k.jpg'),
+        this.loadOptionalTexture('textures/milky_way_8k.jpg'),
+        this.loadMoonTextureSet('mimas'),
         this.loadMoonTextureSet('tethys'),
         this.loadMoonTextureSet('dione'),
         this.loadMoonTextureSet('rhea'),
@@ -66,15 +83,13 @@ export class AssetFetcher {
       // Mapas de color (Albedo) deben estar en sRGB
       saturn.colorSpace = THREE.SRGBColorSpace;
       rColor.colorSpace = THREE.SRGBColorSpace;
-      earth.colorSpace = THREE.SRGBColorSpace;
-      starmap.colorSpace = THREE.SRGBColorSpace;
-      starmap.mapping = THREE.EquirectangularReflectionMapping;
-      mimasColor.colorSpace = THREE.SRGBColorSpace;
-      mimasColor.wrapS = THREE.RepeatWrapping;
-      mimasNormal.colorSpace = THREE.LinearSRGBColorSpace;
-      mimasNormal.wrapS = THREE.RepeatWrapping;
-      mimasAo.colorSpace = THREE.LinearSRGBColorSpace;
-      mimasAo.wrapS = THREE.RepeatWrapping;
+      if (earth) {
+        earth.colorSpace = THREE.SRGBColorSpace;
+      }
+      if (starmap) {
+        starmap.colorSpace = THREE.SRGBColorSpace;
+        starmap.mapping = THREE.EquirectangularReflectionMapping;
+      }
 
       // Mapas de datos (Alpha/Densidad, Normales) DEBEN mantenerse en Linear
       // Si el alpha se convierte a sRGB, la curva matemática de la sombra fallará
@@ -85,9 +100,9 @@ export class AssetFetcher {
       this.assets.ringAlpha = rAlpha;
       this.assets.earthAlbedo = earth;
       this.assets.starmap = starmap;
-      this.assets.mimasColor = mimasColor;
-      this.assets.mimasNormal = mimasNormal;
-      this.assets.mimasAo = mimasAo;
+      this.assets.mimasColor = mimas.color;
+      this.assets.mimasNormal = mimas.normal;
+      this.assets.mimasAo = mimas.ao;
       this.assets.tethysColor = tethys.color;
       this.assets.tethysNormal = tethys.normal;
       this.assets.tethysAo = tethys.ao;
@@ -107,62 +122,146 @@ export class AssetFetcher {
 
       console.log("Texturas cargadas exitosamente.");
       return this.assets;
-      
+
     } catch (error) {
       console.error("Error crítico cargando las texturas:", error);
       throw error;
     }
   }
 
-  /**
-   * Envuelve el TextureLoader de Three.js en una Promesa moderna
-   */
-  assetUrl(path) {
-    return `${import.meta.env.BASE_URL}${path.replace(/^\/+/, '')}`;
+  enqueue(task) {
+    return new Promise((resolve, reject) => {
+      const run = () => {
+        this.activeRequests++;
+        Promise.resolve()
+          .then(task)
+          .then(resolve, reject)
+          .finally(() => {
+            this.activeRequests--;
+            if (this.requestQueue.length > 0) {
+              const next = this.requestQueue.shift();
+              next();
+            }
+          });
+      };
+
+      if (this.activeRequests < this.maxConcurrency) {
+        run();
+      } else {
+        this.requestQueue.push(run);
+      }
+    });
   }
 
-  loadTextureAsync(url) {
-    return new Promise((resolve, reject) => {
+  delay(ms) {
+    if (ms <= 0) return Promise.resolve();
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  withRetryParam(url, attempt) {
+    if (attempt <= 0) return url;
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}retry=${attempt}`;
+  }
+
+  /**
+   * Envuelve el TextureLoader de Three.js en una Promesa moderna con reintentos.
+   */
+  assetUrl(path) {
+    const base = (typeof import.meta !== 'undefined' && import.meta.env?.BASE_URL) || '/';
+    return `${base}${path.replace(/^\/+/, '')}`;
+  }
+
+  loadSingleTexture(url) {
+    return this.enqueue(() => new Promise((resolve, reject) => {
       this.textureLoader.load(
         url,
         (texture) => resolve(texture),
         undefined, // onProgress
-        (err) => reject(new Error(`Fallo al cargar textura: ${url}`))
+        () => reject(new Error(`Fallo al cargar textura: ${url}`))
       );
+    }));
+  }
+
+  async loadTextureAsync(url, retries = 3) {
+    let lastError;
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        if (attempt > 0) {
+          await this.delay(this.retryDelayMs * attempt);
+        }
+        return await this.loadSingleTexture(this.withRetryParam(url, attempt));
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    throw lastError || new Error(`Fallo al cargar textura: ${url}`);
+  }
+
+  loadOptionalTexture(path, fallbackTexture = null) {
+    return this.loadTextureAsync(this.assetUrl(path)).catch((error) => {
+      console.warn(`Textura opcional no disponible (${path}), usando respaldo:`, error?.message || error);
+      return fallbackTexture;
     });
   }
 
-  loadTextureWithFallback(primaryPath, fallbackPath) {
-    return this.loadTextureAsync(this.assetUrl(primaryPath)).catch(() =>
-      this.loadTextureAsync(this.assetUrl(fallbackPath))
-    );
+  loadTextureWithFallback(primaryPath, fallbackPath, fallbackTexture = WHITE_TEXTURE) {
+    return this.loadTextureAsync(this.assetUrl(primaryPath))
+      .catch(() => this.loadTextureAsync(this.assetUrl(fallbackPath)))
+      .catch((error) => {
+        console.warn(`Textura con respaldo agotado (${primaryPath}), usando textura base:`, error?.message || error);
+        return fallbackTexture;
+      });
   }
 
   async loadMoonTextureSet(name) {
     const [color, normal, ao] = await Promise.all([
-      this.loadTextureAsync(this.assetUrl(`textures/${name}_color.jpg`)),
-      this.loadTextureAsync(this.assetUrl(`textures/${name}_normal.jpg`)),
-      this.loadTextureWithFallback(`textures/${name}_ao.jpg`, `textures/${name}_color.jpg`)
+      this.loadOptionalTexture(`textures/${name}_color.jpg`, WHITE_TEXTURE),
+      this.loadOptionalTexture(`textures/${name}_normal.jpg`, FLAT_NORMAL_TEXTURE),
+      this.loadTextureWithFallback(`textures/${name}_ao.jpg`, `textures/${name}_color.jpg`, WHITE_TEXTURE)
     ]);
 
-    color.colorSpace = THREE.SRGBColorSpace;
-    color.wrapS = THREE.RepeatWrapping;
-    normal.colorSpace = THREE.LinearSRGBColorSpace;
-    normal.wrapS = THREE.RepeatWrapping;
-    ao.colorSpace = THREE.LinearSRGBColorSpace;
-    ao.wrapS = THREE.RepeatWrapping;
+    if (color !== WHITE_TEXTURE) {
+      color.colorSpace = THREE.SRGBColorSpace;
+      color.wrapS = THREE.RepeatWrapping;
+    }
+    if (normal !== FLAT_NORMAL_TEXTURE) {
+      normal.colorSpace = THREE.LinearSRGBColorSpace;
+      normal.wrapS = THREE.RepeatWrapping;
+    }
+    if (ao !== WHITE_TEXTURE) {
+      ao.colorSpace = THREE.LinearSRGBColorSpace;
+      ao.wrapS = THREE.RepeatWrapping;
+    }
 
     return { color, normal, ao };
   }
 
-  loadAudioAsync(url) {
-    return new Promise((resolve, reject) => {
+  loadSingleAudio(url) {
+    return this.enqueue(() => new Promise((resolve, reject) => {
       this.audioLoader.load(
         url,
         (buffer) => resolve(buffer),
         undefined,
-        (err) => reject(new Error(`Fallo al cargar audio: ${url}`))
+        () => reject(new Error(`Fallo al cargar audio: ${url}`))
       );
-    });
+    }));
+  }
+
+  async loadAudioAsync(url, retries = 2) {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        if (attempt > 0) {
+          await this.delay(this.retryDelayMs * attempt);
+        }
+        return await this.loadSingleAudio(this.withRetryParam(url, attempt));
+      } catch (error) {
+        if (attempt === retries) {
+          console.warn(`Audio opcional no disponible (${url}):`, error?.message || error);
+          return null;
+        }
+      }
+    }
+    return null;
   }
 }
