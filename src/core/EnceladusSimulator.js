@@ -3,6 +3,9 @@ import { CONSTANTS, toWebGLUnits } from '../math/AstroScale.js';
 import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import plumeVert from '../shaders/plume.vert';
 import plumeFrag from '../shaders/plume.frag';
+import moonVert from '../shaders/moon.vert';
+import moonFrag from '../shaders/moon.frag';
+import { WHITE_TEXTURE, FLAT_NORMAL_TEXTURE } from './MoonTextures.js';
 
 export class EnceladusSimulator {
   constructor(scene, saturnSimulator, scaleFactor, assets = {}, listener = null) {
@@ -10,10 +13,21 @@ export class EnceladusSimulator {
     this.orbitDistance = toWebGLUnits(CONSTANTS.ENCELADUS.ORBIT_SEMI_MAJOR, scaleFactor);
     
     const geometry = new THREE.SphereGeometry(this.radius, 32, 32);
-    const material = new THREE.MeshStandardMaterial({ 
-      color: 0xffffff, // Hielo puro
-      roughness: 0.2,  // Muy liso
-      metalness: 0.1   // Ligero brillo especular
+    const material = new THREE.ShaderMaterial({
+      vertexShader: moonVert,
+      fragmentShader: moonFrag,
+      uniforms: {
+        uSunDirection: { value: saturnSimulator.sunDirection },
+        uSaturnPosition: { value: saturnSimulator.saturnMesh.position },
+        uSaturnEqRadius: { value: saturnSimulator.eqRadius },
+        uSaturnPolRadius: { value: saturnSimulator.polRadius },
+        tColor: { value: WHITE_TEXTURE },
+        tNormal: { value: FLAT_NORMAL_TEXTURE },
+        uBaseColor: { value: new THREE.Vector3(1.0, 1.0, 1.0) },
+        uAtmosphereStrength: { value: 0.0 },
+        uRimPower: { value: 1.2 }
+      },
+      extensions: { derivatives: true }
     });
     
     this.mesh = new THREE.Mesh(geometry, material);

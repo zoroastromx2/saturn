@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 import { CONSTANTS, toWebGLUnits } from '../math/AstroScale.js';
-import titanVert from '../shaders/titan.vert';
-import titanFrag from '../shaders/titan.frag';
 import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
+import moonVert from '../shaders/moon.vert';
+import moonFrag from '../shaders/moon.frag';
+import { WHITE_TEXTURE, FLAT_NORMAL_TEXTURE } from './MoonTextures.js';
 
 export class TitanSimulator {
   constructor(scene, saturnSimulator, scaleFactor, assets = {}, listener = null) {
@@ -12,14 +13,20 @@ export class TitanSimulator {
     // Malla de Titán con atmósfera fotoquímica aproximada ópticamente.
     const geometry = new THREE.SphereGeometry(this.radius, 128, 128);
     const material = new THREE.ShaderMaterial({
-      vertexShader: titanVert,
-      fragmentShader: titanFrag,
+      vertexShader: moonVert,
+      fragmentShader: moonFrag,
       uniforms: {
         uSunDirection: { value: saturnSimulator.sunDirection },
+        uSaturnPosition: { value: saturnSimulator.saturnMesh.position },
         uSaturnEqRadius: { value: saturnSimulator.eqRadius },
         uSaturnPolRadius: { value: saturnSimulator.polRadius },
+        tColor: { value: WHITE_TEXTURE },
+        tNormal: { value: FLAT_NORMAL_TEXTURE },
+        uBaseColor: { value: new THREE.Vector3(0.18, 0.085, 0.025) },
+        uAtmosphereStrength: { value: 1.0 },
         uRimPower: { value: 1.2 }
-      }
+      },
+      extensions: { derivatives: true }
     });
     
     this.mesh = new THREE.Mesh(geometry, material);

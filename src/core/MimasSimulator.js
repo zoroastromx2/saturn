@@ -1,6 +1,9 @@
 import * as THREE from 'three';
 import { CONSTANTS, toWebGLUnits } from '../math/AstroScale.js';
 import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
+import moonVert from '../shaders/moon.vert';
+import moonFrag from '../shaders/moon.frag';
+import { WHITE_TEXTURE, FLAT_NORMAL_TEXTURE } from './MoonTextures.js';
 
 export class MimasSimulator {
   constructor(scene, saturnSimulator, scaleFactor, assets = {}, listener = null) {
@@ -8,12 +11,21 @@ export class MimasSimulator {
     this.orbitDistance = toWebGLUnits(CONSTANTS.MIMAS.ORBIT_SEMI_MAJOR, scaleFactor);
 
     const geometry = new THREE.SphereGeometry(this.radius, 128, 128);
-    const material = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      map: assets.mimasColor || null,
-      normalMap: assets.mimasNormal || null,
-      roughness: 0.8,
-      metalness: 0.0
+    const material = new THREE.ShaderMaterial({
+      vertexShader: moonVert,
+      fragmentShader: moonFrag,
+      uniforms: {
+        uSunDirection: { value: saturnSimulator.sunDirection },
+        uSaturnPosition: { value: saturnSimulator.saturnMesh.position },
+        uSaturnEqRadius: { value: saturnSimulator.eqRadius },
+        uSaturnPolRadius: { value: saturnSimulator.polRadius },
+        tColor: { value: assets.mimasColor || WHITE_TEXTURE },
+        tNormal: { value: assets.mimasNormal || FLAT_NORMAL_TEXTURE },
+        uBaseColor: { value: new THREE.Vector3(1.0, 1.0, 1.0) },
+        uAtmosphereStrength: { value: 0.0 },
+        uRimPower: { value: 1.2 }
+      },
+      extensions: { derivatives: true }
     });
 
     this.mesh = new THREE.Mesh(geometry, material);
