@@ -4,6 +4,14 @@ import * as THREE from 'three';
 import { MinorMoonsSimulator } from '../src/core/MinorMoonsSimulator.js';
 import { AssetFetcher } from '../src/core/AssetFetcher.js';
 
+globalThis.document = {
+  createElement: () => ({
+    style: {},
+    setAttribute() {},
+    remove() {}
+  })
+};
+
 const minorMoons = JSON.parse(
   readFileSync(new URL('../public/data/minor_moons.json', import.meta.url), 'utf8')
 );
@@ -63,6 +71,42 @@ describe('MinorMoonsSimulator - Catálogo GPU de lunas irregulares', () => {
     expect(shader.vertexShader).toContain('vec3 transformed = vec3(position) * aRadius;');
     expect(shader.vertexShader).toContain('transformed.x += finalX;');
     expect(shader.vertexShader).not.toContain('#include <begin_vertex>');
+  });
+
+  it('debería crear una etiqueta CSS2D por grupo y animarla con la misma cinemática', () => {
+    const sim = new MinorMoonsSimulator({ add() {} }, minorMoons);
+
+    expect(sim.flagshipData).toHaveLength(3);
+    expect(sim.groupLabels).toHaveLength(3);
+    expect(sim.groupLabels.map(({ obj }) => obj.element.textContent)).toEqual([
+      'Grupo Nórdico',
+      'Grupo Galo',
+      'Grupo Inuit'
+    ]);
+    sim.groupLabels.forEach(({ obj }) => {
+      expect(obj.element.className).toBe('celestial-label minor-group-label');
+      expect(sim.mesh.children).toContain(obj);
+    });
+
+    sim.update(0);
+    const initialPosition = sim.groupLabels[0].obj.position.clone();
+    sim.update(10);
+    const updatedPosition = sim.groupLabels[0].obj.position;
+
+    expect(updatedPosition.distanceTo(initialPosition)).toBeGreaterThan(0);
+    expect(Number.isFinite(updatedPosition.x)).toBe(true);
+    expect(Number.isFinite(updatedPosition.y)).toBe(true);
+    expect(Number.isFinite(updatedPosition.z)).toBe(true);
+  });
+
+  it('debería ocultar y mostrar las tres etiquetas de grupo', () => {
+    const sim = new MinorMoonsSimulator({ add() {} }, minorMoons);
+
+    sim.setLabelsVisible(true);
+    sim.groupLabels.forEach(({ obj }) => expect(obj.visible).toBe(true));
+
+    sim.setLabelsVisible(false);
+    sim.groupLabels.forEach(({ obj }) => expect(obj.visible).toBe(false));
   });
 });
 

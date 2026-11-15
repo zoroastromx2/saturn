@@ -1,5 +1,6 @@
 // src/core/MinorMoonsSimulator.js
 import * as THREE from 'three';
+import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 
 const MINOR_MOON_COUNT = 135;
 
@@ -11,6 +12,42 @@ export class MinorMoonsSimulator {
     this.mesh = new THREE.InstancedMesh(geometry, material, MINOR_MOON_COUNT);
     this.mesh.frustumCulled = false;
     this.mesh.name = 'MinorIrregularMoons';
+
+    this.flagshipData = [
+      {
+        name: 'Phoebe',
+        group: 'Grupo Nórdico',
+        a: 23.5,
+        e: 0.156,
+        i: THREE.MathUtils.degToRad(175.2),
+        lan: 2.35,
+        argP: 4.18,
+        maEpoch: 0.72,
+        n: 0.38
+      },
+      {
+        name: 'Albiorix',
+        group: 'Grupo Galo',
+        a: 29.4,
+        e: 0.477,
+        i: THREE.MathUtils.degToRad(34.0),
+        lan: 0.95,
+        argP: 2.75,
+        maEpoch: 3.2,
+        n: 0.31
+      },
+      {
+        name: 'Kiviuq',
+        group: 'Grupo Inuit',
+        a: 20.16,
+        e: 0.328,
+        i: THREE.MathUtils.degToRad(45.7),
+        lan: 5.1,
+        argP: 1.35,
+        maEpoch: 5.4,
+        n: 0.55
+      }
+    ];
 
     const aAxis = new Float32Array(MINOR_MOON_COUNT);
     const aEcc = new Float32Array(MINOR_MOON_COUNT);
@@ -93,10 +130,55 @@ export class MinorMoonsSimulator {
       );
     };
 
+    this.groupLabels = [];
+    this.flagshipData.forEach((flagship) => {
+      const div = document.createElement('div');
+      div.className = 'celestial-label minor-group-label';
+      div.textContent = flagship.group;
+
+      const labelObj = new CSS2DObject(div);
+      labelObj.visible = false;
+      this.mesh.add(labelObj);
+      this.groupLabels.push({ obj: labelObj, data: flagship });
+    });
+
     scene.add(this.mesh);
   }
 
   update(daysSinceEpoch) {
     this.mesh.material.userData.uDaysSinceEpoch.value = daysSinceEpoch;
+
+    this.groupLabels.forEach(({ obj, data }) => {
+      const { a, e, i, lan, argP, maEpoch, n } = data;
+
+      const M = maEpoch + (n * daysSinceEpoch);
+      const E = M + e * Math.sin(M);
+
+      const xOrbit = a * (Math.cos(E) - e);
+      const zOrbit = a * (Math.sqrt(1.0 - e * e) * Math.sin(E));
+
+      const cosW = Math.cos(argP);
+      const sinW = Math.sin(argP);
+      const x1 = xOrbit * cosW - zOrbit * sinW;
+      const z1 = xOrbit * sinW + zOrbit * cosW;
+
+      const cosI = Math.cos(i);
+      const sinI = Math.sin(i);
+      const y2 = z1 * sinI;
+      const z2 = z1 * cosI;
+
+      const cosO = Math.cos(lan);
+      const sinO = Math.sin(lan);
+      const finalX = x1 * cosO - z2 * sinO;
+      const finalZ = x1 * sinO + z2 * cosO;
+
+      obj.position.set(finalX, y2, finalZ);
+    });
+  }
+
+  setLabelsVisible(visible) {
+    this.groupLabels.forEach(({ obj }) => {
+      obj.visible = Boolean(visible);
+    });
   }
 }

@@ -291,8 +291,9 @@ async function bootstrapApp() {
     }
 
     const updateLabelsButton = () => {
-      if (!labelsBtn) return;
       const visible = document.body.classList.contains('show-labels');
+      minorMoonsSim?.setLabelsVisible(visible);
+      if (!labelsBtn) return;
       labelsBtn.setAttribute('aria-pressed', String(visible));
       labelsBtn.classList.toggle('active', visible);
       if (labelsState) labelsState.textContent = t(visible ? 'state.on' : 'state.off');
