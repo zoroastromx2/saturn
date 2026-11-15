@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
 :root {
   --text: #6b6375;
   --text-h: #08060d;
@@ -13,7 +15,13 @@
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  --mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+  --display: 'Cinzel', 'Palatino Linotype', Palatino, Georgia, serif;
+  --helio-gold: #b99a5d;
+  --helio-gold-bright: #d5b97b;
+  --helio-text: #d8ceb8;
+  --helio-muted: #95886c;
+  --helio-line: rgba(185, 154, 93, 0.38);
 
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
@@ -317,7 +325,25 @@ body {
 }
 
 #loader {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   z-index: 20;
+  color: var(--helio-gold-bright);
+  font: 500 10px/1.6 var(--mono);
+  letter-spacing: 0.24em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+#loader::before {
+  content: '';
+  display: block;
+  width: 72px;
+  height: 1px;
+  margin: 0 auto 12px;
+  background: linear-gradient(90deg, transparent, var(--helio-gold), transparent);
 }
 
 #ui-container {
@@ -325,60 +351,141 @@ body {
   inset: 0;
   z-index: 10;
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   grid-template-rows: auto 1fr auto;
   gap: 16px;
   padding: 24px;
   pointer-events: none;
 }
 
+#app-header {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+  align-self: start;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--helio-gold-bright);
+  pointer-events: none;
+}
+
+.brand-mark {
+  width: 46px;
+  height: 46px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+  opacity: 0.82;
+  filter: drop-shadow(0 0 10px rgba(191, 156, 91, 0.18));
+}
+
+.brand-mark circle:nth-child(2) {
+  fill: currentColor;
+  stroke: none;
+}
+
+.brand-copy h1 {
+  margin: 0;
+  color: #efe6d2;
+  font: 400 clamp(24px, 2.6vw, 34px)/1 var(--display);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-shadow: 0 0 24px rgba(213, 185, 123, 0.12);
+}
+
+.brand-copy p {
+  margin-top: 8px;
+  color: var(--helio-gold);
+  font: 500 clamp(7px, 0.72vw, 9px)/1.4 var(--mono);
+  letter-spacing: 0.27em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 #hud,
 #telemetry-hud,
 #time-controls {
-  background: rgba(20, 20, 25, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  color: #fff;
-  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  color: var(--helio-text);
+  background: linear-gradient(180deg, rgba(14, 13, 10, 0.94), rgba(8, 8, 7, 0.93));
+  border: 1px solid var(--helio-line);
+  border-radius: 2px;
+  font-family: var(--mono);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow:
+    0 16px 50px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.015);
 }
 
 #hud {
   grid-column: 1 / -1;
   grid-row: 3;
-  justify-self: start;
+  justify-self: stretch;
   align-self: end;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
   max-width: 100%;
   padding: 10px;
   pointer-events: auto;
 }
 
+.panel-label {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 2px 7px;
+  border-bottom: 1px solid rgba(185, 154, 93, 0.24);
+  color: var(--helio-gold);
+  font: 500 9px/1.2 var(--mono);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.panel-index {
+  color: rgba(185, 154, 93, 0.55);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+}
+
 #hud button,
 #time-controls button {
-  padding: 9px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.07);
-  color: #fff;
-  font: 600 13px/1.2 system-ui, 'Segoe UI', Roboto, sans-serif;
+  min-width: 0;
+  padding: 9px 11px;
+  overflow: hidden;
+  border: 1px solid rgba(185, 154, 93, 0.26);
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.015);
+  color: #bfb39a;
+  font: 500 10px/1.25 var(--mono);
+  letter-spacing: 0.055em;
+  text-align: left;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
   cursor: pointer;
-  transition: background 160ms ease, border-color 160ms ease;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease;
 }
 
 #hud button:hover,
 #time-controls button:hover {
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.28);
+  color: #f2e7d1;
+  background: rgba(185, 154, 93, 0.1);
+  border-color: rgba(213, 185, 123, 0.7);
+  box-shadow: inset 0 0 14px rgba(185, 154, 93, 0.06);
 }
 
 #hud button:focus-visible,
 #time-controls button:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.7);
+  outline: 1px solid var(--helio-gold-bright);
   outline-offset: 2px;
 }
 
@@ -387,23 +494,31 @@ body {
   grid-row: 2;
   justify-self: end;
   align-self: end;
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
-  padding: 8px;
+  width: min(360px, 100%);
+  padding: 10px;
   pointer-events: auto;
 }
 
+#time-controls .panel-label {
+  margin-bottom: 1px;
+}
+
 #time-controls button {
-  padding: 9px 12px;
+  padding: 9px 6px;
   font-variant-numeric: tabular-nums;
+  text-align: center;
 }
 
 #time-controls button.active {
-  background: rgba(126, 190, 255, 0.3);
-  border-color: rgba(160, 215, 255, 0.8);
-  box-shadow: 0 0 14px rgba(110, 180, 255, 0.3);
-  color: #f4fbff;
+  color: #f6e8c7;
+  background: linear-gradient(180deg, rgba(190, 155, 90, 0.3), rgba(112, 84, 39, 0.18));
+  border-color: rgba(213, 185, 123, 0.85);
+  box-shadow:
+    inset 0 0 12px rgba(213, 185, 123, 0.1),
+    0 0 18px rgba(185, 154, 93, 0.1);
 }
 
 #telemetry-hud {
@@ -411,39 +526,50 @@ body {
   grid-row: 1;
   justify-self: end;
   display: grid;
-  grid-template-columns: auto auto;
-  gap: 6px 18px;
-  min-width: 240px;
+  grid-template-columns: minmax(130px, auto) auto;
+  gap: 8px 24px;
+  min-width: 300px;
   padding: 12px 16px;
-  font-size: 13px;
   line-height: 1.4;
   pointer-events: none;
 }
 
+#telemetry-hud .panel-label {
+  margin-bottom: 2px;
+}
+
 #telemetry-hud .telemetry-label {
-  color: rgba(230, 236, 255, 0.65);
-  font-size: 11px;
-  letter-spacing: 0.08em;
+  padding-top: 1px;
+  color: var(--helio-muted);
+  font-size: 9px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 #telemetry-hud .telemetry-value {
-  color: #fff;
+  color: #e6ddc8;
   font-family: var(--mono);
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
   text-align: right;
   white-space: nowrap;
 }
 
+#telemetry-target {
+  color: var(--helio-gold-bright);
+}
+
 .celestial-label {
   display: none;
-  padding: 5px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 999px;
-  background: rgba(20, 20, 25, 0.55);
-  color: #fff;
-  font: 600 11px/1.2 system-ui, 'Segoe UI', Roboto, sans-serif;
-  letter-spacing: 0.04em;
+  padding: 4px 8px;
+  border: 1px solid rgba(185, 154, 93, 0.45);
+  border-radius: 1px;
+  background: rgba(8, 8, 7, 0.78);
+  color: var(--helio-text);
+  font: 500 9px/1.2 var(--mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
   white-space: nowrap;
   pointer-events: none;
@@ -453,4 +579,109 @@ body {
 
 body.show-labels .celestial-label {
   display: block;
+}
+
+@media (max-width: 900px) {
+  #ui-container {
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .brand-mark {
+    width: 36px;
+    height: 36px;
+  }
+
+  .brand-copy h1 {
+    font-size: 24px;
+  }
+
+  .brand-copy p {
+    letter-spacing: 0.18em;
+  }
+
+  #hud {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  #telemetry-hud {
+    min-width: 260px;
+  }
+}
+
+@media (max-width: 760px) {
+  #ui-container {
+    grid-template-rows: auto auto 1fr auto;
+  }
+
+  #app-header {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  #telemetry-hud {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  #time-controls {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+
+  #hud {
+    grid-column: 1 / -1;
+    grid-row: 4;
+  }
+}
+
+@media (max-width: 620px) {
+  #ui-container {
+    gap: 10px;
+    padding: 12px;
+  }
+
+  #app-header {
+    gap: 9px;
+  }
+
+  .brand-mark {
+    width: 28px;
+    height: 28px;
+  }
+
+  .brand-copy h1 {
+    font-size: 18px;
+    letter-spacing: 0.11em;
+  }
+
+  .brand-copy p {
+    display: none;
+  }
+
+  #hud {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #telemetry-hud {
+    min-width: 0;
+    padding: 9px 11px;
+    gap: 6px 14px;
+  }
+
+  #telemetry-hud .panel-label {
+    display: none;
+  }
+
+  #telemetry-hud .telemetry-label {
+    font-size: 8px;
+  }
+
+  #telemetry-hud .telemetry-value {
+    font-size: 10px;
+  }
+
+  #time-controls {
+    width: min(320px, 100%);
+  }
 }

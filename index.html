@@ -9,11 +9,26 @@
   <body>
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
-    <div id="loader" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); color:white; font-family:sans-serif;" data-i18n="loader.loading">
+    <div id="loader" data-i18n="loader.loading">
       Cargando datos de la misión Cassini...
     </div>
     <div id="ui-container">
+      <header id="app-header">
+        <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true">
+          <circle cx="24" cy="24" r="12.5" />
+          <circle cx="24" cy="24" r="3.5" />
+          <path d="M24 1v11M24 36v11M1 24h11M36 24h11" />
+        </svg>
+        <div class="brand-copy">
+          <h1 data-i18n="app.title">Simulador de Saturno</h1>
+          <p data-i18n="app.subtitle">Observatorio volumétrico de Saturno / 01</p>
+        </div>
+      </header>
       <div id="telemetry-hud">
+        <div class="panel-label">
+          <span data-i18n="console.telemetry">Telemetría</span>
+          <span class="panel-index">01</span>
+        </div>
         <span class="telemetry-label" data-i18n="telemetry.target">Objetivo activo</span>
         <span id="telemetry-target" class="telemetry-value">Saturno</span>
         <span class="telemetry-label" data-i18n="telemetry.altitude">Altitud de superficie</span>
@@ -22,18 +37,26 @@
         <span id="telemetry-period" class="telemetry-value">—</span>
       </div>
       <nav id="hud">
+        <div class="panel-label">
+          <span data-i18n="console.navigation">Controles</span>
+          <span class="panel-index">03</span>
+        </div>
         <button id="btn-saturn" data-i18n="nav.focusSaturn">Enfocar Saturno</button>
         <button id="btn-earth" data-i18n="nav.focusEarth">Enfocar Tierra</button>
         <button id="btn-titan" data-i18n="nav.focusTitan">Enfocar Titán</button>
         <button id="btn-enceladus" data-i18n="nav.focusEnceladus">Enfocar Encélado</button>
-        <button id="btn-surface-enceladus" data-i18n="nav.landEnceladus">Aterrizar en Encélado</button>
         <button id="btn-mimas" data-i18n="nav.focusMimas">Enfocar Mimas</button>
+        <button id="btn-surface-enceladus" data-i18n="nav.landEnceladus">Aterrizar en Encélado</button>
         <button id="btn-surface-mimas" data-i18n="nav.landMimas">Aterrizar en Mimas</button>
         <button id="btn-toggle-labels" data-i18n="nav.showLabels">Mostrar etiquetas</button>
-        <button id="btn-toggle-audio" data-i18n="nav.enableAudio">🔇 Activar audio</button>
-        <button id="btn-toggle-language" data-i18n="language.toggle" data-i18n-aria-label="language.toggleAria" aria-label="Cambiar a inglés">🌐 EN</button>
+        <button id="btn-toggle-audio" data-i18n="nav.enableAudio">Activar audio</button>
+        <button id="btn-toggle-language" data-i18n="language.toggle" data-i18n-aria-label="language.toggleAria" aria-label="Cambiar a inglés">Idioma · EN</button>
       </nav>
       <div id="time-controls" role="group" aria-label="Controles de tiempo orbital" data-i18n-aria-label="time.controlsAria">
+        <div class="panel-label">
+          <span data-i18n="console.time">Tiempo orbital</span>
+          <span class="panel-index">02</span>
+        </div>
         <button id="btn-time-pause" aria-pressed="false" data-i18n="time.pause">|| Pausa</button>
         <button id="btn-time-1" class="active" aria-pressed="true">&gt; x1</button>
         <button id="btn-time-10" aria-pressed="false">&gt;&gt; x10</button>
