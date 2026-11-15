@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>saturn-sim</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+    <div id="loader" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); color:white; font-family:sans-serif;">
+      Cargando datos de la misión Cassini...
+    </div>
+    <div id="ui-container">
+      <div id="telemetry-hud">
+        <span class="telemetry-label">Active Target</span>
+        <span id="telemetry-target" class="telemetry-value">Saturn</span>
+        <span class="telemetry-label">Surface Altitude</span>
+        <span id="telemetry-altitude" class="telemetry-value">0 km</span>
+        <span class="telemetry-label">Orbital Period</span>
+        <span id="telemetry-period" class="telemetry-value">—</span>
+      </div>
+      <nav id="hud">
+        <button id="btn-saturn">Enfocar Saturno</button>
+        <button id="btn-earth">Enfocar Tierra</button>
+        <button id="btn-titan">Enfocar Titán</button>
+        <button id="btn-enceladus">Enfocar Encélado</button>
+        <button id="btn-toggle-labels">Mostrar etiquetas</button>
+        <button id="btn-toggle-audio">🔇 Activar audio</button>
+      </nav>
+    </div>
+    <canvas id="webgl-canvas"></canvas>	
+  </body>
+</html>
