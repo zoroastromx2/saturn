@@ -505,6 +505,8 @@ body:not(.ui-collapsed) .ui-icon-close {
 .panel-label-meta {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 10px;
 }
 

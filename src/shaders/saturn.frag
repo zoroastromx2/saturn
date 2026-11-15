@@ -9,6 +9,7 @@ uniform float uRingOuterRadius;
 uniform vec3 uSunDirection;
 uniform float uTime;
 uniform float uAuroraIntensity;
+uniform float uStormIntensity;
 
 // Lunares que proyectan sombra sobre Saturno
 uniform vec3 uTitanPosition;
@@ -85,17 +86,46 @@ float auroraFbm(vec2 p) {
     return value;
 }
 
+float hexagonSdf(vec2 p, float radius) {
+    const vec3 k = vec3(-0.866025404, 0.5, 0.577350269);
+
+    p = abs(p);
+    p -= 2.0 * min(dot(k.xy, p), 0.0) * k.xy;
+    p -= vec2(clamp(p.x, -k.z * radius, k.z * radius), radius);
+
+    return length(p) * sign(p.y);
+}
+
 void main() {
+    vec3 normal = normalize(vNormal);
+    vec3 unitPosition = normalize(vWorldPosition);
+    vec3 sunDir = normalize(uSunDirection);
+
     // 1. Color base de la atmósfera
     vec3 albedo = texture2D(uSaturnTexture, vUv).rgb;
-    vec3 normal = normalize(vNormal);
-    vec3 sunDir = normalize(uSunDirection);
+
+    // 2. Vórtice hexagonal del polo norte mediante SDF
+    if (unitPosition.y > 0.90 && uStormIntensity > 0.0) {
+        float polarRadius = length(unitPosition.xz);
+        float stormRotation = uTime * 0.8;
+        mat2 rotation = mat2(cos(stormRotation), -sin(stormRotation), sin(stormRotation), cos(stormRotation));
+        vec2 stormPoint = rotation * unitPosition.xz;
+        float hexSdf = hexagonSdf(stormPoint, 0.20);
+
+        float hexInterior = 1.0 - smoothstep(-0.008, 0.008, hexSdf);
+        float hexEdge = 1.0 - smoothstep(0.0, 0.025, abs(hexSdf));
+        float eye = 1.0 - smoothstep(0.015, 0.055, polarRadius);
+
+        albedo *= 1.0 - 0.18 * hexInterior * uStormIntensity;
+        albedo = mix(albedo, albedo * vec3(0.8, 0.9, 1.0), 0.28 * hexEdge * uStormIntensity);
+        albedo = mix(albedo, albedo * 0.3, eye * uStormIntensity);
+    }
 
     float moonShadowFactor = moonShadow(vWorldPosition, sunDir, uTitanPosition, uTitanRadius)
                            * moonShadow(vWorldPosition, sunDir, uEnceladusPosition, uEnceladusRadius)
                            * mimasShadow(vWorldPosition, sunDir);
 
-    // 2. Iluminación difusa base (Lambert) usando la normal del esferoide oblato
+    // 3. Iluminación difusa base (Lambert) usando la normal del esferoide oblato
     // La luz ambiente mínima es 0.02 para que el lado oscuro no sea negro puro
     float diffuse = max(dot(normal, sunDir), 0.0);
 
@@ -135,23 +165,23 @@ void main() {
 
     // 4. Auroras polares dinámicas
     vec3 auroraEmission = vec3(0.0);
-    float polarLatitude = abs(normal.y);
-    float polarMask = smoothstep(0.85, 0.92, polarLatitude)
-                    * (1.0 - smoothstep(0.92, 0.98, polarLatitude));
+    float auroraLatitude = abs(unitPosition.y);
+    float auroraMask = smoothstep(0.94, 0.955, auroraLatitude)
+                     * (1.0 - smoothstep(0.975, 0.985, auroraLatitude));
 
-    if (polarMask > 0.001 && uAuroraIntensity > 0.0) {
-        float auroraAngle = atan(normal.x, normal.z);
+    if (auroraMask > 0.001 && uAuroraIntensity > 0.0) {
+        float auroraAngle = atan(unitPosition.x, unitPosition.z);
         vec2 circular = vec2(cos(auroraAngle), sin(auroraAngle));
-        float poleOffset = normal.y >= 0.0 ? 0.0 : 13.7;
+        float poleOffset = unitPosition.y >= 0.0 ? 0.0 : 13.7;
         vec2 drift = vec2(0.0, -uTime * 0.16);
 
-        float noiseVal = auroraFbm(circular * 5.0 + vec2(polarLatitude * 9.0, poleOffset) + drift);
+        float noiseVal = auroraFbm(circular * 5.0 + vec2(auroraLatitude * 9.0, poleOffset) + drift);
         noiseVal += 0.45 * auroraFbm(
-            circular * 11.0 + vec2(polarLatitude * 21.0, poleOffset * 2.0) + drift * 2.0
+            circular * 11.0 + vec2(auroraLatitude * 21.0, poleOffset * 2.0) + drift * 2.0
         );
         noiseVal /= 1.45;
 
-        float auroraShape = smoothstep(0.42, 0.68, noiseVal) * polarMask;
+        float auroraShape = smoothstep(0.42, 0.68, noiseVal) * auroraMask;
         vec3 auroraColor = vec3(0.4, 0.6, 2.5);
         auroraEmission = auroraColor * auroraShape * uAuroraIntensity;
     }

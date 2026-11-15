@@ -133,8 +133,10 @@ async function bootstrapApp() {
     const surfaceMimasBtn = document.getElementById('btn-surface-mimas');
     const labelsBtn = document.getElementById('btn-toggle-labels');
     const audioBtn = document.getElementById('btn-toggle-audio');
+    const stormBtn = document.getElementById('btn-toggle-hexagon');
     const auroraBtn = document.getElementById('btn-toggle-aurora');
     const languageBtn = document.getElementById('btn-toggle-language');
+    let stormEnabled = true;
     let auroraEnabled = true;
     const timeButtons = [
       { element: document.getElementById('btn-time-pause'), scale: 0.0 },
@@ -193,6 +195,21 @@ async function bootstrapApp() {
       auroraBtn.setAttribute('aria-pressed', String(auroraEnabled));
       auroraBtn.classList.toggle('active', auroraEnabled);
     };
+
+    const updateStormButton = () => {
+      if (!stormBtn) return;
+      stormBtn.textContent = t(stormEnabled ? 'hexagon.on' : 'hexagon.off');
+      stormBtn.setAttribute('aria-pressed', String(stormEnabled));
+      stormBtn.classList.toggle('active', stormEnabled);
+    };
+
+    if (stormBtn) {
+      stormBtn.addEventListener('click', () => {
+        stormEnabled = !stormEnabled;
+        saturnSim.saturnMesh.material.uniforms.uStormIntensity.value = stormEnabled ? 1.0 : 0.0;
+        updateStormButton();
+      });
+    }
 
     if (auroraBtn) {
       auroraBtn.addEventListener('click', () => {
@@ -267,6 +284,7 @@ async function bootstrapApp() {
       mimasSim.label.element.textContent = t('body.mimas');
       comparisonMode.label.element.textContent = t('body.earth');
       setUiCollapsed(uiCollapsed);
+      updateStormButton();
       updateAuroraButton();
       telemetryController.refresh();
     };
