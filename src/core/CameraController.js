@@ -21,10 +21,15 @@ export class CameraController {
     this.lastTargetPosition = new THREE.Vector3();
     this.followDelta = new THREE.Vector3();
     this.focusDistance = 0;
+    this.isSurfaceLocked = false;
+    this.surfaceOrigin = new THREE.Vector3(0, 0, 0);
   }
 
   focusOn(targetMesh, distanceMultiplier) {
     if (!targetMesh) return;
+
+    this.isSurfaceLocked = false;
+    this.controls.enabled = true;
 
     if (this.tween) {
       this.tween.kill();
@@ -59,6 +64,44 @@ export class CameraController {
     });
   }
 
+  landOnSurface(targetSimulator) {
+    const mount = targetSimulator?.surfaceCameraMount;
+    if (!mount) return;
+
+    if (this.tween) {
+      this.tween.kill();
+    }
+
+    this.currentTarget = targetSimulator.mesh;
+    this.isSurfaceLocked = false;
+    this.controls.enabled = false;
+
+    this.startPosition.copy(this.camera.position);
+    this.startTarget.copy(this.controls.target);
+
+    this.progress.value = 0;
+    this.tween = gsap.to(this.progress, {
+      value: 1,
+      duration: TRANSITION_DURATION,
+      ease: 'power3.inOut',
+      onUpdate: () => {
+        mount.getWorldPosition(this.targetPosition);
+        this.camera.position.lerpVectors(this.startPosition, this.targetPosition, this.progress.value);
+        this.controls.target.lerpVectors(this.startTarget, this.surfaceOrigin, this.progress.value);
+        this.camera.lookAt(this.controls.target);
+      },
+      onComplete: () => {
+        mount.getWorldPosition(this.targetPosition);
+        this.camera.position.copy(this.targetPosition);
+        this.controls.target.copy(this.surfaceOrigin);
+        this.camera.lookAt(this.surfaceOrigin);
+        this.isSurfaceLocked = true;
+        this.controls.enabled = false;
+        this.tween = null;
+      }
+    });
+  }
+
   applyTransition() {
     if (!this.currentTarget) return;
 
@@ -73,7 +116,7 @@ export class CameraController {
   }
 
   update() {
-    if (this.currentTarget && !this.tween) {
+    if (this.currentTarget && !this.tween && !this.isSurfaceLocked) {
       // Sigue la traslación orbital sin perder el encuadre elegido.
       this.followDelta.subVectors(this.currentTarget.position, this.lastTargetPosition);
       this.camera.position.add(this.followDelta);

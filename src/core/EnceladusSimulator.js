@@ -26,6 +26,11 @@ export class EnceladusSimulator {
     this.label.position.set(0, this.radius * 1.2, 0);
     this.mesh.add(this.label);
 
+    this.surfaceCameraMount = new THREE.Object3D();
+    this.surfaceCameraMount.name = 'EnceladusSurfaceCameraMount';
+    this.surfaceCameraMount.position.set(0, this.radius * 0.5, this.radius);
+    this.mesh.add(this.surfaceCameraMount);
+
     this.ambientSound = null;
     if (listener && assets.enceladusAudioBuffer) {
       const sound = new THREE.PositionalAudio(listener);

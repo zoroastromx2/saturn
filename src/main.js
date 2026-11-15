@@ -19,6 +19,7 @@ let scene, camera, renderer, composer, labelRenderer, controls, cameraController
 let saturnSim, titanSim, enceladusSim, comparisonMode, telemetryController;
 let audioEnabled = false;
 const clock = new THREE.Clock();
+const surfaceMountPosition = new THREE.Vector3();
 
 async function bootstrapApp() {
   // 1. Configuración base de Three.js
@@ -98,6 +99,7 @@ async function bootstrapApp() {
     const earthBtn = document.getElementById('btn-earth');
     const titanBtn = document.getElementById('btn-titan');
     const enceladusBtn = document.getElementById('btn-enceladus');
+    const surfaceEnceladusBtn = document.getElementById('btn-surface-enceladus');
     const labelsBtn = document.getElementById('btn-toggle-labels');
     const audioBtn = document.getElementById('btn-toggle-audio');
 
@@ -124,6 +126,12 @@ async function bootstrapApp() {
     if (enceladusBtn) {
       enceladusBtn.addEventListener('click', () => {
         cameraController.focusOn(enceladusSim.mesh, 5.0);
+      });
+    }
+
+    if (surfaceEnceladusBtn) {
+      surfaceEnceladusBtn.addEventListener('click', () => {
+        cameraController.landOnSurface(enceladusSim);
       });
     }
 
@@ -204,6 +212,12 @@ function tick() {
   // Sigue al objetivo activo y actualiza la inercia de OrbitControls.
   if (cameraController) {
     cameraController.update();
+  }
+
+  if (cameraController?.isSurfaceLocked && enceladusSim) {
+    enceladusSim.surfaceCameraMount.getWorldPosition(surfaceMountPosition);
+    camera.position.copy(surfaceMountPosition);
+    camera.lookAt(0, 0, 0);
   }
 
   if (telemetryController) {
