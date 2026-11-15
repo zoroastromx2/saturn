@@ -1,0 +1,93 @@
+// src/shaders/saturn.frag
+
+varying vec2 vUv;
+varying vec3 vNormal;
+varying vec3 vWorldPosition;
+
+uniform float uRingInnerRadius;
+uniform float uRingOuterRadius;
+uniform vec3 uSunDirection;
+
+// Lunares que proyectan sombra sobre Saturno
+uniform vec3 uTitanPosition;
+uniform float uTitanRadius;
+uniform vec3 uEnceladusPosition;
+uniform float uEnceladusRadius;
+
+
+// Texturas cargadas por AssetFetcher
+uniform sampler2D uSaturnTexture;
+uniform sampler2D uRingAlphaTex; // La máscara de densidad (Cassini)
+
+// La misma intersección rayo-esfera se reutiliza para Titán y Encélado.
+// Cuanto menor es distanceToMoon, más estrecha es la penumbra.
+float moonShadow(vec3 point, vec3 sunDir, vec3 moonPosition, float moonRadius) {
+    vec3 oc = point - moonPosition;
+    float b = dot(oc, sunDir);
+    float c = dot(oc, oc) - (moonRadius * moonRadius);
+    float h = b * b - c;
+
+    if (h <= 0.0 || b >= 0.0) return 1.0;
+
+    float distanceToMoon = length(oc);
+    float penumbraSoftness = max(distanceToMoon * 0.001, 1e-4);
+    float shadowEdge = sqrt(h);
+    return 1.0 - smoothstep(0.0, penumbraSoftness, shadowEdge);
+}
+
+void main() {
+    // 1. Color base de la atmósfera
+    vec3 albedo = texture2D(uSaturnTexture, vUv).rgb;
+    vec3 normal = normalize(vNormal);
+    vec3 sunDir = normalize(uSunDirection);
+
+    float moonShadowFactor = moonShadow(vWorldPosition, sunDir, uTitanPosition, uTitanRadius)
+                           * moonShadow(vWorldPosition, sunDir, uEnceladusPosition, uEnceladusRadius);
+
+    // 2. Iluminación difusa base (Lambert) usando la normal del esferoide oblato
+    // La luz ambiente mínima es 0.02 para que el lado oscuro no sea negro puro
+    float diffuse = max(dot(normal, sunDir), 0.0);
+
+    // 3. MATEMÁTICA DE RING OPTICS (Rayo vs Plano Y=0)
+    float shadowMultiplier = moonShadowFactor; // 1.0 = Luz plena, 0.0 = Oscuridad total
+
+    // Evitar división por cero si el Sol está exactamente en el ecuador (equinoccio)
+    if (abs(sunDir.y) > 1e-6) {
+        // Lanzamos el rayo DESDE la atmósfera HACIA el Sol
+        float t = -vWorldPosition.y / sunDir.y;
+
+        // Si t > 0.0, el plano de los anillos bloquea el rayo de luz
+        if (t > 0.0) {
+            // Calcular el punto XZ exacto de intersección en el plano de los anillos
+            vec2 hitPosXZ = vWorldPosition.xz + sunDir.xz * t;
+            
+            // Distancia radial desde el centro de Saturno
+            float hitDistance = length(hitPosXZ);
+
+            // Verificar si el impacto ocurre dentro de los límites del disco de los anillos
+            if (hitDistance >= uRingInnerRadius && hitDistance <= uRingOuterRadius) {
+                
+                // Mapear la distancia a coordenadas UV (0.0 a 1.0) para leer la textura
+                float ringUv = (hitDistance - uRingInnerRadius) / (uRingOuterRadius - uRingInnerRadius);
+                
+                // Muestrear la textura de densidad de Cassini (canal alfa)
+                // Usamos 0.5 en Y porque la textura es una tira 1D estirada
+                float ringDensity = texture2D(uRingAlphaTex, vec2(ringUv, 0.5)).a;
+                
+                // La sombra es inversamente proporcional a la densidad del anillo
+                // Si la densidad es 1.0 (sólido), el multiplicador cae a 0.0 (sombra total)
+                // Si la densidad es 0.0 (División de Cassini), la luz pasa intacta (1.0)
+                shadowMultiplier *= 1.0 - ringDensity;
+            }
+        }
+    }
+
+    // 4. Composición final
+    // Multiplicamos la contribución difusa por la sombra, preservando la luz ambiente
+    vec3 finalColor = albedo * (vec3(0.02) + vec3(diffuse * shadowMultiplier));
+
+    gl_FragColor = vec4(finalColor, 1.0);
+
+    #include <tonemapping_fragment>
+    #include <colorspace_fragment>
+}
