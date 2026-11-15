@@ -1,46 +1,23 @@
 import * as THREE from 'three';
-import { CONSTANTS, toWebGLUnits } from '../math/AstroScale.js';
-import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
+import { CONSTANTS } from '../math/AstroScale.js';
+import { MoonSimulatorBase } from './MoonSimulatorBase.js';
 import plumeVert from '../shaders/plume.vert';
 import plumeFrag from '../shaders/plume.frag';
-import moonVert from '../shaders/moon.vert';
-import moonFrag from '../shaders/moon.frag';
-import { WHITE_TEXTURE, FLAT_NORMAL_TEXTURE } from './MoonTextures.js';
 
-export class EnceladusSimulator {
+export class EnceladusSimulator extends MoonSimulatorBase {
   constructor(scene, saturnSimulator, scaleFactor, assets = {}, listener = null) {
-    this.radius = toWebGLUnits(CONSTANTS.ENCELADUS.RADIUS, scaleFactor);
-    this.orbitDistance = toWebGLUnits(CONSTANTS.ENCELADUS.ORBIT_SEMI_MAJOR, scaleFactor);
-    
-    const geometry = new THREE.SphereGeometry(this.radius, 32, 32);
-    const material = new THREE.ShaderMaterial({
-      vertexShader: moonVert,
-      fragmentShader: moonFrag,
-      uniforms: {
-        uSunDirection: { value: saturnSimulator.sunDirection },
-        uSaturnPosition: { value: saturnSimulator.saturnMesh.position },
-        uSaturnEqRadius: { value: saturnSimulator.eqRadius },
-        uSaturnPolRadius: { value: saturnSimulator.polRadius },
-        tColor: { value: WHITE_TEXTURE },
-        tNormal: { value: FLAT_NORMAL_TEXTURE },
-        tAo: { value: WHITE_TEXTURE },
-        uAoIntensity: { value: 1.0 },
-        uBaseColor: { value: new THREE.Vector3(1.0, 1.0, 1.0) },
-        uAtmosphereStrength: { value: 0.0 },
-        uRimPower: { value: 1.2 }
-      },
-      extensions: { derivatives: true }
+    super(scene, saturnSimulator, scaleFactor, {
+      name: 'Enceladus',
+      radiusKm: CONSTANTS.ENCELADUS.RADIUS,
+      orbitSemiMajorKm: CONSTANTS.ENCELADUS.ORBIT_SEMI_MAJOR,
+      orbitPeriod: CONSTANTS.ENCELADUS.ORBIT_PERIOD,
+      eccentricity: CONSTANTS.ENCELADUS.ECCENTRICITY,
+      inclination: CONSTANTS.ENCELADUS.INCLINATION,
+      lan: CONSTANTS.ENCELADUS.LAN,
+      meanAnomalyEpoch: CONSTANTS.ENCELADUS.MEAN_ANOMALY_EPOCH,
+      geometrySegments: 32,
+      castsShadow: false
     });
-    
-    this.mesh = new THREE.Mesh(geometry, material);
-    this.mesh.name = 'Enceladus';
-
-    const labelElement = document.createElement('div');
-    labelElement.className = 'celestial-label';
-    labelElement.textContent = 'Enceladus';
-    this.label = new CSS2DObject(labelElement);
-    this.label.position.set(0, this.radius * 1.2, 0);
-    this.mesh.add(this.label);
 
     this.surfaceCameraMount = new THREE.Object3D();
     this.surfaceCameraMount.name = 'EnceladusSurfaceCameraMount';
@@ -58,7 +35,8 @@ export class EnceladusSimulator {
       this.ambientSound = sound;
     }
 
-    scene.add(this.mesh);
+    this.ringSourcePosition = new THREE.Vector3();
+    saturnSimulator.ringsMesh.material.uniforms.uEnceladusPosition.value = this.ringSourcePosition;
 
     this.maxParticles = 5000;
     this.positions = new Float32Array(this.maxParticles * 3);
@@ -66,15 +44,12 @@ export class EnceladusSimulator {
     this.lifetimes = new Float32Array(this.maxParticles);
     this.maxLifetimes = new Float32Array(this.maxParticles);
     this.plumeTime = 0.0;
+    this.meshWorldQuaternion = new THREE.Quaternion();
+    this.southDirection = new THREE.Vector3();
+    this.southTangentX = new THREE.Vector3();
+    this.southTangentZ = new THREE.Vector3();
+    this.southPolePosition = new THREE.Vector3();
     this.initPlume(scene);
-
-    // Inyectar uniforms a los shaders (igual que con Titán)
-    this.saturnUniforms = saturnSimulator.saturnMesh.material.uniforms;
-    this.ringsUniforms = saturnSimulator.ringsMesh.material.uniforms;
-    
-    const initialPos = new THREE.Vector3();
-    this.setupUniforms(this.saturnUniforms, initialPos);
-    this.setupUniforms(this.ringsUniforms, initialPos);
   }
 
   initPlume(scene) {
@@ -109,25 +84,9 @@ export class EnceladusSimulator {
     scene.add(this.plume);
   }
 
-  setupUniforms(uniforms, pos) {
-    uniforms.uEnceladusPosition = { value: pos };
-    uniforms.uEnceladusRadius = { value: this.radius };
-  }
-
-  update(elapsedTime, deltaTime = 0) {
-    // Velocidad orbital real: el período está en días terrestres.
-    const SECONDS_PER_DAY = 86400.0;
-    const angularSpeed = (2.0 * Math.PI) / (CONSTANTS.ENCELADUS.ORBIT_PERIOD * SECONDS_PER_DAY);
-    const currentAngle = elapsedTime * angularSpeed;
-
-    const x = Math.cos(currentAngle) * this.orbitDistance;
-    const z = Math.sin(currentAngle) * this.orbitDistance;
-    
-    this.mesh.position.set(x, 0, z);
-
-    this.saturnUniforms.uEnceladusPosition.value.copy(this.mesh.position);
-    this.ringsUniforms.uEnceladusPosition.value.copy(this.mesh.position);
-
+  update(daysSinceJ2000, deltaTime = 0) {
+    super.update(daysSinceJ2000);
+    this.mesh.getWorldPosition(this.ringSourcePosition);
     this.updatePlume(deltaTime);
   }
 
@@ -135,9 +94,15 @@ export class EnceladusSimulator {
     this.plumeTime += deltaTime;
     this.plumeMaterial.uniforms.uTime.value = this.plumeTime;
 
-    const southX = this.mesh.position.x;
-    const southY = this.mesh.position.y - this.radius;
-    const southZ = this.mesh.position.z;
+    this.mesh.getWorldQuaternion(this.meshWorldQuaternion);
+    this.southDirection.set(0, -1, 0).applyQuaternion(this.meshWorldQuaternion);
+    this.southTangentX.set(1, 0, 0).applyQuaternion(this.meshWorldQuaternion);
+    this.southTangentZ.set(0, 0, 1).applyQuaternion(this.meshWorldQuaternion);
+    this.southPolePosition.set(0, -this.radius, 0).applyMatrix4(this.mesh.matrixWorld);
+
+    const southX = this.southPolePosition.x;
+    const southY = this.southPolePosition.y;
+    const southZ = this.southPolePosition.z;
     const drag = Math.max(0.0, 1.0 - 0.06 * deltaTime);
     const expansion = 1.0 + 0.22 * deltaTime;
 
@@ -153,11 +118,24 @@ export class EnceladusSimulator {
         const speed = this.radius * (0.35 + Math.random() * 0.55);
         const azimuth = Math.random() * Math.PI * 2.0;
         const spread = Math.sqrt(Math.random()) * 0.65;
-        const lateral = Math.sin(spread) * speed;
+        const cosSpread = Math.cos(spread);
+        const sinSpread = Math.sin(spread);
+        const lateralX = Math.cos(azimuth) * this.southTangentX.x
+          + Math.sin(azimuth) * this.southTangentZ.x;
+        const lateralY = Math.cos(azimuth) * this.southTangentX.y
+          + Math.sin(azimuth) * this.southTangentZ.y;
+        const lateralZ = Math.cos(azimuth) * this.southTangentX.z
+          + Math.sin(azimuth) * this.southTangentZ.z;
 
-        this.velocities[j] = Math.cos(azimuth) * lateral;
-        this.velocities[j + 1] = -Math.cos(spread) * speed;
-        this.velocities[j + 2] = Math.sin(azimuth) * lateral;
+        this.velocities[j] = (
+          this.southDirection.x * cosSpread + lateralX * sinSpread
+        ) * speed;
+        this.velocities[j + 1] = (
+          this.southDirection.y * cosSpread + lateralY * sinSpread
+        ) * speed;
+        this.velocities[j + 2] = (
+          this.southDirection.z * cosSpread + lateralZ * sinSpread
+        ) * speed;
 
         const life = 2.0 + Math.random() * 3.0;
         this.lifetimes[i] = life;

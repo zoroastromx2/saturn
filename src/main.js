@@ -11,6 +11,10 @@ import { SaturnSimulator } from './core/SaturnSimulator.js';
 import { TitanSimulator } from './core/TitanSimulator.js';
 import { EnceladusSimulator } from './core/EnceladusSimulator.js';
 import { MimasSimulator } from './core/MimasSimulator.js';
+import { TethysSimulator } from './core/TethysSimulator.js';
+import { DioneSimulator } from './core/DioneSimulator.js';
+import { RheaSimulator } from './core/RheaSimulator.js';
+import { IapetusSimulator } from './core/IapetusSimulator.js';
 import { FRingSimulator } from './core/FRingSimulator.js';
 import { ComparisonMode } from './core/ComparisonMode.js';
 import { CameraController } from './core/CameraController.js';
@@ -19,14 +23,23 @@ import { getLanguage, setLanguage, t } from './core/Localization.js';
 import './style.css';
 
 let scene, camera, renderer, composer, labelRenderer, controls, cameraController, listener;
-let saturnSim, titanSim, enceladusSim, mimasSim, fRingSim, comparisonMode, telemetryController;
+let saturnSim, titanSim, enceladusSim, mimasSim;
+let tethysSim, dioneSim, rheaSim, iapetusSim;
+let fRingSim, comparisonMode, telemetryController;
 let audioEnabled = false;
 let timeScale = 1.0;
 let orbitalTime = 0.0;
+let simulationDate = new Date();
 let uiCollapsed = false;
 const clock = new THREE.Clock();
 const surfaceMountPosition = new THREE.Vector3();
 const MOBILE_UI_QUERY = '(max-width: 1024px), (pointer: coarse)';
+const J2000_EPOCH_MS = Date.UTC(2000, 0, 1, 12, 0, 0);
+const MS_PER_DAY = 86400000;
+
+function getDaysSinceJ2000() {
+  return (simulationDate.getTime() - J2000_EPOCH_MS) / MS_PER_DAY;
+}
 
 function setUiCollapsed(collapsed) {
   uiCollapsed = collapsed;
@@ -101,13 +114,23 @@ async function bootstrapApp() {
 
     // 3. Inyectar dependencias a los simuladores
     // Le pasamos los assets para que SaturnSimulator los asigne a los uniforms de GLSL
+    simulationDate = new Date();
+    const initialDaysSinceJ2000 = getDaysSinceJ2000();
     saturnSim = new SaturnSimulator(scene, assets, listener);
     titanSim = new TitanSimulator(scene, saturnSim, saturnSim.scaleFactor, assets, listener);
-    titanSim.update(0);
+    titanSim.update(initialDaysSinceJ2000);
     enceladusSim = new EnceladusSimulator(scene, saturnSim, saturnSim.scaleFactor, assets, listener);
-    enceladusSim.update(0);
+    enceladusSim.update(initialDaysSinceJ2000);
     mimasSim = new MimasSimulator(scene, saturnSim, saturnSim.scaleFactor, assets, listener);
-    mimasSim.update(0);
+    mimasSim.update(initialDaysSinceJ2000);
+    tethysSim = new TethysSimulator(scene, saturnSim, saturnSim.scaleFactor, assets);
+    tethysSim.update(initialDaysSinceJ2000);
+    dioneSim = new DioneSimulator(scene, saturnSim, saturnSim.scaleFactor, assets);
+    dioneSim.update(initialDaysSinceJ2000);
+    rheaSim = new RheaSimulator(scene, saturnSim, saturnSim.scaleFactor, assets);
+    rheaSim.update(initialDaysSinceJ2000);
+    iapetusSim = new IapetusSimulator(scene, saturnSim, saturnSim.scaleFactor, assets);
+    iapetusSim.update(initialDaysSinceJ2000);
     fRingSim = new FRingSimulator(scene, saturnSim, saturnSim.scaleFactor);
     comparisonMode = new ComparisonMode(scene, saturnSim, camera, assets);
     telemetryController = new TelemetryController(camera, cameraController, saturnSim.scaleFactor, saturnSim.sunDirection);
@@ -129,6 +152,10 @@ async function bootstrapApp() {
     const titanBtn = document.getElementById('btn-titan');
     const enceladusBtn = document.getElementById('btn-enceladus');
     const mimasBtn = document.getElementById('btn-mimas');
+    const tethysBtn = document.getElementById('btn-tethys');
+    const dioneBtn = document.getElementById('btn-dione');
+    const rheaBtn = document.getElementById('btn-rhea');
+    const iapetusBtn = document.getElementById('btn-iapetus');
     const surfaceEnceladusBtn = document.getElementById('btn-surface-enceladus');
     const surfaceMimasBtn = document.getElementById('btn-surface-mimas');
     const labelsBtn = document.getElementById('btn-toggle-labels');
@@ -179,6 +206,30 @@ async function bootstrapApp() {
     if (mimasBtn) {
       mimasBtn.addEventListener('click', () => {
         cameraController.focusOn(mimasSim.mesh, 8.0, 0.0);
+      });
+    }
+
+    if (tethysBtn) {
+      tethysBtn.addEventListener('click', () => {
+        cameraController.focusOn(tethysSim.mesh, 5.0);
+      });
+    }
+
+    if (dioneBtn) {
+      dioneBtn.addEventListener('click', () => {
+        cameraController.focusOn(dioneSim.mesh, 5.0);
+      });
+    }
+
+    if (rheaBtn) {
+      rheaBtn.addEventListener('click', () => {
+        cameraController.focusOn(rheaSim.mesh, 5.0);
+      });
+    }
+
+    if (iapetusBtn) {
+      iapetusBtn.addEventListener('click', () => {
+        cameraController.focusOn(iapetusSim.mesh, 5.0);
       });
     }
 
@@ -298,6 +349,10 @@ async function bootstrapApp() {
       titanSim.label.element.textContent = t('body.titan');
       enceladusSim.label.element.textContent = t('body.enceladus');
       mimasSim.label.element.textContent = t('body.mimas');
+      tethysSim.label.element.textContent = t('body.tethys');
+      dioneSim.label.element.textContent = t('body.dione');
+      rheaSim.label.element.textContent = t('body.rhea');
+      iapetusSim.label.element.textContent = t('body.iapetus');
       comparisonMode.label.element.textContent = t('body.earth');
       setUiCollapsed(uiCollapsed);
       updateLabelsButton();
@@ -348,6 +403,8 @@ function tick() {
   // El tiempo alimenta la rotación kepleriana diferencial de los anillos
   const deltaTime = clock.getDelta();
   orbitalTime += deltaTime * timeScale;
+  simulationDate.setTime(simulationDate.getTime() + deltaTime * timeScale * 1000);
+  const daysSinceJ2000 = getDaysSinceJ2000();
 
   if (saturnSim && saturnSim.ringsMesh) {
     saturnSim.ringsMesh.material.uniforms.uTime.value = orbitalTime;
@@ -356,13 +413,25 @@ function tick() {
     saturnSim.saturnMesh.material.uniforms.uTime.value = orbitalTime;
   }
   if (titanSim) {
-    titanSim.update(orbitalTime);
+    titanSim.update(daysSinceJ2000);
   }
   if (enceladusSim) {
-    enceladusSim.update(orbitalTime, deltaTime);
+    enceladusSim.update(daysSinceJ2000, deltaTime);
   }
   if (mimasSim) {
-    mimasSim.update(orbitalTime);
+    mimasSim.update(daysSinceJ2000);
+  }
+  if (tethysSim) {
+    tethysSim.update(daysSinceJ2000);
+  }
+  if (dioneSim) {
+    dioneSim.update(daysSinceJ2000);
+  }
+  if (rheaSim) {
+    rheaSim.update(daysSinceJ2000);
+  }
+  if (iapetusSim) {
+    iapetusSim.update(daysSinceJ2000);
   }
   if (fRingSim) {
     fRingSim.update(orbitalTime);

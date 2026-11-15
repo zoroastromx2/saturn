@@ -18,6 +18,10 @@ const translations = {
     'nav.focusEnceladus': 'Ir a Encélado',
     'nav.landEnceladus': 'Aterrizar en Encélado',
     'nav.focusMimas': 'Ir a Mimas',
+    'nav.focusTethys': 'Ir a Tetis',
+    'nav.focusDione': 'Ir a Dione',
+    'nav.focusRhea': 'Ir a Rea',
+    'nav.focusIapetus': 'Ir a Jápeto',
     'nav.landMimas': 'Aterrizar en Mimas',
     'nav.showLabels': 'Mostrar etiquetas',
     'nav.hideLabels': 'Ocultar etiquetas',
@@ -52,6 +56,10 @@ const translations = {
     'body.titan': 'Titán',
     'body.enceladus': 'Encélado',
     'body.mimas': 'Mimas',
+    'body.tethys': 'Tetis',
+    'body.dione': 'Dione',
+    'body.rhea': 'Rea',
+    'body.iapetus': 'Jápeto',
     'error.bootstrap': 'Error inicializando el simulador. Revisa la consola.'
   },
   en: {
@@ -73,6 +81,10 @@ const translations = {
     'nav.focusEnceladus': 'Focus Enceladus',
     'nav.landEnceladus': 'Land on Enceladus',
     'nav.focusMimas': 'Focus Mimas',
+    'nav.focusTethys': 'Focus Tethys',
+    'nav.focusDione': 'Focus Dione',
+    'nav.focusRhea': 'Focus Rhea',
+    'nav.focusIapetus': 'Focus Iapetus',
     'nav.landMimas': 'Land on Mimas',
     'nav.showLabels': 'Show labels',
     'nav.hideLabels': 'Hide labels',
@@ -107,6 +119,10 @@ const translations = {
     'body.titan': 'Titan',
     'body.enceladus': 'Enceladus',
     'body.mimas': 'Mimas',
+    'body.tethys': 'Tethys',
+    'body.dione': 'Dione',
+    'body.rhea': 'Rhea',
+    'body.iapetus': 'Iapetus',
     'error.bootstrap': 'Error initializing the simulator. Check the console.'
   }
 };

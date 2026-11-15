@@ -42,9 +42,11 @@ export class CameraController {
 
     this.startPosition.copy(this.camera.position);
     this.startTarget.copy(this.controls.target);
+    targetMesh.getWorldPosition(this.targetPosition);
+    this.lastTargetPosition.copy(this.targetPosition);
 
     // Mantiene el ángulo de visión actual y añade una ligera elevación.
-    this.offsetDirection.copy(this.startPosition).sub(targetMesh.position);
+    this.offsetDirection.copy(this.startPosition).sub(this.targetPosition);
     if (this.offsetDirection.lengthSq() < 1e-8) {
       this.offsetDirection.set(0, 0.5, 1);
     }
@@ -60,7 +62,7 @@ export class CameraController {
       onUpdate: () => this.applyTransition(),
       onComplete: () => {
         this.applyTransition();
-        this.lastTargetPosition.copy(this.currentTarget.position);
+        this.lastTargetPosition.copy(this.targetPosition);
         this.tween = null;
       }
     });
@@ -109,7 +111,7 @@ export class CameraController {
     if (!this.currentTarget) return;
 
     // El destino se recalcula con la posición viva del astro en cada frame.
-    this.targetPosition.copy(this.currentTarget.position);
+    this.currentTarget.getWorldPosition(this.targetPosition);
     this.endPosition.copy(this.targetPosition)
       .addScaledVector(this.offsetDirection, this.focusDistance);
 
@@ -121,10 +123,11 @@ export class CameraController {
   update() {
     if (this.currentTarget && !this.tween && !this.isSurfaceLocked) {
       // Sigue la traslación orbital sin perder el encuadre elegido.
-      this.followDelta.subVectors(this.currentTarget.position, this.lastTargetPosition);
+      this.currentTarget.getWorldPosition(this.targetPosition);
+      this.followDelta.subVectors(this.targetPosition, this.lastTargetPosition);
       this.camera.position.add(this.followDelta);
-      this.controls.target.copy(this.currentTarget.position);
-      this.lastTargetPosition.copy(this.currentTarget.position);
+      this.controls.target.copy(this.targetPosition);
+      this.lastTargetPosition.copy(this.targetPosition);
     }
 
     this.controls.update();

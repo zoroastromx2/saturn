@@ -7,18 +7,15 @@ uniform float uOuterRadius;
 uniform float uERingInnerRadius;
 uniform float uERingOuterRadius;
 uniform float uEnceladusOrbitRadius;
+uniform vec3 uEnceladusPosition;
 uniform float uERingThickness;
 uniform float uEqRadius;
 uniform float uPolRadius;
 uniform vec3 uSunDirection;
 uniform float uTime;
 
-uniform vec3 uTitanPosition;
-uniform float uTitanRadius;
-uniform vec3 uEnceladusPosition;
-uniform float uEnceladusRadius;
-uniform vec3 uMimasPosition;
-uniform float uMimasRadius;
+uniform vec3 uMoonsPosition[6];
+uniform float uMoonsRadius[6];
 
 varying vec2 vUv;
 varying vec3 vWorldPosition;
@@ -61,34 +58,26 @@ float planetShadow(vec3 point, vec3 sunDir) {
     return t > 0.0 ? 1.0 : 0.0;
 }
 
-// La misma intersección rayo-esfera se reutiliza para Titán y Encélado.
-// Cuanto menor es distanceToMoon, más estrecha es la penumbra.
-float moonShadow(vec3 point, vec3 sunDir, vec3 moonPosition, float moonRadius) {
-    vec3 oc = point - moonPosition;
-    float b = dot(oc, sunDir);
-    float c = dot(oc, oc) - (moonRadius * moonRadius);
-    float h = b * b - c;
+float moonShadows(vec3 point, vec3 sunDir) {
+    float factor = 1.0;
 
-    if (h <= 0.0 || b >= 0.0) return 1.0;
+    for (int i = 0; i < 6; i++) {
+        vec3 oc = point - uMoonsPosition[i];
+        float b = dot(oc, sunDir);
+        float c = dot(oc, oc) - (uMoonsRadius[i] * uMoonsRadius[i]);
+        float h = b * b - c;
 
-    float distanceToMoon = length(oc);
-    float penumbraSoftness = max(distanceToMoon * 0.001, 1e-4);
-    float shadowEdge = sqrt(h);
-    return 1.0 - smoothstep(0.0, penumbraSoftness, shadowEdge);
-}
+        if (h > 0.0 && b < 0.0) {
+            float distanceToMoon = length(oc);
+            float penumbraSoftness = max(distanceToMoon * 0.001, 1e-4);
+            float shadowEdge = sqrt(h);
+            factor *= 1.0 - smoothstep(0.0, penumbraSoftness, shadowEdge);
 
-float mimasShadow(vec3 point, vec3 sunDir) {
-    vec3 oc = point - uMimasPosition;
-    float b = dot(oc, sunDir);
-    float c = dot(oc, oc) - (uMimasRadius * uMimasRadius);
-    float h = b * b - c;
+            if (factor < 0.001) break;
+        }
+    }
 
-    if (h <= 0.0 || b >= 0.0) return 1.0;
-
-    float distanceToMimas = length(oc);
-    float penumbra = max(distanceToMimas * 0.012, 1e-4);
-    float shadowEdge = sqrt(h);
-    return 1.0 - smoothstep(0.0, penumbra, shadowEdge);
+    return factor;
 }
 
 // Raymarching local del toro volumétrico del Anillo E.
@@ -213,9 +202,7 @@ void main() {
             float cosTheta = dot(viewDir, -sunDir);
             float phase = hgPhase(cosTheta, 0.8);
 
-            float moonShadowFactor = moonShadow(vWorldPosition, sunDir, uTitanPosition, uTitanRadius)
-                                   * moonShadow(vWorldPosition, sunDir, uEnceladusPosition, uEnceladusRadius)
-                                   * mimasShadow(vWorldPosition, sunDir);
+            float moonShadowFactor = moonShadows(vWorldPosition, sunDir);
 
             float illumination = 0.45 + 0.9 * phase;
             illumination *= mix(1.0, 0.02, planetShadow(vWorldPosition, sunDir));
@@ -240,9 +227,7 @@ void main() {
             float cosTheta = dot(viewDir, -sunDir);
             float phase = hgPhase(cosTheta, 0.8);
 
-            float moonShadowFactor = moonShadow(vWorldPosition, sunDir, uTitanPosition, uTitanRadius)
-                                   * moonShadow(vWorldPosition, sunDir, uEnceladusPosition, uEnceladusRadius)
-                                   * mimasShadow(vWorldPosition, sunDir);
+            float moonShadowFactor = moonShadows(vWorldPosition, sunDir);
 
             float illumination = (0.50 + 1.5 * phase)
                                * mix(1.0, 0.02, planetShadow(vWorldPosition, sunDir))

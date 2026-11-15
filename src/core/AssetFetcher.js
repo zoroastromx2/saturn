@@ -14,6 +14,18 @@ export class AssetFetcher {
       mimasColor: null,
       mimasNormal: null,
       mimasAo: null,
+      tethysColor: null,
+      tethysNormal: null,
+      tethysAo: null,
+      dioneColor: null,
+      dioneNormal: null,
+      dioneAo: null,
+      rheaColor: null,
+      rheaNormal: null,
+      rheaAo: null,
+      iapetusColor: null,
+      iapetusNormal: null,
+      iapetusAo: null,
       saturnAudioBuffer: null,
       titanAudioBuffer: null,
       enceladusAudioBuffer: null,
@@ -30,7 +42,7 @@ export class AssetFetcher {
     console.log("Iniciando descarga de texturas de la misión Cassini...");
 
     try {
-      const [saturn, rColor, rAlpha, earth, starmap, mimasColor, mimasNormal, mimasAo, saturnAudio, titanAudio, enceladusAudio, mimasAudio] = await Promise.all([
+      const [saturn, rColor, rAlpha, earth, starmap, mimasColor, mimasNormal, mimasAo, tethys, dione, rhea, iapetus, saturnAudio, titanAudio, enceladusAudio, mimasAudio] = await Promise.all([
         this.loadTextureAsync(this.assetUrl('textures/saturn_atmosphere_8k.jpg')),
         this.loadTextureAsync(this.assetUrl('textures/saturn_rings_color.png')),
         // La máscara de densidad/alfa de los anillos (blanco = sólido, negro = vacío)
@@ -40,6 +52,10 @@ export class AssetFetcher {
         this.loadTextureAsync(this.assetUrl('textures/mimas_color.jpg')),
         this.loadTextureAsync(this.assetUrl('textures/mimas_normal.jpg')),
         this.loadTextureWithFallback('textures/mimas_ao.jpg', 'textures/mimas_color.jpg'),
+        this.loadMoonTextureSet('tethys'),
+        this.loadMoonTextureSet('dione'),
+        this.loadMoonTextureSet('rhea'),
+        this.loadMoonTextureSet('iapetus'),
         this.loadAudioAsync(this.assetUrl('audio/saturn_deep_rumble.wav')),
         this.loadAudioAsync(this.assetUrl('audio/titan_winds.wav')),
         this.loadAudioAsync(this.assetUrl('audio/enceladus_ice_crackle.wav')),
@@ -72,6 +88,18 @@ export class AssetFetcher {
       this.assets.mimasColor = mimasColor;
       this.assets.mimasNormal = mimasNormal;
       this.assets.mimasAo = mimasAo;
+      this.assets.tethysColor = tethys.color;
+      this.assets.tethysNormal = tethys.normal;
+      this.assets.tethysAo = tethys.ao;
+      this.assets.dioneColor = dione.color;
+      this.assets.dioneNormal = dione.normal;
+      this.assets.dioneAo = dione.ao;
+      this.assets.rheaColor = rhea.color;
+      this.assets.rheaNormal = rhea.normal;
+      this.assets.rheaAo = rhea.ao;
+      this.assets.iapetusColor = iapetus.color;
+      this.assets.iapetusNormal = iapetus.normal;
+      this.assets.iapetusAo = iapetus.ao;
       this.assets.saturnAudioBuffer = saturnAudio;
       this.assets.titanAudioBuffer = titanAudio;
       this.assets.enceladusAudioBuffer = enceladusAudio;
@@ -108,6 +136,23 @@ export class AssetFetcher {
     return this.loadTextureAsync(this.assetUrl(primaryPath)).catch(() =>
       this.loadTextureAsync(this.assetUrl(fallbackPath))
     );
+  }
+
+  async loadMoonTextureSet(name) {
+    const [color, normal, ao] = await Promise.all([
+      this.loadTextureAsync(this.assetUrl(`textures/${name}_color.jpg`)),
+      this.loadTextureAsync(this.assetUrl(`textures/${name}_normal.jpg`)),
+      this.loadTextureWithFallback(`textures/${name}_ao.jpg`, `textures/${name}_color.jpg`)
+    ]);
+
+    color.colorSpace = THREE.SRGBColorSpace;
+    color.wrapS = THREE.RepeatWrapping;
+    normal.colorSpace = THREE.LinearSRGBColorSpace;
+    normal.wrapS = THREE.RepeatWrapping;
+    ao.colorSpace = THREE.LinearSRGBColorSpace;
+    ao.wrapS = THREE.RepeatWrapping;
+
+    return { color, normal, ao };
   }
 
   loadAudioAsync(url) {

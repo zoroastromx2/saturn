@@ -69,6 +69,62 @@ const BODY_DATA = {
       CONSTANTS.MIMAS.ORBIT_ECCENTRICITY
     ),
     labelKey: 'body.mimas'
+  },
+  Tethys: {
+    radius: CONSTANTS.TETHYS.RADIUS,
+    period: CONSTANTS.TETHYS.ORBIT_PERIOD,
+    velocity: calculateOrbitalVelocity(
+      CONSTANTS.TETHYS.ORBIT_SEMI_MAJOR,
+      CONSTANTS.TETHYS.ORBIT_PERIOD
+    ),
+    eccentricity: CONSTANTS.TETHYS.ORBIT_ECCENTRICITY,
+    ...calculateApsides(
+      CONSTANTS.TETHYS.ORBIT_SEMI_MAJOR,
+      CONSTANTS.TETHYS.ORBIT_ECCENTRICITY
+    ),
+    labelKey: 'body.tethys'
+  },
+  Dione: {
+    radius: CONSTANTS.DIONE.RADIUS,
+    period: CONSTANTS.DIONE.ORBIT_PERIOD,
+    velocity: calculateOrbitalVelocity(
+      CONSTANTS.DIONE.ORBIT_SEMI_MAJOR,
+      CONSTANTS.DIONE.ORBIT_PERIOD
+    ),
+    eccentricity: CONSTANTS.DIONE.ORBIT_ECCENTRICITY,
+    ...calculateApsides(
+      CONSTANTS.DIONE.ORBIT_SEMI_MAJOR,
+      CONSTANTS.DIONE.ORBIT_ECCENTRICITY
+    ),
+    labelKey: 'body.dione'
+  },
+  Rhea: {
+    radius: CONSTANTS.RHEA.RADIUS,
+    period: CONSTANTS.RHEA.ORBIT_PERIOD,
+    velocity: calculateOrbitalVelocity(
+      CONSTANTS.RHEA.ORBIT_SEMI_MAJOR,
+      CONSTANTS.RHEA.ORBIT_PERIOD
+    ),
+    eccentricity: CONSTANTS.RHEA.ORBIT_ECCENTRICITY,
+    ...calculateApsides(
+      CONSTANTS.RHEA.ORBIT_SEMI_MAJOR,
+      CONSTANTS.RHEA.ORBIT_ECCENTRICITY
+    ),
+    labelKey: 'body.rhea'
+  },
+  Iapetus: {
+    radius: CONSTANTS.IAPETUS.RADIUS,
+    period: CONSTANTS.IAPETUS.ORBIT_PERIOD,
+    velocity: calculateOrbitalVelocity(
+      CONSTANTS.IAPETUS.ORBIT_SEMI_MAJOR,
+      CONSTANTS.IAPETUS.ORBIT_PERIOD
+    ),
+    eccentricity: CONSTANTS.IAPETUS.ORBIT_ECCENTRICITY,
+    ...calculateApsides(
+      CONSTANTS.IAPETUS.ORBIT_SEMI_MAJOR,
+      CONSTANTS.IAPETUS.ORBIT_ECCENTRICITY
+    ),
+    labelKey: 'body.iapetus'
   }
 };
 
@@ -84,6 +140,7 @@ export class TelemetryController {
       : new THREE.Vector3(1.0, 0.35, 0.35)
     ).normalize();
     this.sunPositionKm = this.sunDirection.clone().multiplyScalar(CONSTANTS.SATURN.SUN_DISTANCE_KM);
+    this.bodyWorldPosition = new THREE.Vector3();
     this.bodyPositionKm = new THREE.Vector3();
 
     // Cachear los nodos evita lecturas de layout en el bucle de render.
@@ -112,10 +169,11 @@ export class TelemetryController {
     const target = this.cameraController.currentTarget;
     const targetName = target?.name || 'Saturn';
     const body = BODY_DATA[targetName] || BODY_DATA.Saturn;
+    const targetPosition = target ? target.getWorldPosition(this.bodyWorldPosition) : null;
 
     // Saturno está en el origen; el resto de cuerpos usan su posición viva.
-    const distanceToCore = target
-      ? this.camera.position.distanceTo(target.position)
+    const distanceToCore = targetPosition
+      ? this.camera.position.distanceTo(targetPosition)
       : this.camera.position.length();
     const altitudeKm = distanceToCore * this.scaleFactor - body.radius;
 
@@ -123,8 +181,8 @@ export class TelemetryController {
     if (targetName === 'Earth') {
       sunDistanceAu = kmToAU(CONSTANTS.EARTH.SUN_DISTANCE_KM);
     } else {
-      if (target) {
-        this.bodyPositionKm.copy(target.position).multiplyScalar(this.scaleFactor);
+      if (targetPosition) {
+        this.bodyPositionKm.copy(targetPosition).multiplyScalar(this.scaleFactor);
       } else {
         this.bodyPositionKm.set(0, 0, 0);
       }

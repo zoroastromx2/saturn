@@ -29,8 +29,22 @@ export class SaturnSimulator {
     // Misma dirección de luz para la atmósfera, los anillos y la Tierra.
     this.sunDirection = new THREE.Vector3(1.0, 0.35, 0.35).normalize();
 
+    this.moonShadowPositions = Array.from({ length: 6 }, () => new THREE.Vector3());
+    this.moonShadowRadii = new Float32Array(6);
+    this.nextShadowMoonIndex = 0;
+
     this.initSaturn();
     this.initRings();
+  }
+
+  registerShadowMoon(radius) {
+    if (this.nextShadowMoonIndex >= this.moonShadowPositions.length) {
+      throw new Error('No hay más ranuras para sombras de lunas.');
+    }
+
+    const index = this.nextShadowMoonIndex++;
+    this.moonShadowRadii[index] = radius;
+    return index;
   }
 
   initSaturn() {
@@ -58,7 +72,9 @@ export class SaturnSimulator {
         uRingAlphaTex: { value: this.assets.ringAlpha || null },
         uTime: { value: 0.0 },
         uAuroraIntensity: { value: 0.0 },
-        uStormIntensity: { value: 0.0 }
+        uStormIntensity: { value: 0.0 },
+        uMoonsPosition: { value: this.moonShadowPositions },
+        uMoonsRadius: { value: this.moonShadowRadii }
       }
     });
 
@@ -120,7 +136,10 @@ export class SaturnSimulator {
         uSunDirection: { value: this.sunDirection },
         uRingTexture: { value: this.assets.ringColor || null },
         uRingAlphaTex: { value: this.assets.ringAlpha || null },
-        uTime: { value: 0.0 }
+        uEnceladusPosition: { value: new THREE.Vector3() },
+        uTime: { value: 0.0 },
+        uMoonsPosition: { value: this.moonShadowPositions },
+        uMoonsRadius: { value: this.moonShadowRadii }
       }
     });
 
