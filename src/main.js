@@ -39,6 +39,7 @@ import { getLanguage, setLanguage, t } from './core/Localization.js';
 import { createEnvironmentProbe } from './core/EnvironmentProbe.js';
 import { resolveLocalized } from './core/LocalizedText.js';
 import { resolveQualityTier } from './core/QualityTier.js';
+import { prefersReducedMotion, watchReducedMotion } from './core/ReducedMotion.js';
 import { sliderPositionToScale, scaleToSliderPosition, formatTimeScale } from './math/TimeScale.js';
 import { VintageOpticsShader } from './shaders/VintageOpticsShader.js';
 import './style.css';
@@ -58,6 +59,7 @@ let fRingSim,
   statsController,
   orbitPathsController;
 let audioEnabled = false;
+let reducedMotion = false;
 let orbitsEnabled = false;
 let timeScale = 1.0;
 let orbitalTime = 0.0;
@@ -225,6 +227,11 @@ async function bootstrapApp() {
     override: new URLSearchParams(window.location.search).get('quality')
   });
 
+  reducedMotion = prefersReducedMotion();
+  watchReducedMotion((value) => {
+    reducedMotion = value;
+  });
+
   scene = new THREE.Scene();
 
   // La cámara se configura inicialmente para encuadrar a Saturno.
@@ -262,9 +269,13 @@ async function bootstrapApp() {
   try {
     // 2. Fase 0: solo lo mínimo para el primer frame (Saturno, anillos, fondo y Tierra)
     const loaderProgress = document.getElementById('loader-progress');
+    let lastAnnouncedPercent = -1;
     const setLoadProgress = (fraction) => {
       if (!loaderProgress) return;
       const percent = Math.max(0, Math.min(100, Math.round(fraction * 100)));
+      // Anuncia como máximo cada 5 puntos para no saturar al lector de pantalla.
+      if (percent !== 100 && percent - lastAnnouncedPercent < 5) return;
+      lastAnnouncedPercent = percent;
       loaderProgress.textContent = `${percent} %`;
     };
 
@@ -1091,7 +1102,8 @@ function tick() {
 
   // El tiempo alimenta la rotación kepleriana diferencial de los anillos
   const deltaTime = clock.getDelta();
-  if (vintageOpticsPass) {
+  // El grano del post-proceso es decorativo: se congela con movimiento reducido.
+  if (vintageOpticsPass && !reducedMotion) {
     vintageOpticsPass.uniforms.uTime.value = clock.elapsedTime;
   }
   orbitalTime += deltaTime * timeScale;

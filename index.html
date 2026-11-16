@@ -18,7 +18,7 @@
   <body>
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
-    <div id="loader">
+    <div id="loader" role="status" aria-live="polite" aria-atomic="true">
       <span data-i18n="loader.loading">Cargando datos de la misión Cassini...</span>
       <span id="loader-progress" class="loader-progress">0 %</span>
     </div>
@@ -344,6 +344,12 @@
         <path d="M4 4l12 12M16 4L4 16" />
       </svg>
     </button>
-    <canvas id="webgl-canvas"></canvas>	
+    <canvas
+      id="webgl-canvas"
+      role="img"
+      aria-label="Simulación 3D de Saturno, sus anillos y lunas"
+      data-i18n-aria-label="canvas.ariaLabel"
+      >Tu navegador no soporta WebGL.</canvas
+    >	
   </body>
 </html>

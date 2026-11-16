@@ -1,13 +1,18 @@
 // src/core/CameraController.js
 import * as THREE from 'three';
 import { gsap } from 'gsap';
+import { prefersReducedMotion, transitionDuration, watchReducedMotion } from './ReducedMotion.js';
 
 const TRANSITION_DURATION = 2.0;
 
 export class CameraController {
-  constructor(camera, controls) {
+  constructor(camera, controls, { reducedMotion = prefersReducedMotion() } = {}) {
     this.camera = camera;
     this.controls = controls;
+    this.reducedMotion = Boolean(reducedMotion);
+    this.stopWatchingMotion = watchReducedMotion((reduced) => {
+      this.reducedMotion = reduced;
+    });
 
     this.currentTarget = null;
     this.tween = null;
@@ -91,7 +96,7 @@ export class CameraController {
 
     this.instrumentTween = gsap.to(this.camera, {
       fov,
-      duration,
+      duration: transitionDuration(duration, this.reducedMotion),
       ease: 'power2.out',
       onUpdate: () => this.camera.updateProjectionMatrix(),
       onComplete: () => {
@@ -163,7 +168,7 @@ export class CameraController {
     this.progress.value = 0;
     this.tween = gsap.to(this.progress, {
       value: 1,
-      duration: TRANSITION_DURATION,
+      duration: transitionDuration(TRANSITION_DURATION, this.reducedMotion),
       ease: 'power3.inOut',
       onUpdate: () => this.applyTransition(),
       onComplete: () => {
@@ -194,7 +199,7 @@ export class CameraController {
     this.progress.value = 0;
     this.tween = gsap.to(this.progress, {
       value: 1,
-      duration: TRANSITION_DURATION,
+      duration: transitionDuration(TRANSITION_DURATION, this.reducedMotion),
       ease: 'power3.inOut',
       onUpdate: () => {
         mount.getWorldPosition(this.targetPosition);

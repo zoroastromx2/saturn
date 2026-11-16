@@ -2,6 +2,7 @@ const translations = {
   es: {
     'app.title': 'Simulador de Saturno',
     'app.subtitle': 'Observatorio volumétrico de Saturno / 01',
+    'canvas.ariaLabel': 'Simulación 3D de Saturno, sus anillos y lunas',
     'loader.loading': 'Cargando datos de la misión Cassini...',
     'telemetry.target': 'Objetivo activo',
     'telemetry.simDate': 'Fecha simulada',
@@ -110,6 +111,7 @@ const translations = {
   en: {
     'app.title': 'Saturn Simulator',
     'app.subtitle': 'Volumetric Saturn Observatory / 01',
+    'canvas.ariaLabel': '3D simulation of Saturn, its rings and moons',
     'loader.loading': 'Loading Cassini mission data...',
     'telemetry.target': 'Active Target',
     'telemetry.simDate': 'Simulated Date',
