@@ -45,7 +45,8 @@ export class AssetFetcher {
       minorMoons: null,
       models: {
         pioneer11: null,
-        voyager1: null
+        voyager1: null,
+        voyager2: null
       }
     };
   }
@@ -76,7 +77,8 @@ export class AssetFetcher {
         mimasAudio,
         minorMoons,
         pioneerModel,
-        voyagerModel
+        voyagerModel,
+        voyager2Model
       ] = await Promise.all([
         this.loadTextureAsync(this.assetUrl('textures/saturn_atmosphere_8k.jpg')),
         this.loadTextureAsync(this.assetUrl('textures/saturn_rings_color.png')),
@@ -96,7 +98,8 @@ export class AssetFetcher {
         this.loadAudioAsync(this.assetUrl('audio/mimas_rocky_rumble.wav')),
         this.loadMinorMoons(),
         this.loadPioneerModel(),
-        this.loadVoyagerModel()
+        this.loadVoyagerModel(),
+        this.loadVoyager2Model()
       ]);
 
       // Configuración estricta de espacios de color
@@ -149,6 +152,7 @@ export class AssetFetcher {
       this.assets.minorMoons = minorMoons;
       this.assets.models.pioneer11 = pioneerModel;
       this.assets.models.voyager1 = voyagerModel;
+      this.assets.models.voyager2 = voyager2Model;
 
       console.log("Texturas cargadas exitosamente.");
       return this.assets;
@@ -325,6 +329,22 @@ export class AssetFetcher {
     } catch (error) {
       console.warn(
         'Modelo Voyager 1 no disponible, usando sonda procedural:',
+        error?.message || error
+      );
+      return null;
+    }
+  }
+
+  async loadVoyager2Model() {
+    if (typeof window === 'undefined' && !this.hasCustomGltfLoader) {
+      return null;
+    }
+
+    try {
+      return await this.loadModel(this.assetUrl('models/voyager_2.glb'));
+    } catch (error) {
+      console.warn(
+        'Modelo Voyager 2 no disponible, usando sonda procedural:',
         error?.message || error
       );
       return null;

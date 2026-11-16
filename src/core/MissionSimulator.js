@@ -49,6 +49,9 @@ export class MissionSimulator {
     this.voyagerSource = assets?.models?.voyager1 || null;
     this.voyagerModel = null;
     this.voyagerModelWrapper = null;
+    this.voyager2Source = assets?.models?.voyager2 || null;
+    this.voyager2Model = null;
+    this.voyager2ModelWrapper = null;
     this.eqRadius = saturnSimulator.eqRadius;
     this.scaleFactor = saturnSimulator.scaleFactor
       ?? (CONSTANTS.SATURN.RADIUS_EQUATORIAL / this.eqRadius);
@@ -250,6 +253,7 @@ export class MissionSimulator {
     this.probeVisual.add(this.proceduralProbe);
     this.buildPioneerProbe();
     this.buildVoyagerProbe();
+    this.buildVoyager2Probe();
   }
 
   buildPioneerProbe() {
@@ -338,6 +342,50 @@ export class MissionSimulator {
     this.voyagerModelWrapper.add(voyagerMesh);
     this.probeVisual.add(this.voyagerModelWrapper);
     this.voyagerModel = voyagerMesh;
+  }
+
+  buildVoyager2Probe() {
+    if (!this.voyager2Source) return;
+
+    const voyager2Mesh = this.voyager2Source.clone(true);
+    voyager2Mesh.name = 'Voyager2Model';
+    voyager2Mesh.updateMatrixWorld(true);
+
+    const box = new THREE.Box3().setFromObject(voyager2Mesh);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z) || 1;
+    const saturnRadiusMeters = CONSTANTS.SATURN.RADIUS_EQUATORIAL * 1000;
+    const physicalWidth = (VOYAGER_REAL_WIDTH_METERS / saturnRadiusMeters) * this.eqRadius;
+    const targetSize = Math.max(physicalWidth * VOYAGER_TACTICAL_VISIBILITY, 3.7);
+    const scale = targetSize / maxDim;
+
+    voyager2Mesh.scale.setScalar(scale);
+    voyager2Mesh.position.set(
+      -center.x * scale,
+      -center.y * scale,
+      -center.z * scale
+    );
+
+    voyager2Mesh.traverse((child) => {
+      if (!child.isMesh || !child.material) return;
+
+      const materials = Array.isArray(child.material) ? child.material : [child.material];
+      materials.forEach((material) => {
+        material.envMapIntensity = 1.5;
+        material.needsUpdate = true;
+      });
+      child.castShadow = true;
+      child.receiveShadow = true;
+    });
+
+    this.voyager2ModelWrapper = new THREE.Group();
+    this.voyager2ModelWrapper.name = 'Voyager2ModelWrapper';
+    this.voyager2ModelWrapper.rotation.copy(VOYAGER_MODEL_ROTATION);
+    this.voyager2ModelWrapper.visible = false;
+    this.voyager2ModelWrapper.add(voyager2Mesh);
+    this.probeVisual.add(this.voyager2ModelWrapper);
+    this.voyager2Model = voyager2Mesh;
   }
 
   loadMission(key, daysSinceEpoch = this.lastDaysSinceEpoch) {
@@ -444,14 +492,18 @@ export class MissionSimulator {
 
     const usePioneerModel = mission.key === 'pioneer11' && Boolean(this.pioneerModelWrapper);
     const useVoyagerModel = mission.key === 'voyager1' && Boolean(this.voyagerModelWrapper);
+    const useVoyager2Model = mission.key === 'voyager2' && Boolean(this.voyager2ModelWrapper);
     if (this.proceduralProbe) {
-      this.proceduralProbe.visible = !usePioneerModel && !useVoyagerModel;
+      this.proceduralProbe.visible = !usePioneerModel && !useVoyagerModel && !useVoyager2Model;
     }
     if (this.pioneerModelWrapper) {
       this.pioneerModelWrapper.visible = usePioneerModel;
     }
     if (this.voyagerModelWrapper) {
       this.voyagerModelWrapper.visible = useVoyagerModel;
+    }
+    if (this.voyager2ModelWrapper) {
+      this.voyager2ModelWrapper.visible = useVoyager2Model;
     }
     this.huygensShield.visible = mission.key === 'huygens';
     this.probeGroup.visible = true;
@@ -490,6 +542,9 @@ export class MissionSimulator {
     }
     if (this.voyagerModelWrapper) {
       this.voyagerModelWrapper.visible = false;
+    }
+    if (this.voyager2ModelWrapper) {
+      this.voyager2ModelWrapper.visible = false;
     }
     this.huygensShield.visible = false;
   }
