@@ -85,7 +85,7 @@ export const CONSTANTS = {
     RADIUS_EQUATORIAL: 60268.0,
     RADIUS_POLAR: 54364.0,
     RING_INNER_EDGE: 74500.0, // Inicio del Anillo C
-    RING_OUTER_EDGE: 136775.0, // Borde exterior del Anillo F
+    RING_OUTER_EDGE: 136775.0, // Borde exterior del anillo A (el F tiene su propia constante)
     F_RING_RADIUS: 140180.0,
     F_RING_WIDTH: 500.0,
     E_RING_INNER: 181000.0,

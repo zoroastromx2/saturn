@@ -261,12 +261,12 @@ Orden de construcción vigente: `assets` + `astro-core` → `scene-render` → `
 | H-08 | S3 | Cobertura con puntos ciegos: `main.js`, `SaturnSimulator`, `Localization` y compilación de shaders no se prueban | 25 archivos de test listados | Un error GLSL o un `uniform` mal cableado no lo detecta nadie hasta abrir el navegador |
 | H-09 | S3 | Acoplamiento por conteo exacto: las lunas menores solo se crean si el JSON tiene exactamente 135 entradas | `main.js:274` | Si el catálogo cambia de tamaño, las 135 lunas irregulares desaparecen sin aviso |
 | H-10 | S3 | No hay `LICENSE` para el código; las licencias CC-BY de modelos viven solo en la UI | raíz del repo; `index.html:296-305` | Ambigüedad legal para reutilización o publicación |
-| H-11 | S4 | El comentario de `RING_OUTER_EDGE` dice "Anillo F" pero 136.775 km es el borde exterior del anillo A (el F está a 140.180 km) | `AstroScale.js:88-89` | Futuras decisiones de física sobre datos mal etiquetados |
+| H-11 | S4 | ~~El comentario de `RING_OUTER_EDGE` decía "Anillo F"~~ **Cerrado por `h11`**: 136.775 km es el borde exterior del anillo A | `AstroScale.js:88` | Etiqueta correcta; el valor no cambió |
 | H-12 | S4 | ~~Archivos muertos: `src/counter.js`, restos de `src/assets/` y PNG de AI Studio~~ **Cerrado por `repo-hygiene`** | — | Árbol sin huérfanos |
 | H-13 | S4 | ~~Accesibilidad incompleta: sin `prefers-reduced-motion`, loader sin semántica y canvas sin etiqueta~~ **Cerrado por `a11y`** | `tests/A11yMarkup.test.js` | Movimiento reducido, `role="status"` y canvas etiquetado |
 | H-14 | S4 | Sin E2E ni regresión visual pese a ser un producto eminentemente visual | `tests/` | Cambios de encuadre, color o shader se validan a ojo |
 
-**Cerrados por `quality-gates` (2026-11-16): H-02 y H-05.** **Cerrados por `remove-texture-studio` (2026-11-16): H-01 y H-04** (la función y el endpoint ya no existen). **Cerrado por `asset-budget` (2026-11-16): H-03.** **Cerrados por `repo-hygiene` (2026-11-16): H-06 y H-12.** **Cerrado por `i18n-missions` (2026-11-16): H-07.** **Cerrado por `a11y` (2026-11-16): H-13.**
+**Cerrados por `quality-gates` (2026-11-16): H-02 y H-05.** **Cerrados por `remove-texture-studio` (2026-11-16): H-01 y H-04** (la función y el endpoint ya no existen). **Cerrado por `asset-budget` (2026-11-16): H-03.** **Cerrados por `repo-hygiene` (2026-11-16): H-06 y H-12.** **Cerrado por `i18n-missions` (2026-11-16): H-07.** **Cerrado por `a11y` (2026-11-16): H-13.** **Cerrado por `h11` (2026-11-16): H-11.**
 
 ### 10.3 Límites de dominio que deben declararse en el producto
 
@@ -282,7 +282,7 @@ No son bugs; son decisiones que conviene explicitar para no vender precisión in
 
 ## 11. Candidatos de siguiente incremento (sin planificar)
 
-**Aplicados (2026-11-16):** `quality-gates`, `remove-texture-studio`, `asset-budget`, `repo-hygiene`, `i18n-missions` y `a11y`. **Producción:** GitHub Pages (estático). `deploy-api` quedó descartado: sin función de IA no hay API que desplegar.
+**Aplicados (2026-11-16):** `quality-gates`, `remove-texture-studio`, `asset-budget`, `repo-hygiene`, `i18n-missions`, `a11y` y `h11`. **Producción:** GitHub Pages (estático). `deploy-api` quedó descartado: sin función de IA no hay API que desplegar.
 
 **Siguiente (2026-11-16):** `a11y` — movimiento reducido, semántica del loader y canvas etiquetado (H-13). Ver [`SPEC-a11y.md`](SPEC-a11y.md).
 
