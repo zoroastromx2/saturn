@@ -678,6 +678,37 @@ body:not(.ui-collapsed) .ui-icon-close {
   color: #e68a7a;
 }
 
+.about-credits {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 8px 4px 4px;
+}
+
+.about-credit {
+  margin: 0;
+  color: var(--helio-muted);
+  font: 500 9px/1.55 var(--mono);
+  letter-spacing: 0.02em;
+  overflow-wrap: anywhere;
+}
+
+.about-credit a {
+  color: var(--helio-gold-bright);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.about-credit a:hover {
+  color: #f6e8c7;
+}
+
+.about-credit a:focus-visible {
+  outline: 1px solid var(--helio-gold-bright);
+  outline-offset: 2px;
+}
+
 .panel-label {
   grid-column: 1 / -1;
   display: flex;
@@ -1039,6 +1070,18 @@ body:not(.ui-collapsed) .ui-icon-close {
 
 #ui-container.light .texture-studio-status.is-error {
   color: #a63424;
+}
+
+#ui-container.light .about-credit {
+  color: rgba(58, 50, 38, 0.72);
+}
+
+#ui-container.light .about-credit a {
+  color: #7d5f28;
+}
+
+#ui-container.light .about-credit a:hover {
+  color: #17130d;
 }
 
 #ui-container.light .glass-input::-webkit-calendar-picker-indicator {

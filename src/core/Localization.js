@@ -109,6 +109,8 @@ const translations = {
     'textureStudio.applied': 'Textura {res} aplicada a {target}.',
     'textureStudio.restored': 'Textura original restaurada en {target}.',
     'textureStudio.previewAlt': 'Vista previa de textura generada para {target}',
+    'about.section': 'Acerca de',
+    'about.modelCredit': 'Créditos de los modelos',
     'error.bootstrap': 'Error inicializando el simulador. Revisa la consola.'
   },
   en: {
@@ -221,6 +223,8 @@ const translations = {
     'textureStudio.applied': 'Applied {res} texture to {target}.',
     'textureStudio.restored': 'Restored original texture on {target}.',
     'textureStudio.previewAlt': 'Generated texture preview for {target}',
+    'about.section': 'About',
+    'about.modelCredit': 'Model credits',
     'error.bootstrap': 'Error initializing the simulator. Check the console.'
   }
 };

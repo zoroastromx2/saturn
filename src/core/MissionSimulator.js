@@ -12,6 +12,9 @@ const PATH_SEGMENTS = 300;
 const PIONEER_REAL_WIDTH_METERS = 2.9;
 const PIONEER_TACTICAL_VISIBILITY = 1e7;
 const PIONEER_MODEL_ROTATION = new THREE.Euler(0, 0, 0);
+const VOYAGER_REAL_WIDTH_METERS = 3.7;
+const VOYAGER_TACTICAL_VISIBILITY = 1e7;
+const VOYAGER_MODEL_ROTATION = new THREE.Euler(Math.PI / 2, 0, 0);
 
 function pad2(value) {
   return String(value).padStart(2, '0');
@@ -43,6 +46,9 @@ export class MissionSimulator {
     this.pioneerSource = assets?.models?.pioneer11 || null;
     this.pioneerModel = null;
     this.pioneerModelWrapper = null;
+    this.voyagerSource = assets?.models?.voyager1 || null;
+    this.voyagerModel = null;
+    this.voyagerModelWrapper = null;
     this.eqRadius = saturnSimulator.eqRadius;
     this.scaleFactor = saturnSimulator.scaleFactor
       ?? (CONSTANTS.SATURN.RADIUS_EQUATORIAL / this.eqRadius);
@@ -243,6 +249,7 @@ export class MissionSimulator {
     proceduralChildren.forEach((child) => this.proceduralProbe.add(child));
     this.probeVisual.add(this.proceduralProbe);
     this.buildPioneerProbe();
+    this.buildVoyagerProbe();
   }
 
   buildPioneerProbe() {
@@ -287,6 +294,50 @@ export class MissionSimulator {
     this.pioneerModelWrapper.add(pioneerMesh);
     this.probeVisual.add(this.pioneerModelWrapper);
     this.pioneerModel = pioneerMesh;
+  }
+
+  buildVoyagerProbe() {
+    if (!this.voyagerSource) return;
+
+    const voyagerMesh = this.voyagerSource.clone(true);
+    voyagerMesh.name = 'Voyager1Model';
+    voyagerMesh.updateMatrixWorld(true);
+
+    const box = new THREE.Box3().setFromObject(voyagerMesh);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z) || 1;
+    const saturnRadiusMeters = CONSTANTS.SATURN.RADIUS_EQUATORIAL * 1000;
+    const physicalWidth = (VOYAGER_REAL_WIDTH_METERS / saturnRadiusMeters) * this.eqRadius;
+    const targetSize = Math.max(physicalWidth * VOYAGER_TACTICAL_VISIBILITY, 3.7);
+    const scale = targetSize / maxDim;
+
+    voyagerMesh.scale.setScalar(scale);
+    voyagerMesh.position.set(
+      -center.x * scale,
+      -center.y * scale,
+      -center.z * scale
+    );
+
+    voyagerMesh.traverse((child) => {
+      if (!child.isMesh || !child.material) return;
+
+      const materials = Array.isArray(child.material) ? child.material : [child.material];
+      materials.forEach((material) => {
+        material.envMapIntensity = 1.5;
+        material.needsUpdate = true;
+      });
+      child.castShadow = true;
+      child.receiveShadow = true;
+    });
+
+    this.voyagerModelWrapper = new THREE.Group();
+    this.voyagerModelWrapper.name = 'Voyager1ModelWrapper';
+    this.voyagerModelWrapper.rotation.copy(VOYAGER_MODEL_ROTATION);
+    this.voyagerModelWrapper.visible = false;
+    this.voyagerModelWrapper.add(voyagerMesh);
+    this.probeVisual.add(this.voyagerModelWrapper);
+    this.voyagerModel = voyagerMesh;
   }
 
   loadMission(key, daysSinceEpoch = this.lastDaysSinceEpoch) {
@@ -392,11 +443,15 @@ export class MissionSimulator {
     });
 
     const usePioneerModel = mission.key === 'pioneer11' && Boolean(this.pioneerModelWrapper);
+    const useVoyagerModel = mission.key === 'voyager1' && Boolean(this.voyagerModelWrapper);
     if (this.proceduralProbe) {
-      this.proceduralProbe.visible = !usePioneerModel;
+      this.proceduralProbe.visible = !usePioneerModel && !useVoyagerModel;
     }
     if (this.pioneerModelWrapper) {
       this.pioneerModelWrapper.visible = usePioneerModel;
+    }
+    if (this.voyagerModelWrapper) {
+      this.voyagerModelWrapper.visible = useVoyagerModel;
     }
     this.huygensShield.visible = mission.key === 'huygens';
     this.probeGroup.visible = true;
@@ -432,6 +487,9 @@ export class MissionSimulator {
     this.probeGroup.visible = false;
     if (this.pioneerModelWrapper) {
       this.pioneerModelWrapper.visible = false;
+    }
+    if (this.voyagerModelWrapper) {
+      this.voyagerModelWrapper.visible = false;
     }
     this.huygensShield.visible = false;
   }
