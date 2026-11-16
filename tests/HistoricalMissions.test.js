@@ -53,6 +53,12 @@ describe('HistoricalMissions - Catálogo y cinemática', () => {
         expect(milestone.t).toBeGreaterThanOrEqual(0);
         expect(milestone.t).toBeLessThanOrEqual(1);
         expect(milestone.title.length).toBeGreaterThan(0);
+        expect([
+          'SATURN', 'TITAN', 'ENCELADUS', 'TETIS', 'RING_F', 'VELOCITY_VECTOR'
+        ]).toContain(milestone.targetKey);
+        expect(milestone.targetOffset).toBeInstanceOf(THREE.Vector3);
+        expect(milestone.instrumentName.length).toBeGreaterThan(0);
+        expect(milestone.defaultFov).toBeGreaterThan(0);
       });
     });
   });
@@ -71,6 +77,8 @@ describe('HistoricalMissions - Catálogo y cinemática', () => {
       MISSIONS.pioneer11.milestones.map(({ title }) => title)
     );
     expect(simulator.milestoneBadges[0].element.className).toBe('milestone-badge');
+    expect(simulator.instrumentMount).toBeInstanceOf(THREE.Object3D);
+    expect(simulator.probeVisual.children).toContain(simulator.instrumentMount);
   });
 
   it('debería mover la sonda a lo largo de la spline según la fecha simulada', () => {
@@ -86,6 +94,38 @@ describe('HistoricalMissions - Catálogo y cinemática', () => {
     expect(Number.isFinite(after.x)).toBe(true);
     expect(Number.isFinite(after.y)).toBe(true);
     expect(Number.isFinite(after.z)).toBe(true);
+  });
+
+  it('debería interpolar el apuntamiento óptico entre hitos', () => {
+    const { simulator, titan } = createSimulator();
+    const eventDays = daysSinceJ2000(MISSIONS.voyager1.timestamp);
+    simulator.loadMission('voyager1', eventDays);
+
+    titan.mesh.position.set(80, 4, -30);
+    titan.mesh.updateMatrixWorld(true);
+    const titanTarget = simulator.getOpticalTargetPosition(0.2, {
+      saturnSim: { saturnMesh: null },
+      titanSim: titan
+    });
+    const expectedTitanTarget = titan.mesh.getWorldPosition(new THREE.Vector3())
+      .addScaledVector(MISSIONS.voyager1.milestones[0].targetOffset, simulator.eqRadius);
+    expect(titanTarget.distanceTo(expectedTitanTarget)).toBeLessThan(1e-5);
+
+    const saturnTarget = simulator.getOpticalTargetPosition(0.5, {
+      saturnSim: { saturnMesh: null },
+      titanSim: titan
+    });
+    const expectedSaturnTarget = new THREE.Vector3()
+      .addScaledVector(MISSIONS.voyager1.milestones[1].targetOffset, simulator.eqRadius);
+    expect(saturnTarget.distanceTo(expectedSaturnTarget)).toBeLessThan(1e-5);
+
+    const midTarget = simulator.getOpticalTargetPosition(0.35, {
+      saturnSim: { saturnMesh: null },
+      titanSim: titan
+    });
+    const midpoint = expectedTitanTarget.clone().lerp(expectedSaturnTarget, 0.5);
+    expect(midTarget.distanceTo(midpoint)).toBeLessThan(1e-5);
+    expect(simulator.getRelativeVelocityKmS(0.35)).toBeGreaterThan(0);
   });
 
   it('debería anclar el descenso de Huygens a Titán y tocar su superficie', () => {

@@ -22,8 +22,75 @@ export class CameraController {
     this.followDelta = new THREE.Vector3();
     this.focusDistance = 0;
     this.isSurfaceLocked = false;
+    this.defaultFov = camera.fov;
+    this.isInstrumentLocked = false;
+    this.activeLensMode = 'WAC';
+    this.instrumentTween = null;
     this.surfaceMount = null;
     this.surfaceOrigin = new THREE.Vector3(0, 0, 0);
+  }
+
+  engageInstrumentView(missionSim) {
+    const config = missionSim?.getActiveOpticalConfig?.();
+    if (!missionSim?.activeMission || !config) return;
+
+    if (this.tween) {
+      this.tween.kill();
+      this.tween = null;
+    }
+
+    this.isInstrumentLocked = true;
+    this.isSurfaceLocked = false;
+    this.surfaceMount = null;
+    this.currentTarget = null;
+    this.controls.enabled = false;
+
+    const defaultFov = Number(config.defaultFov) || 32;
+    this.activeLensMode = defaultFov <= 16 ? 'NAC' : 'WAC';
+    this.setInstrumentFov(defaultFov, 0.8);
+  }
+
+  toggleInstrumentLens() {
+    if (!this.isInstrumentLocked) return this.activeLensMode;
+
+    this.activeLensMode = this.activeLensMode === 'WAC' ? 'NAC' : 'WAC';
+    this.setInstrumentFov(this.activeLensMode === 'WAC' ? 32 : 10, 0.6);
+    return this.activeLensMode;
+  }
+
+  setInstrumentFov(fov, duration) {
+    if (this.instrumentTween) {
+      this.instrumentTween.kill();
+    }
+
+    this.instrumentTween = gsap.to(this.camera, {
+      fov,
+      duration,
+      ease: 'power2.out',
+      onUpdate: () => this.camera.updateProjectionMatrix(),
+      onComplete: () => {
+        this.camera.updateProjectionMatrix();
+        this.instrumentTween = null;
+      }
+    });
+  }
+
+  exitInstrumentView() {
+    if (!this.isInstrumentLocked) return;
+
+    this.isInstrumentLocked = false;
+    this.isSurfaceLocked = false;
+    this.surfaceMount = null;
+    this.activeLensMode = 'WAC';
+
+    if (this.instrumentTween) {
+      this.instrumentTween.kill();
+      this.instrumentTween = null;
+    }
+
+    this.camera.fov = this.defaultFov;
+    this.camera.updateProjectionMatrix();
+    this.controls.enabled = true;
   }
 
   focusOn(targetMesh, distanceMultiplier, elevationBias = 0.35) {
@@ -34,6 +101,7 @@ export class CameraController {
 
   focusOnObject(targetObject, distance, elevationBias = 0.35) {
     if (!targetObject) return;
+    this.exitInstrumentView();
 
     this.isSurfaceLocked = false;
     this.surfaceMount = null;
@@ -77,6 +145,7 @@ export class CameraController {
   landOnSurface(targetSimulator) {
     const mount = targetSimulator?.surfaceCameraMount;
     if (!mount) return;
+    this.exitInstrumentView();
 
     if (this.tween) {
       this.tween.kill();
@@ -127,6 +196,8 @@ export class CameraController {
   }
 
   update() {
+    if (this.isInstrumentLocked) return;
+
     if (this.currentTarget && !this.tween && !this.isSurfaceLocked) {
       // Sigue la traslación orbital sin perder el encuadre elegido.
       this.currentTarget.getWorldPosition(this.targetPosition);

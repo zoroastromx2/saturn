@@ -44,6 +44,18 @@ let orbitalTime = 0.0;
 let simulationDate = new Date();
 let uiCollapsed = false;
 let currentTheme = 'dark';
+let opticalSceneSimulators = null;
+let instrumentHud = null;
+let instrumentMissionName = null;
+let instrumentName = null;
+let instrumentDistance = null;
+let instrumentVelocity = null;
+let instrumentLensReadout = null;
+let instrumentViewBtn = null;
+let instrumentLensBtn = null;
+let instrumentViewState = null;
+let instrumentLensState = null;
+let instrumentUiSignature = '';
 const THEME_STORAGE_KEY = 'saturn-sim-theme';
 const clock = new THREE.Clock();
 const surfaceMountPosition = new THREE.Vector3();
@@ -53,6 +65,65 @@ const MS_PER_DAY = 86400000;
 
 function getDaysSinceJ2000() {
   return (simulationDate.getTime() - J2000_EPOCH_MS) / MS_PER_DAY;
+}
+
+function refreshInstrumentControls(force = false) {
+  if (!instrumentHud) return;
+
+  const locked = Boolean(cameraController?.isInstrumentLocked && missionSim?.activeMission);
+  const missionActive = Boolean(missionSim?.activeMission);
+  const lensMode = cameraController?.activeLensMode || 'WAC';
+  const fov = Math.round(cameraController?.camera?.fov ?? camera?.fov ?? 45);
+  const signature = `${locked}|${missionActive}|${lensMode}|${fov}|${getLanguage()}`;
+  if (!force && signature === instrumentUiSignature) return;
+  instrumentUiSignature = signature;
+
+  instrumentHud.hidden = !locked;
+
+  if (instrumentViewBtn) {
+    instrumentViewBtn.disabled = !missionActive;
+    instrumentViewBtn.setAttribute('aria-pressed', String(locked));
+    instrumentViewBtn.classList.toggle('active', locked);
+  }
+  if (instrumentViewState) {
+    instrumentViewState.textContent = t(locked ? 'state.on' : 'state.off');
+  }
+
+  if (instrumentLensBtn) {
+    instrumentLensBtn.disabled = !locked;
+    instrumentLensBtn.setAttribute('aria-pressed', String(locked && lensMode === 'NAC'));
+    instrumentLensBtn.classList.toggle('active', locked && lensMode === 'NAC');
+  }
+  if (instrumentLensState) {
+    instrumentLensState.textContent = locked ? `${lensMode} ${fov}°` : t('state.off');
+  }
+  if (instrumentLensReadout) {
+    instrumentLensReadout.textContent = `${lensMode} ${fov}°`;
+  }
+}
+
+function updateInstrumentReadout(targetPosition) {
+  if (!instrumentHud || instrumentHud.hidden || !targetPosition) return;
+  const config = missionSim?.getActiveOpticalConfig();
+  if (!config) return;
+
+  const filterSuffix = config.instrumentName.includes('Cassini ISS')
+    ? ' | FILTER: CL1+CL2'
+    : '';
+  if (instrumentName) {
+    instrumentName.textContent = `${config.instrumentName}${filterSuffix}`;
+  }
+  if (instrumentMissionName) {
+    instrumentMissionName.textContent = missionSim.activeMission.name;
+  }
+  if (instrumentDistance) {
+    const distanceKm = camera.position.distanceTo(targetPosition) * saturnSim.scaleFactor;
+    instrumentDistance.textContent = `${Math.round(distanceKm).toLocaleString()} km`;
+  }
+  if (instrumentVelocity) {
+    const velocityKmS = missionSim.getRelativeVelocityKmS(missionSim.currentU);
+    instrumentVelocity.textContent = `${velocityKmS.toFixed(2)} km/s`;
+  }
 }
 
 function setUiCollapsed(collapsed) {
@@ -180,6 +251,12 @@ async function bootstrapApp() {
       iapetusSim
     ]);
     missionSim = new MissionSimulator(scene, saturnSim, camera, cameraController, titanSim);
+    opticalSceneSimulators = {
+      saturnSim,
+      titanSim,
+      enceladusSim,
+      tethysSim
+    };
 
     // 4. Iluminar la Tierra con la misma dirección solar que usan los shaders
     const sunLight = new THREE.DirectionalLight(0xffffff, 2.6);
@@ -231,6 +308,16 @@ async function bootstrapApp() {
     const followProbeBtn = document.getElementById('btn-follow-probe');
     const followState = document.getElementById('follow-state');
     const missionDescription = document.getElementById('mission-description');
+    instrumentHud = document.getElementById('instrument-hud');
+    instrumentMissionName = document.getElementById('instrument-mission-name');
+    instrumentName = document.getElementById('instrument-name');
+    instrumentDistance = document.getElementById('instrument-distance');
+    instrumentVelocity = document.getElementById('instrument-velocity');
+    instrumentLensReadout = document.getElementById('instrument-lens-readout');
+    instrumentViewBtn = document.getElementById('btn-instrument-view');
+    instrumentLensBtn = document.getElementById('btn-instrument-lens');
+    instrumentViewState = document.getElementById('instrument-view-state');
+    instrumentLensState = document.getElementById('instrument-lens-state');
     let timeHistory = loadTimeHistory();
     let activeHistoryDate = null;
     let followProbe = false;
@@ -554,10 +641,15 @@ async function bootstrapApp() {
     }
 
     const selectMission = (missionKey) => {
+      if (cameraController.isInstrumentLocked) {
+        cameraController.exitInstrumentView();
+      }
+
       if (!missionKey) {
         missionSim.clearMission();
         followProbe = false;
         updateFollowButton();
+        refreshInstrumentControls(true);
         if (missionDescription) {
           missionDescription.hidden = true;
           missionDescription.textContent = '';
@@ -581,6 +673,7 @@ async function bootstrapApp() {
       followProbe = false;
       updateFollowButton();
       missionSim.frameMission();
+      refreshInstrumentControls(true);
 
       if (missionDescription) {
         missionDescription.textContent = `${mission.dateLabel} — ${mission.description}`;
@@ -598,6 +691,10 @@ async function bootstrapApp() {
     if (followProbeBtn) {
       followProbeBtn.addEventListener('click', () => {
         if (!missionSim.activeMission) return;
+        if (cameraController.isInstrumentLocked) {
+          cameraController.exitInstrumentView();
+          refreshInstrumentControls(true);
+        }
         followProbe = !followProbe;
         updateFollowButton();
         if (followProbe) {
@@ -612,7 +709,33 @@ async function bootstrapApp() {
       });
     }
 
+    if (instrumentViewBtn) {
+      instrumentViewBtn.addEventListener('click', () => {
+        if (!missionSim.activeMission) return;
+
+        followProbe = false;
+        updateFollowButton();
+
+        if (cameraController.isInstrumentLocked) {
+          cameraController.exitInstrumentView();
+          missionSim.frameMission();
+        } else {
+          cameraController.engageInstrumentView(missionSim);
+        }
+        refreshInstrumentControls(true);
+      });
+    }
+
+    if (instrumentLensBtn) {
+      instrumentLensBtn.addEventListener('click', () => {
+        if (!cameraController.isInstrumentLocked) return;
+        cameraController.toggleInstrumentLens();
+        refreshInstrumentControls(true);
+      });
+    }
+
     updateFollowButton();
+    refreshInstrumentControls(true);
 
     const updateDynamicLanguage = () => {
       saturnSim.label.element.textContent = t('body.saturn');
@@ -628,6 +751,7 @@ async function bootstrapApp() {
       updateLabelsButton();
       updateOrbitsButton();
       updateFollowButton();
+      refreshInstrumentControls(true);
       updateAudioButton();
       updateLanguageState();
       updateStormButton();
@@ -740,15 +864,37 @@ function tick() {
     missionSim.update(daysSinceJ2000);
   }
 
-  // Sigue al objetivo activo y actualiza la inercia de OrbitControls.
-  if (cameraController) {
-    cameraController.update();
-  }
+  refreshInstrumentControls();
 
-  if (cameraController?.isSurfaceLocked && cameraController.surfaceMount) {
-    cameraController.surfaceMount.getWorldPosition(surfaceMountPosition);
-    camera.position.copy(surfaceMountPosition);
-    camera.lookAt(0, 0, 0);
+  if (cameraController?.isInstrumentLocked && missionSim?.activeMission) {
+    missionSim.instrumentMount.getWorldPosition(camera.position);
+    const opticalTarget = missionSim.getOpticalTargetPosition(
+      missionSim.currentU,
+      opticalSceneSimulators
+    );
+    if (opticalTarget) {
+      camera.lookAt(opticalTarget);
+    }
+
+    missionSim.pathGroup.visible = false;
+    labelRenderer.domElement.style.visibility = 'hidden';
+    updateInstrumentReadout(opticalTarget);
+  } else {
+    if (missionSim) {
+      missionSim.pathGroup.visible = true;
+    }
+    labelRenderer.domElement.style.visibility = '';
+
+    // Sigue al objetivo activo y actualiza la inercia de OrbitControls.
+    if (cameraController) {
+      cameraController.update();
+    }
+
+    if (cameraController?.isSurfaceLocked && cameraController.surfaceMount) {
+      cameraController.surfaceMount.getWorldPosition(surfaceMountPosition);
+      camera.position.copy(surfaceMountPosition);
+      camera.lookAt(0, 0, 0);
+    }
   }
 
   if (telemetryController) {

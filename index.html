@@ -78,6 +78,43 @@
           <span class="panel-index">03</span>
         </div>
 
+        <details class="control-section mission-section" open>
+          <summary class="control-section-title">
+            <span data-i18n="mission.section">Misiones históricas</span>
+            <span class="section-chevron" aria-hidden="true">›</span>
+          </summary>
+          <div class="mission-controls">
+            <label class="mission-label" for="mission-selector" data-i18n="mission.selectorLabel">Misión</label>
+            <select
+              id="mission-selector"
+              class="glass-input mission-selector"
+              aria-label="Seleccionar misión histórica"
+              data-i18n-aria-label="mission.selectorAria"
+            >
+              <option value="" data-i18n="mission.placeholder">Selecciona una misión</option>
+              <option value="pioneer11">Pioneer 11 · 1979</option>
+              <option value="voyager1">Voyager 1 · 1980</option>
+              <option value="voyager2">Voyager 2 · 1981</option>
+              <option value="cassiniInsertion">Cassini-Huygens · 2004</option>
+              <option value="huygens">Huygens en Titán · 2005</option>
+              <option value="cassiniGrandFinale">Cassini · Gran Final · 2017</option>
+            </select>
+            <button id="btn-follow-probe" class="control-row system-row" type="button" aria-pressed="false" disabled>
+              <span class="row-label" data-i18n="mission.follow">Seguir sonda</span>
+              <span class="row-state" id="follow-state">OFF</span>
+            </button>
+            <button id="btn-instrument-view" class="control-row system-row" type="button" aria-pressed="false" disabled>
+              <span class="row-label" data-i18n="mission.instrumentView">Vista Instrumento Óptico</span>
+              <span class="row-state" id="instrument-view-state">OFF</span>
+            </button>
+            <button id="btn-instrument-lens" class="control-row system-row" type="button" aria-pressed="false" disabled>
+              <span class="row-label" data-i18n="mission.lens">Lente: WAC 32° / NAC 10°</span>
+              <span class="row-state" id="instrument-lens-state">WAC</span>
+            </button>
+            <p id="mission-description" class="mission-description" hidden></p>
+          </div>
+        </details>
+
         <details class="control-section" open>
           <summary class="control-section-title">
             <span data-i18n="console.goTo">Ir a</span>
@@ -137,35 +174,6 @@
               <span class="row-label" data-i18n="body.mimas">Mimas</span>
               <span class="row-glyph" aria-hidden="true">›</span>
             </button>
-          </div>
-        </details>
-
-        <details class="control-section mission-section" open>
-          <summary class="control-section-title">
-            <span data-i18n="mission.section">Misiones históricas</span>
-            <span class="section-chevron" aria-hidden="true">›</span>
-          </summary>
-          <div class="mission-controls">
-            <label class="mission-label" for="mission-selector" data-i18n="mission.selectorLabel">Misión</label>
-            <select
-              id="mission-selector"
-              class="glass-input mission-selector"
-              aria-label="Seleccionar misión histórica"
-              data-i18n-aria-label="mission.selectorAria"
-            >
-              <option value="" data-i18n="mission.placeholder">Selecciona una misión</option>
-              <option value="pioneer11">Pioneer 11 · 1979</option>
-              <option value="voyager1">Voyager 1 · 1980</option>
-              <option value="voyager2">Voyager 2 · 1981</option>
-              <option value="cassiniInsertion">Cassini-Huygens · 2004</option>
-              <option value="huygens">Huygens en Titán · 2005</option>
-              <option value="cassiniGrandFinale">Cassini · Gran Final · 2017</option>
-            </select>
-            <button id="btn-follow-probe" class="control-row system-row" type="button" aria-pressed="false" disabled>
-              <span class="row-label" data-i18n="mission.follow">Seguir sonda</span>
-              <span class="row-state" id="follow-state">OFF</span>
-            </button>
-            <p id="mission-description" class="mission-description" hidden></p>
           </div>
         </details>
 
@@ -249,6 +257,37 @@
         <span id="stats-memory" class="telemetry-value">—</span>
         <span class="telemetry-label" data-i18n="stats.gpu">Geometrías / Texturas</span>
         <span id="stats-gpu" class="telemetry-value">—</span>
+      </div>
+    </div>
+    <div id="instrument-hud" hidden>
+      <div class="instrument-frame" aria-hidden="true">
+        <span class="instrument-corner instrument-corner-tl"></span>
+        <span class="instrument-corner instrument-corner-tr"></span>
+        <span class="instrument-corner instrument-corner-bl"></span>
+        <span class="instrument-corner instrument-corner-br"></span>
+        <span class="instrument-reseau instrument-reseau-1">+</span>
+        <span class="instrument-reseau instrument-reseau-2">+</span>
+        <span class="instrument-reseau instrument-reseau-3">+</span>
+        <span class="instrument-reseau instrument-reseau-4">+</span>
+        <span class="instrument-reseau instrument-reseau-5">+</span>
+      </div>
+      <div class="instrument-readout">
+        <div class="instrument-readout-heading">
+          <span id="instrument-mission-name">OPTICAL INSTRUMENT</span>
+          <span id="instrument-lens-readout">WAC 32°</span>
+        </div>
+        <div class="instrument-readout-row">
+          <span class="instrument-readout-key">INSTRUMENT</span>
+          <span id="instrument-name" class="instrument-readout-value">—</span>
+        </div>
+        <div class="instrument-readout-row">
+          <span class="instrument-readout-key">TARGET DIST</span>
+          <span id="instrument-distance" class="instrument-readout-value">—</span>
+        </div>
+        <div class="instrument-readout-row">
+          <span class="instrument-readout-key">REL VELOCITY</span>
+          <span id="instrument-velocity" class="instrument-readout-value">—</span>
+        </div>
       </div>
     </div>
     <button id="btn-toggle-ui" type="button" aria-controls="ui-container" aria-expanded="true" aria-label="Ocultar controles" title="Ocultar controles">

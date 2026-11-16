@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { MISSIONS } from '../data/HistoricalMissions.js';
+import { CONSTANTS } from '../math/AstroScale.js';
 
 const J2000_EPOCH_MS = Date.UTC(2000, 0, 1, 12, 0, 0);
 const MS_PER_DAY = 86400000;
@@ -30,6 +31,11 @@ export class MissionSimulator {
     this.cameraController = cameraController;
     this.titanSimulator = titanSimulator;
     this.eqRadius = saturnSimulator.eqRadius;
+    this.scaleFactor = saturnSimulator.scaleFactor
+      ?? (CONSTANTS.SATURN.RADIUS_EQUATORIAL / this.eqRadius);
+    this.fRingRadius = (
+      CONSTANTS.SATURN.F_RING_RADIUS / CONSTANTS.SATURN.RADIUS_EQUATORIAL
+    ) * this.eqRadius;
 
     this.activeMission = null;
     this.activeKey = null;
@@ -63,6 +69,14 @@ export class MissionSimulator {
     this.tempUp = new THREE.Vector3();
     this.tempMatrix = new THREE.Matrix4();
     this.tempFrameCenter = new THREE.Vector3();
+    this.tempInstrumentWorld = new THREE.Vector3();
+    this.tempOpticalTangent = new THREE.Vector3();
+    this.tempOpticalQuaternion = new THREE.Quaternion();
+    this.tempVelocityA = new THREE.Vector3();
+    this.tempVelocityB = new THREE.Vector3();
+    this.opticalTarget = new THREE.Vector3();
+    this.opticalTargetA = new THREE.Vector3();
+    this.opticalTargetB = new THREE.Vector3();
 
     this.buildProbe();
   }
@@ -173,6 +187,19 @@ export class MissionSimulator {
     thruster.rotation.x = Math.PI / 2;
     thruster.position.z = 0.46;
     this.probeVisual.add(thruster);
+
+    const scanPlatformBoom = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.018, 0.018, 0.72, 6),
+      darkMetal
+    );
+    scanPlatformBoom.rotation.z = Math.PI / 2;
+    scanPlatformBoom.position.set(0.52, 0, -0.2);
+    this.probeVisual.add(scanPlatformBoom);
+
+    this.instrumentMount = new THREE.Object3D();
+    this.instrumentMount.name = 'OpticalInstrumentMount';
+    this.instrumentMount.position.set(0.98, -0.04, -0.26);
+    this.probeVisual.add(this.instrumentMount);
 
     this.huygensShield = new THREE.Group();
     this.huygensShield.name = 'HuygensHeatShield';
@@ -325,6 +352,7 @@ export class MissionSimulator {
 
     this.pathGroup.clear();
     this.trajectoryGroup.position.set(0, 0, 0);
+    this.pathGroup.visible = true;
     this.curve = null;
     this.activeMission = null;
     this.activeKey = null;
@@ -389,6 +417,151 @@ export class MissionSimulator {
     this.trajectoryGroup.localToWorld(this.tempFrameCenter);
     this.framingAnchor.position.copy(this.tempFrameCenter);
     this.framingAnchor.updateMatrixWorld(true);
+  }
+
+  getMilestoneSegment(u) {
+    const milestones = this.activeMission?.milestones;
+    if (!milestones?.length) return null;
+
+    const first = milestones[0];
+    if (u <= first.t) {
+      return { previous: first, next: first, local: 0 };
+    }
+
+    const last = milestones[milestones.length - 1];
+    if (u >= last.t) {
+      return { previous: last, next: last, local: 0 };
+    }
+
+    for (let i = 0; i < milestones.length - 1; i++) {
+      const previous = milestones[i];
+      const next = milestones[i + 1];
+      if (u <= next.t) {
+        const span = Math.max(1e-8, next.t - previous.t);
+        return {
+          previous,
+          next,
+          local: (u - previous.t) / span
+        };
+      }
+    }
+
+    return { previous: last, next: last, local: 0 };
+  }
+
+  getActiveOpticalConfig(u = this.currentU) {
+    const milestones = this.activeMission?.milestones;
+    if (!milestones?.length) return null;
+
+    let active = milestones[0];
+    for (const milestone of milestones) {
+      if (milestone.t <= u + 1e-8) {
+        active = milestone;
+      }
+    }
+    return active;
+  }
+
+  resolveOpticalTarget(milestone, sceneSimulators, out) {
+    const sims = sceneSimulators || {};
+
+    switch (milestone.targetKey) {
+      case 'TITAN': {
+        const titanSim = sims.titanSim || this.titanSimulator;
+        if (titanSim?.mesh) {
+          titanSim.mesh.getWorldPosition(out);
+        } else {
+          out.set(0, 0, 0);
+        }
+        break;
+      }
+      case 'ENCELADUS': {
+        if (sims.enceladusSim?.mesh) {
+          sims.enceladusSim.mesh.getWorldPosition(out);
+        } else {
+          out.set(0, 0, 0);
+        }
+        break;
+      }
+      case 'TETIS': {
+        if (sims.tethysSim?.mesh) {
+          sims.tethysSim.mesh.getWorldPosition(out);
+        } else {
+          out.set(0, 0, 0);
+        }
+        break;
+      }
+      case 'RING_F': {
+        this.instrumentMount.getWorldPosition(this.tempInstrumentWorld);
+        const angle = Math.atan2(this.tempInstrumentWorld.z, this.tempInstrumentWorld.x);
+        out.set(
+          Math.cos(angle) * this.fRingRadius,
+          0,
+          Math.sin(angle) * this.fRingRadius
+        );
+        break;
+      }
+      case 'VELOCITY_VECTOR': {
+        this.instrumentMount.getWorldPosition(this.tempInstrumentWorld);
+        if (this.curve) {
+          this.tempOpticalTangent.copy(this.curve.getTangentAt(this.currentU)).normalize();
+          this.trajectoryGroup.getWorldQuaternion(this.tempOpticalQuaternion);
+          this.tempOpticalTangent.applyQuaternion(this.tempOpticalQuaternion);
+        } else {
+          this.tempOpticalTangent.set(0, 0, 1);
+        }
+        out.copy(this.tempInstrumentWorld).addScaledVector(
+          this.tempOpticalTangent,
+          this.eqRadius * 0.05
+        );
+        break;
+      }
+      case 'SATURN':
+      default: {
+        const saturnSim = sims.saturnSim || this.saturnSimulator;
+        if (saturnSim?.saturnMesh) {
+          saturnSim.saturnMesh.getWorldPosition(out);
+        } else {
+          out.set(0, 0, 0);
+        }
+        break;
+      }
+    }
+
+    if (milestone.targetOffset) {
+      out.addScaledVector(milestone.targetOffset, this.eqRadius);
+    }
+    return out;
+  }
+
+  getOpticalTargetPosition(u, sceneSimulators = null, out = this.opticalTarget) {
+    const segment = this.getMilestoneSegment(u);
+    if (!segment) return null;
+
+    this.resolveOpticalTarget(segment.previous, sceneSimulators, this.opticalTargetA);
+    this.resolveOpticalTarget(segment.next, sceneSimulators, this.opticalTargetB);
+
+    const local = THREE.MathUtils.clamp(segment.local, 0, 1);
+    const eased = local * local * (3 - 2 * local);
+    out.lerpVectors(this.opticalTargetA, this.opticalTargetB, eased);
+    return out;
+  }
+
+  getRelativeVelocityKmS(u = this.currentU) {
+    if (!this.curve || !this.activeMission) return 0;
+
+    const deltaU = 0.001;
+    const uA = THREE.MathUtils.clamp(u - deltaU, 0, 1);
+    const uB = THREE.MathUtils.clamp(u + deltaU, 0, 1);
+    const span = uB - uA;
+    if (span < 1e-8) return 0;
+
+    this.curve.getPointAt(uA, this.tempVelocityA);
+    this.curve.getPointAt(uB, this.tempVelocityB);
+    const distanceWorld = this.tempVelocityA.distanceTo(this.tempVelocityB);
+    const missionSeconds = Math.max(1, this.activeMission.windowHours * 3600);
+
+    return (distanceWorld / (span * missionSeconds)) * this.scaleFactor;
   }
 
   frameMission() {
