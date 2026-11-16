@@ -46,6 +46,7 @@ npm run verify        # lint + formato + pruebas + build
 
 - `public/models/` es la **única copia** de los GLB; no hay carpeta `models/` en la raíz.
 - El lockfile canónico es `package-lock.json`; npm es el gestor soportado.
+- Accesibilidad: se respeta `prefers-reduced-motion`, el loader se anuncia como estado y el canvas tiene nombre accesible en ES/EN.
 
 ### Presupuesto de activos
 
