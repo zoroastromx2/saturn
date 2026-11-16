@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { CONSTANTS } from '../math/AstroScale.js';
 import { MoonSimulatorBase } from './MoonSimulatorBase.js';
 import { WHITE_TEXTURE } from './MoonTextures.js';
+import { random } from './Random.js';
 import plumeVert from '../shaders/plume.vert';
 import plumeFrag from '../shaders/plume.frag';
 
@@ -40,6 +41,9 @@ export class EnceladusSimulator extends MoonSimulatorBase {
 
     this.ringSourcePosition = new THREE.Vector3();
     saturnSimulator.ringsMesh.material.uniforms.uEnceladusPosition.value = this.ringSourcePosition;
+
+    // Permite congelar la pluma en capturas deterministas (fase C).
+    this.frozen = false;
 
     this.maxParticles = 5000;
     this.positions = new Float32Array(this.maxParticles * 3);
@@ -102,6 +106,8 @@ export class EnceladusSimulator extends MoonSimulatorBase {
   }
 
   updatePlume(deltaTime) {
+    if (this.frozen) return;
+
     this.plumeTime += deltaTime;
     this.plumeMaterial.uniforms.uTime.value = this.plumeTime;
 
@@ -126,9 +132,9 @@ export class EnceladusSimulator extends MoonSimulatorBase {
         this.positions[j + 1] = southY;
         this.positions[j + 2] = southZ;
 
-        const speed = this.radius * (0.35 + Math.random() * 0.55);
-        const azimuth = Math.random() * Math.PI * 2.0;
-        const spread = Math.sqrt(Math.random()) * 0.65;
+        const speed = this.radius * (0.35 + random() * 0.55);
+        const azimuth = random() * Math.PI * 2.0;
+        const spread = Math.sqrt(random()) * 0.65;
         const cosSpread = Math.cos(spread);
         const sinSpread = Math.sin(spread);
         const lateralX =
@@ -142,7 +148,7 @@ export class EnceladusSimulator extends MoonSimulatorBase {
         this.velocities[j + 1] = (this.southDirection.y * cosSpread + lateralY * sinSpread) * speed;
         this.velocities[j + 2] = (this.southDirection.z * cosSpread + lateralZ * sinSpread) * speed;
 
-        const life = 2.0 + Math.random() * 3.0;
+        const life = 2.0 + random() * 3.0;
         this.lifetimes[i] = life;
         this.maxLifetimes[i] = life;
       } else {

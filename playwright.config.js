@@ -12,13 +12,33 @@ export default defineConfig({
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
+  snapshotPathTemplate: '{testDir}/{testFileDir}/__screenshots__/{arg}{ext}',
   use: {
     baseURL: BASE_URL,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     viewport: { width: 1280, height: 800 }
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    {
+      name: 'chromium',
+      testIgnore: /visual\//,
+      use: { ...devices['Desktop Chrome'] }
+    },
+    {
+      name: 'visual',
+      testMatch: /visual\/.*\.spec\.js/,
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1280, height: 800 },
+        deviceScaleFactor: 1,
+        reducedMotion: 'reduce',
+        launchOptions: {
+          args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader']
+        }
+      }
+    }
+  ],
   webServer: {
     command: `npm run build && npm run preview -- --port ${PORT} --strictPort`,
     url: BASE_URL,

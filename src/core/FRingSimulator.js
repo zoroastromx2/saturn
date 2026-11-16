@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { CONSTANTS, toWebGLUnits } from '../math/AstroScale.js';
+import { random } from './Random.js';
 
 const ASTEROID_COUNT = 15000;
 const ASTEROID_RADIUS_KM = 180;
@@ -33,15 +34,15 @@ export class FRingSimulator {
     const scales = new Float32Array(ASTEROID_COUNT * 3);
 
     for (let i = 0; i < ASTEROID_COUNT; i++) {
-      const radius = this.ringRadius + (Math.random() - 0.5) * this.radialSpread * 2.0;
+      const radius = this.ringRadius + (random() - 0.5) * this.radialSpread * 2.0;
       orbitRadii[i] = radius;
-      phases[i] = Math.random() * Math.PI * 2.0;
+      phases[i] = random() * Math.PI * 2.0;
       speeds[i] = KEPLERIAN_SPEED_FACTOR / Math.pow(radius, 1.5);
 
       const offset = i * 3;
-      scales[offset] = 0.55 + Math.random();
-      scales[offset + 1] = 0.55 + Math.random();
-      scales[offset + 2] = 0.55 + Math.random();
+      scales[offset] = 0.55 + random();
+      scales[offset + 1] = 0.55 + random();
+      scales[offset + 2] = 0.55 + random();
     }
 
     geometry.setAttribute('aOrbitRadius', new THREE.InstancedBufferAttribute(orbitRadii, 1));

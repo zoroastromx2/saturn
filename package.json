@@ -12,7 +12,8 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --project=chromium",
+    "test:visual": "playwright test --project=visual",
     "verify": "npm run lint && npm run format:check && npm run test && npm run build"
   },
   "engines": {

@@ -39,6 +39,7 @@ import { getLanguage, setLanguage, t } from './core/Localization.js';
 import { createEnvironmentProbe } from './core/EnvironmentProbe.js';
 import { resolveLocalized } from './core/LocalizedText.js';
 import { resolveQualityTier } from './core/QualityTier.js';
+import { setRandomSeed } from './core/Random.js';
 import { prefersReducedMotion, watchReducedMotion } from './core/ReducedMotion.js';
 import { sliderPositionToScale, scaleToSliderPosition, formatTimeScale } from './math/TimeScale.js';
 import { VintageOpticsShader } from './shaders/VintageOpticsShader.js';
@@ -220,12 +221,19 @@ async function bootstrapApp() {
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.0;
 
+  const params = new URLSearchParams(window.location.search);
+  const e2eMode = params.get('e2e') === '1';
   const qualityTier = resolveQualityTier({
     coarsePointer: window.matchMedia('(pointer: coarse)').matches,
     deviceMemory: navigator.deviceMemory,
     maxTextureSize: renderer.capabilities.maxTextureSize,
-    override: new URLSearchParams(window.location.search).get('quality')
+    override: params.get('quality')
   });
+
+  if (e2eMode) {
+    setRandomSeed(Number(params.get('seed')) || 20261116);
+    window.__E2E_READY__ = false;
+  }
 
   reducedMotion = prefersReducedMotion();
   watchReducedMotion((value) => {
@@ -295,7 +303,7 @@ async function bootstrapApp() {
 
     // 3. Inyectar dependencias a los simuladores
     // Le pasamos los assets para que SaturnSimulator los asigne a los uniforms de GLSL
-    simulationDate = new Date();
+    simulationDate = e2eMode ? new Date(Date.UTC(2026, 10, 16, 12, 0, 0)) : new Date();
     const initialDaysSinceJ2000 = getDaysSinceJ2000();
     saturnSim = new SaturnSimulator(scene, assets, listener);
     starfieldSim = new StarfieldSimulator(
@@ -316,6 +324,11 @@ async function bootstrapApp() {
       listener
     );
     enceladusSim.update(initialDaysSinceJ2000);
+    if (e2eMode) {
+      // Una sola emisión sembrada y congelada: capturas reproducibles.
+      enceladusSim.update(initialDaysSinceJ2000, 0.016);
+      enceladusSim.frozen = true;
+    }
     mimasSim = new MimasSimulator(scene, saturnSim, saturnSim.scaleFactor, assets, listener);
     mimasSim.update(initialDaysSinceJ2000);
     tethysSim = new TethysSimulator(scene, saturnSim, saturnSim.scaleFactor, assets);
@@ -809,7 +822,7 @@ async function bootstrapApp() {
 
       titanSim.update(getDaysSinceJ2000());
       missionSim.update(getDaysSinceJ2000());
-      setTimeScale(100);
+      setTimeScale(e2eMode ? 0 : 100);
       followProbe = false;
       updateFollowButton();
       missionSim.frameMission();
@@ -1064,6 +1077,8 @@ async function bootstrapApp() {
         }
       } catch (error) {
         console.warn('Carga en segundo plano incompleta:', error?.message || error);
+      } finally {
+        if (e2eMode) window.__E2E_READY__ = true;
       }
     };
 
@@ -1073,6 +1088,8 @@ async function bootstrapApp() {
     // Ocultar pantalla de carga del DOM si existe
     const loaderUi = document.getElementById('loader');
     if (loaderUi) loaderUi.style.display = 'none';
+
+    if (e2eMode) setTimeScale(0);
 
     clock.start();
     tick();
