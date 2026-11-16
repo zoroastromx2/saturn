@@ -15,11 +15,13 @@ const grandFinaleFinalPoint = [
 export const MISSIONS = {
   pioneer11: {
     key: 'pioneer11',
-    name: 'Pioneer 11',
+    name: { es: 'Pioneer 11', en: 'Pioneer 11' },
     timestamp: '1979-09-01T16:29:00Z',
     dateLabel: '1979-09-01 16:29 UTC',
-    description:
-      'Sobrevuelo hiperbólico bajo los anillos, con máxima aproximación de 20.000 km sobre las nubes.',
+    description: {
+      es: 'Sobrevuelo hiperbólico bajo los anillos, con máxima aproximación de 20.000 km sobre las nubes.',
+      en: 'Hyperbolic flyby beneath the rings, with a closest approach of 20,000 km above the clouds.'
+    },
     color: 0x62d9ff,
     opticsMode: 1,
     peakT: 0.5,
@@ -39,7 +41,7 @@ export const MISSIONS = {
     milestones: [
       {
         t: 0.25,
-        title: 'Cruce del plano exterior de anillos',
+        title: { es: 'Cruce del plano exterior de anillos', en: 'Outer ring-plane crossing' },
         targetKey: 'RING_F',
         targetOffset: new THREE.Vector3(0, 0.02, 0),
         instrumentName: 'Pioneer IPP - Photopolarimeter',
@@ -47,7 +49,10 @@ export const MISSIONS = {
       },
       {
         t: 0.5,
-        title: 'Máxima aproximación (<20,000 km de las nubes)',
+        title: {
+          es: 'Máxima aproximación (<20,000 km de las nubes)',
+          en: 'Closest approach (<20,000 km above the clouds)'
+        },
         targetKey: 'SATURN',
         targetOffset: new THREE.Vector3(0, 0.28, 0.95),
         instrumentName: 'Pioneer IPP - Photopolarimeter',
@@ -55,7 +60,10 @@ export const MISSIONS = {
       },
       {
         t: 0.8,
-        title: 'Descubrimiento del Anillo F y Epimeteo',
+        title: {
+          es: 'Descubrimiento del Anillo F y Epimeteo',
+          en: 'Discovery of the F ring and Epimetheus'
+        },
         targetKey: 'RING_F',
         targetOffset: new THREE.Vector3(0, 0, 0),
         instrumentName: 'Pioneer IPP - Photopolarimeter',
@@ -66,11 +74,13 @@ export const MISSIONS = {
 
   voyager1: {
     key: 'voyager1',
-    name: 'Voyager 1',
+    name: { es: 'Voyager 1', en: 'Voyager 1' },
     timestamp: '1980-11-12T23:46:00Z',
     dateLabel: '1980-11-12 23:46 UTC',
-    description:
-      'Encuentro con Titán, paso bajo el polo sur y deflexión norte sobre el plano de los anillos.',
+    description: {
+      es: 'Encuentro con Titán, paso bajo el polo sur y deflexión norte sobre el plano de los anillos.',
+      en: 'Titan encounter, pass beneath the south pole, and northward deflection above the ring plane.'
+    },
     color: 0x62d9ff,
     opticsMode: 2,
     peakT: 0.5,
@@ -90,7 +100,10 @@ export const MISSIONS = {
     milestones: [
       {
         t: 0.2,
-        title: 'Sobrevuelo cercano a Titán (estudio atmosférico)',
+        title: {
+          es: 'Sobrevuelo cercano a Titán (estudio atmosférico)',
+          en: 'Close Titan flyby (atmospheric study)'
+        },
         targetKey: 'TITAN',
         targetOffset: new THREE.Vector3(0, 0.02, 0.03),
         instrumentName: 'Voyager ISS - Narrow Angle (NAC)',
@@ -98,7 +111,10 @@ export const MISSIONS = {
       },
       {
         t: 0.5,
-        title: 'Periapsis sobre el hemisferio sur (124,000 km)',
+        title: {
+          es: 'Periapsis sobre el hemisferio sur (124,000 km)',
+          en: 'Periapsis over the southern hemisphere (124,000 km)'
+        },
         targetKey: 'SATURN',
         targetOffset: new THREE.Vector3(0, -0.92, 0.38),
         instrumentName: 'Voyager ISS - Narrow Angle (NAC)',
@@ -106,7 +122,10 @@ export const MISSIONS = {
       },
       {
         t: 0.85,
-        title: 'Inclinación de salida hacia el espacio interestelar',
+        title: {
+          es: 'Inclinación de salida hacia el espacio interestelar',
+          en: 'Outbound inclination toward interstellar space'
+        },
         targetKey: 'SATURN',
         targetOffset: new THREE.Vector3(0, 0.38, 0.92),
         instrumentName: 'Voyager ISS - Wide Angle (WAC)',
@@ -117,11 +136,13 @@ export const MISSIONS = {
 
   voyager2: {
     key: 'voyager2',
-    name: 'Voyager 2',
+    name: { es: 'Voyager 2', en: 'Voyager 2' },
     timestamp: '1981-08-25T03:24:00Z',
     dateLabel: '1981-08-25 03:24 UTC',
-    description:
-      'Paso veloz junto a Encélado y Tetis, captura de los anillos y descenso hacia el plano exterior rumbo a Urano.',
+    description: {
+      es: 'Paso veloz junto a Encélado y Tetis, captura de los anillos y descenso hacia el plano exterior rumbo a Urano.',
+      en: 'Fast pass by Enceladus and Tethys, ring imaging, and descent toward the outer plane en route to Uranus.'
+    },
     color: 0x62d9ff,
     opticsMode: 2,
     peakT: 0.5,
@@ -141,7 +162,10 @@ export const MISSIONS = {
     milestones: [
       {
         t: 0.3,
-        title: 'Captura de alta resolución de los anillos',
+        title: {
+          es: 'Captura de alta resolución de los anillos',
+          en: 'High-resolution ring imaging'
+        },
         targetKey: 'RING_F',
         targetOffset: new THREE.Vector3(0, 0.015, 0),
         instrumentName: 'Voyager ISS - Narrow Angle (NAC)',
@@ -149,7 +173,10 @@ export const MISSIONS = {
       },
       {
         t: 0.55,
-        title: 'Aproximación cercana a Encélado y Tetis',
+        title: {
+          es: 'Aproximación cercana a Encélado y Tetis',
+          en: 'Close approach to Enceladus and Tethys'
+        },
         targetKey: 'ENCELADUS',
         targetOffset: new THREE.Vector3(0, 0.004, 0.006),
         instrumentName: 'Voyager ISS - Narrow Angle (NAC)',
@@ -157,7 +184,10 @@ export const MISSIONS = {
       },
       {
         t: 0.8,
-        title: 'Cruce descendente del plano de anillos rumbo a Urano',
+        title: {
+          es: 'Cruce descendente del plano de anillos rumbo a Urano',
+          en: 'Descending ring-plane crossing en route to Uranus'
+        },
         targetKey: 'RING_F',
         targetOffset: new THREE.Vector3(0, -0.02, 0),
         instrumentName: 'Voyager ISS - Wide Angle (WAC)',
@@ -168,11 +198,13 @@ export const MISSIONS = {
 
   cassiniInsertion: {
     key: 'cassiniInsertion',
-    name: 'Cassini-Huygens',
+    name: { es: 'Cassini-Huygens', en: 'Cassini-Huygens' },
     timestamp: '2004-07-01T01:12:00Z',
     dateLabel: '2004-07-01 01:12 UTC',
-    description:
-      'Ascenso por la brecha F-G, encendido de inserción orbital y captura en una órbita elíptica alrededor de Saturno.',
+    description: {
+      es: 'Ascenso por la brecha F-G, encendido de inserción orbital y captura en una órbita elíptica alrededor de Saturno.',
+      en: 'Ascent through the F-G gap, orbital insertion burn, and capture into an elliptical orbit around Saturn.'
+    },
     color: 0xf0a33c,
     opticsMode: 3,
     peakT: 0.5,
@@ -192,7 +224,10 @@ export const MISSIONS = {
     milestones: [
       {
         t: 0.2,
-        title: 'Ascenso a través de la brecha de los anillos F y G',
+        title: {
+          es: 'Ascenso a través de la brecha de los anillos F y G',
+          en: 'Ascent through the F and G ring gap'
+        },
         targetKey: 'RING_F',
         targetOffset: new THREE.Vector3(0, 0.01, 0),
         instrumentName: 'Cassini ISS - Wide Angle (WAC)',
@@ -200,7 +235,10 @@ export const MISSIONS = {
       },
       {
         t: 0.5,
-        title: 'Encendido de motor de 96 minutos (Inserción Orbital)',
+        title: {
+          es: 'Encendido de motor de 96 minutos (Inserción Orbital)',
+          en: '96-minute engine burn (Orbital Insertion)'
+        },
         targetKey: 'SATURN',
         targetOffset: new THREE.Vector3(0, 0.78, 0.62),
         instrumentName: 'Cassini ISS - Narrow Angle (NAC)',
@@ -208,7 +246,10 @@ export const MISSIONS = {
       },
       {
         t: 0.85,
-        title: 'Captura exitosa en órbita de Saturno (13 años de misión)',
+        title: {
+          es: 'Captura exitosa en órbita de Saturno (13 años de misión)',
+          en: 'Successful capture into Saturn orbit (13-year mission)'
+        },
         targetKey: 'SATURN',
         targetOffset: new THREE.Vector3(0, 0.25, 0.97),
         instrumentName: 'Cassini ISS - Wide Angle (WAC)',
@@ -219,11 +260,13 @@ export const MISSIONS = {
 
   huygens: {
     key: 'huygens',
-    name: 'Sonda Huygens',
+    name: { es: 'Sonda Huygens', en: 'Huygens Probe' },
     timestamp: '2005-01-14T10:13:00Z',
     dateLabel: '2005-01-14 10:13 UTC',
-    description:
-      'Descenso de Huygens desde la alta atmósfera de Titán hasta la superficie, anclado a la posición viva de la luna.',
+    description: {
+      es: 'Descenso de Huygens desde la alta atmósfera de Titán hasta la superficie, anclado a la posición viva de la luna.',
+      en: 'Huygens descent from the upper atmosphere of Titan to the surface, anchored to the live position of the moon.'
+    },
     color: 0xffc45c,
     opticsMode: 3,
     peakT: 1.0,
@@ -239,7 +282,10 @@ export const MISSIONS = {
     milestones: [
       {
         t: 0.15,
-        title: 'Entrada en la densa atmósfera de nitrógeno y metano',
+        title: {
+          es: 'Entrada en la densa atmósfera de nitrógeno y metano',
+          en: 'Entry into the dense nitrogen-methane atmosphere'
+        },
         targetKey: 'TITAN',
         targetOffset: new THREE.Vector3(0.01, 0.01, 0.03),
         instrumentName: 'Huygens DISR',
@@ -247,7 +293,10 @@ export const MISSIONS = {
       },
       {
         t: 0.5,
-        title: 'Despliegue de paracaídas e imágenes de ríos de metano',
+        title: {
+          es: 'Despliegue de paracaídas e imágenes de ríos de metano',
+          en: 'Parachute deployment and images of methane rivers'
+        },
         targetKey: 'TITAN',
         targetOffset: new THREE.Vector3(0.015, 0.005, 0.035),
         instrumentName: 'Huygens DISR',
@@ -255,7 +304,10 @@ export const MISSIONS = {
       },
       {
         t: 1.0,
-        title: 'Aterrizaje histórico en la superficie de Titán',
+        title: {
+          es: 'Aterrizaje histórico en la superficie de Titán',
+          en: 'Historic landing on the surface of Titan'
+        },
         targetKey: 'TITAN',
         targetOffset: new THREE.Vector3(0.015, 0, 0.035),
         instrumentName: 'Huygens DISR',
@@ -266,11 +318,13 @@ export const MISSIONS = {
 
   cassiniGrandFinale: {
     key: 'cassiniGrandFinale',
-    name: 'Cassini · Gran Final',
+    name: { es: 'Cassini · Gran Final', en: 'Cassini · Grand Finale' },
     timestamp: '2017-09-15T11:55:00Z',
     dateLabel: '2017-09-15 11:55 UTC',
-    description:
-      'Inmersión final entre el Anillo D y la atmósfera, entrada a 113.000 km/h y desintegración sobre las nubes de Saturno.',
+    description: {
+      es: 'Inmersión final entre el Anillo D y la atmósfera, entrada a 113.000 km/h y desintegración sobre las nubes de Saturno.',
+      en: 'Final plunge between the D ring and the atmosphere, entry at 113,000 km/h, and disintegration above the clouds of Saturn.'
+    },
     color: 0xff8a3d,
     opticsMode: 3,
     peakT: 1.0,
@@ -287,7 +341,10 @@ export const MISSIONS = {
     milestones: [
       {
         t: 0.25,
-        title: 'Último cruce entre el Anillo D y la atmósfera',
+        title: {
+          es: 'Último cruce entre el Anillo D y la atmósfera',
+          en: 'Last crossing between the D ring and the atmosphere'
+        },
         targetKey: 'SATURN',
         targetOffset: new THREE.Vector3(0.25, 0.95, 0),
         instrumentName: 'Cassini ISS - Narrow Angle (NAC)',
@@ -295,7 +352,10 @@ export const MISSIONS = {
       },
       {
         t: 0.65,
-        title: 'Entrada atmosférica a 113,000 km/h (Propulsores al 100%)',
+        title: {
+          es: 'Entrada atmosférica a 113,000 km/h (Propulsores al 100%)',
+          en: 'Atmospheric entry at 113,000 km/h (thrusters at 100%)'
+        },
         targetKey: 'VELOCITY_VECTOR',
         targetOffset: new THREE.Vector3(0, 0, 0),
         instrumentName: 'Cassini ISS - Wide Angle (WAC)',
@@ -303,7 +363,10 @@ export const MISSIONS = {
       },
       {
         t: 1.0,
-        title: 'Fin de transmisión: Desintegración en las nubes de Saturno',
+        title: {
+          es: 'Fin de transmisión: Desintegración en las nubes de Saturno',
+          en: 'End of transmission: disintegration in the clouds of Saturn'
+        },
         targetKey: 'VELOCITY_VECTOR',
         targetOffset: new THREE.Vector3(0, 0, 0),
         instrumentName: 'Cassini ISS - Narrow Angle (NAC)',

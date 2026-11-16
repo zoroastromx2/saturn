@@ -37,6 +37,7 @@ import {
 } from './core/TimeHistory.js';
 import { getLanguage, setLanguage, t } from './core/Localization.js';
 import { createEnvironmentProbe } from './core/EnvironmentProbe.js';
+import { resolveLocalized } from './core/LocalizedText.js';
 import { resolveQualityTier } from './core/QualityTier.js';
 import { sliderPositionToScale, scaleToSliderPosition, formatTimeScale } from './math/TimeScale.js';
 import { VintageOpticsShader } from './shaders/VintageOpticsShader.js';
@@ -152,7 +153,10 @@ function updateInstrumentReadout(targetPosition) {
     instrumentName.textContent = `${config.instrumentName}${filterSuffix}`;
   }
   if (instrumentMissionName) {
-    instrumentMissionName.textContent = missionSim.activeMission.name;
+    instrumentMissionName.textContent = resolveLocalized(
+      missionSim.activeMission.name,
+      getLanguage()
+    );
   }
   if (instrumentDistance) {
     const distanceKm = camera.position.distanceTo(targetPosition) * saturnSim.scaleFactor;
@@ -801,7 +805,7 @@ async function bootstrapApp() {
       refreshInstrumentControls(true);
 
       if (missionDescription) {
-        missionDescription.textContent = `${mission.dateLabel} — ${mission.description}`;
+        missionDescription.textContent = `${mission.dateLabel} — ${resolveLocalized(mission.description, getLanguage())}`;
         missionDescription.hidden = false;
       }
       telemetryController?.refresh();
@@ -910,7 +914,9 @@ async function bootstrapApp() {
       }
 
       const activeMission = missionSim?.activeMission;
-      const missionName = activeMission?.name || 'FREE FLIGHT';
+      const missionName = activeMission
+        ? resolveLocalized(activeMission.name, getLanguage())
+        : 'FREE FLIGHT';
       let instrumentName = 'FREE ORBITAL CAM | HDR RAW';
 
       if (activeMission && cameraController.isInstrumentLocked) {
@@ -967,6 +973,11 @@ async function bootstrapApp() {
       rheaSim.label.element.textContent = t('body.rhea');
       iapetusSim.label.element.textContent = t('body.iapetus');
       comparisonMode.label.element.textContent = t('body.earth');
+      if (missionSim?.activeMission && missionDescription) {
+        const mission = missionSim.activeMission;
+        missionDescription.textContent = `${mission.dateLabel} — ${resolveLocalized(mission.description, getLanguage())}`;
+      }
+      missionSim?.refreshLanguage?.();
       setUiCollapsed(uiCollapsed);
       updateLabelsButton();
       updateOrbitsButton();

@@ -2,8 +2,14 @@ import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
 import { MISSIONS, MISSION_ORDER } from '../src/data/HistoricalMissions.js';
 import { MissionSimulator } from '../src/core/MissionSimulator.js';
+import { setLanguage } from '../src/core/Localization.js';
+import { hasFullLocalization } from '../src/core/LocalizedText.js';
 
 globalThis.document = {
+  documentElement: { lang: 'es' },
+  title: '',
+  querySelectorAll: () => [],
+  dispatchEvent: () => {},
   createElement: () => ({
     style: { setProperty() {} },
     dataset: {},
@@ -53,7 +59,7 @@ describe('HistoricalMissions - Catálogo y cinemática', () => {
       mission.milestones.forEach((milestone) => {
         expect(milestone.t).toBeGreaterThanOrEqual(0);
         expect(milestone.t).toBeLessThanOrEqual(1);
-        expect(milestone.title.length).toBeGreaterThan(0);
+        expect(hasFullLocalization(milestone.title)).toBe(true);
         expect(['SATURN', 'TITAN', 'ENCELADUS', 'TETIS', 'RING_F', 'VELOCITY_VECTOR']).toContain(
           milestone.targetKey
         );
@@ -62,6 +68,32 @@ describe('HistoricalMissions - Catálogo y cinemática', () => {
         expect(milestone.defaultFov).toBeGreaterThan(0);
       });
     });
+  });
+
+  it('debería localizar nombres, descripciones e hitos, y refrescar los badges al cambiar idioma', () => {
+    MISSION_ORDER.forEach((key) => {
+      const mission = MISSIONS[key];
+      expect(hasFullLocalization(mission.name)).toBe(true);
+      expect(hasFullLocalization(mission.description)).toBe(true);
+      mission.milestones.forEach((milestone) => {
+        expect(hasFullLocalization(milestone.title)).toBe(true);
+      });
+    });
+
+    const { simulator } = createSimulator();
+    simulator.loadMission('pioneer11', daysSinceJ2000(MISSIONS.pioneer11.timestamp));
+    const spanishTitle = simulator.milestoneBadges[0].element.textContent;
+
+    setLanguage('en');
+    simulator.refreshLanguage();
+    expect(simulator.milestoneBadges[0].element.textContent).toBe(
+      MISSIONS.pioneer11.milestones[0].title.en
+    );
+    expect(simulator.milestoneBadges[0].element.dataset.detail).toContain('Pioneer 11');
+
+    setLanguage('es');
+    simulator.refreshLanguage();
+    expect(simulator.milestoneBadges[0].element.textContent).toBe(spanishTitle);
   });
 
   it('debería crear la spline, la sonda y un marcador por hito', () => {
@@ -78,7 +110,7 @@ describe('HistoricalMissions - Catálogo y cinemática', () => {
     expect(simulator.probeGroup.visible).toBe(true);
     expect(simulator.milestoneBadges).toHaveLength(3);
     expect(simulator.milestoneBadges.map(({ element }) => element.textContent)).toEqual(
-      MISSIONS.pioneer11.milestones.map(({ title }) => title)
+      MISSIONS.pioneer11.milestones.map(({ title }) => title.es)
     );
     expect(simulator.milestoneBadges[0].element.className).toBe('milestone-badge');
     expect(simulator.instrumentMount).toBeInstanceOf(THREE.Object3D);

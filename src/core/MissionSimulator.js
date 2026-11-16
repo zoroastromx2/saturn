@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { MISSIONS } from '../data/HistoricalMissions.js';
 import { CONSTANTS } from '../math/AstroScale.js';
+import { getLanguage } from './Localization.js';
+import { resolveLocalized } from './LocalizedText.js';
 
 const J2000_EPOCH_MS = Date.UTC(2000, 0, 1, 12, 0, 0);
 const MS_PER_DAY = 86400000;
@@ -422,6 +424,8 @@ export class MissionSimulator {
     this.activeMission = mission;
     this.eventMs = Date.parse(mission.timestamp);
     this.lastDaysSinceEpoch = daysSinceEpoch;
+    const missionName = resolveLocalized(mission.name, getLanguage());
+    const language = getLanguage();
 
     const controlPoints = mission.controlPoints.map(([x, y, z]) =>
       new THREE.Vector3(x, y, z).multiplyScalar(this.eqRadius)
@@ -439,7 +443,7 @@ export class MissionSimulator {
       toneMapped: false
     });
     const trajectoryLine = new THREE.Line(this.lineGeometry, this.lineMaterial);
-    trajectoryLine.name = `${mission.name}Trajectory`;
+    trajectoryLine.name = `${missionName}Trajectory`;
     trajectoryLine.frustumCulled = false;
     this.pathGroup.add(trajectoryLine);
 
@@ -464,16 +468,17 @@ export class MissionSimulator {
         })
       );
       marker.position.copy(point);
-      marker.name = `${mission.name}Milestone`;
+      marker.name = `${missionName}Milestone`;
       this.pathGroup.add(marker);
 
       const badge = document.createElement('div');
       badge.className = 'milestone-badge';
-      badge.textContent = milestone.title;
+      badge.textContent = resolveLocalized(milestone.title, language);
       badge.dataset.expanded = 'false';
-      badge.dataset.detail = `${formatUtcDate(
+      const detailDate = formatUtcDate(
         new Date(this.eventMs + (milestone.t - mission.peakT) * mission.windowHours * MS_PER_HOUR)
-      )} · ${mission.name}`;
+      );
+      badge.dataset.detail = `${detailDate} · ${missionName}`;
       badge.style.setProperty('--mission-color', missionColor);
       badge.setAttribute('role', 'button');
       badge.setAttribute('tabindex', '0');
@@ -507,7 +512,9 @@ export class MissionSimulator {
         label,
         element: badge,
         geometry: marker.geometry,
-        material: marker.material
+        material: marker.material,
+        milestone,
+        detailDate
       });
     });
 
@@ -517,6 +524,19 @@ export class MissionSimulator {
     this.update(daysSinceEpoch);
 
     return mission;
+  }
+
+  /** Reetiqueta los badges existentes al cambiar de idioma, sin reconstruir la curva. */
+  refreshLanguage() {
+    if (!this.activeMission) return;
+    const language = getLanguage();
+    const missionName = resolveLocalized(this.activeMission.name, language);
+
+    this.milestoneBadges.forEach(({ milestone, element, detailDate }) => {
+      if (!element) return;
+      if (milestone) element.textContent = resolveLocalized(milestone.title, language);
+      if (detailDate) element.dataset.detail = `${detailDate} · ${missionName}`;
+    });
   }
 
   /** Elige sonda procedural o modelo GLB según la misión activa. */
