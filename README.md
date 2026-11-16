@@ -31,7 +31,7 @@ npm install
 npm run dev        # Vite en http://localhost:3000
 npm run build      # Build estático en dist/
 npm run preview    # Sirve dist/ en local
-npm test           # 95 pruebas de Vitest
+npm test           # 113 pruebas de Vitest
 ```
 
 Calidad — los mismos gates que CI ejecuta antes de publicar:
@@ -40,4 +40,15 @@ Calidad — los mismos gates que CI ejecuta antes de publicar:
 npm run lint          # ESLint
 npm run format:check  # Prettier
 npm run verify        # lint + formato + pruebas + build
+```
+
+### Presupuesto de activos
+
+El cliente elige el preset `low`, `medium` o `high` según memoria del dispositivo, tamaño máximo de textura y tipo de puntero. Se puede forzar con `?quality=low` (o `medium` / `high`).
+
+Las variantes se versionan; solo hay que regenerarlas si cambian los originales (requiere Python + Pillow):
+
+```bash
+python tools/generate-texture-tiers.py   # public/textures/{low,medium,high} + tiers.json
+node tools/asset-report.mjs              # transferencia inicial y VRAM por preset
 ```

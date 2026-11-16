@@ -13,9 +13,9 @@
 ## Resumen
 
 - El proyecto es un **observatorio 3D de Saturno** (Three.js + GLSL) con una decena de módulos de simulación, 6 misiones históricas, instrumento óptico emulado y UI bilingüe ES/EN. Es una **app 100 % estática**: sin servidor ni API.
-- La base es sólida: matemática aislada y documentada, **95 pruebas en 25 archivos que pasan (~1,3 s)** y build correcto (**898,31 kB JS / 238,96 kB gzip**).
-- El riesgo principal no está en la física, sino en el **presupuesto de recursos**: ~38 MB de carga inicial bloqueante y ~416 MB de texturas decodificadas.
-- La deuda restante es acotada: assets, duplicación de modelos, contenido de misiones solo en español y puntos ciegos de cobertura.
+- La base es sólida: matemática aislada y documentada, **113 pruebas en 29 archivos que pasan (~1,4 s)** y build correcto (**902,02 kB JS / 239,12 kB gzip**).
+- El presupuesto está acotado: **1,08–2,26 MB** de carga inicial y **32–278 MB** de VRAM según preset; modelos y audio no bloquean el primer frame.
+- La deuda restante es acotada: duplicación de modelos, contenido de misiones solo en español, cobertura y accesibilidad.
 - El documento registra los incrementos aplicados (`quality-gates`, `remove-texture-studio`) y los candidatos vivos de §11.
 
 ---
@@ -72,7 +72,8 @@ npm install                # lockfile canónico para CI: package-lock.json
 npm run dev                # Vite en http://localhost:3000
 npm run build              # vite build → dist/
 npm run preview            # sirve dist/ en local
-npx vitest run             # 25 archivos · 95 pruebas · ~1,3 s
+npx vitest run             # 29 archivos · 113 pruebas · ~1,4 s
+node tools/asset-report.mjs # presupuesto de activos por preset
 
 # Gates de calidad (desde 2026-11-16)
 npm run lint               # ESLint 10 (flat config)
@@ -84,9 +85,9 @@ Salidas medidas el 2026-11-16:
 
 | Comando | Resultado |
 |---|---|
-| `npx vitest run` | **25/25 archivos, 95/95 pruebas OK**, exit 0 |
-| `npm run build` | `index.html 22,90 kB` · `css 28,01 kB` · `js 898,31 kB` (gzip 238,96 kB), <1 s |
-| `dist/` | 38,0 MB en total (modelos 18,2 MB + texturas ~14 MB + audio 1,4 MB + resto) |
+| `npx vitest run` | **29/29 archivos, 113/113 pruebas OK**, exit 0 |
+| `npm run build` | `index.html 22,64 kB` · `css 28,13 kB` · `js 902,02 kB` (gzip 239,12 kB), ~1 s |
+| `dist/` | 43,3 MB (incluye los tres presets; cada usuario descarga solo el suyo) |
 
 **Calidad (desde 2026-11-16):** `lint`, `format:check` y `verify` existen y CI los ejecuta antes de publicar. No hay `typecheck` porque no queda TypeScript. Siguen faltando `test:coverage` y `test:e2e` (ver `test-depth`).
 
@@ -98,8 +99,11 @@ Salidas medidas el 2026-11-16:
 
 ```
 index.html                 Shell DOM: HUD, navegación, tiempo, estadísticas, instrumento
-src/main.js                Orquestación (1.105 líneas): bootstrap, wiring del HUD, reloj, tick
-src/core/                  Simuladores y controladores (26 archivos, 3.697 líneas)
+src/main.js                Orquestación (1.191 líneas): bootstrap, wiring del HUD, reloj, tick
+src/core/                  Simuladores y controladores (29 archivos, 3.862 líneas)
+  QualityTier              Preset low/medium/high y rutas por variante
+  LoadProgress             Progreso de carga por bytes
+  EnvironmentProbe         Entorno PBR reducido (512×256)
   SaturnSimulator            Planeta + anillos, registro de sombras de lunas (6 ranuras)
   MoonSimulatorBase           Base Kepleriana: geometría, material, etiqueta, sombra
   Titan/Enceladus/Mimas/      Lunas principales (GLB cuando existe, esfera procedural si no)
@@ -120,8 +124,9 @@ src/math/                  FUENTE DE VERDAD (no modificar sin aprobación)
 src/shaders/               16 archivos GLSL + VintageOpticsShader.js (post-proceso)
 src/data/HistoricalMissions.js   6 misiones: control points, hitos, instrumentos
 src/assets/               Restos de plantilla Vite, sin referencias
-tests/                    25 archivos, 2.015 líneas, entorno node
-public/                   Texturas, audio, GLB, minor_moons.json, iconos
+tests/                    29 archivos, 2.216 líneas, entorno node
+public/                   Texturas base + tiers low/medium/high, audio, GLB, minor_moons.json
+tools/                    asset-report.mjs y generate-texture-tiers.py
 models/                   Copia idéntica de public/models (18,2 MB) — redundante
 dist/                     Build de producción (ignorado por git)
 ```
@@ -159,7 +164,7 @@ Convenciones observadas:
 | Aspecto | Estado actual |
 |---|---|
 | Runner | Vitest 5.1, `environment: node`, `globals: true`, `include: tests/**/*.test.js` |
-| Volumen | 25 archivos · 95 pruebas · 2.015 líneas · ~1,3 s |
+| Volumen | 29 archivos · 113 pruebas · 2.216 líneas · ~1,4 s |
 | Técnica | Stubs manuales de DOM (`globalThis.document = {…}`), dobles inyectados; **sin jsdom** y **sin `vi.mock`** (0 usos) |
 | Foco real | Matemática (12 pruebas en `AstroScale`, 6 en `KeplerOrbit`, 3 en `RingOptics`), carga resiliente de assets, normalización de GLB, controladores con estado |
 | Cobertura | Sin umbral, sin `@vitest/coverage`, sin informe |
@@ -167,7 +172,7 @@ Convenciones observadas:
 | E2E / visual | Inexistentes |
 | Shaders | Solo aserciones sobre el texto fuente (`VintageOpticsShader.test.js`, 1 prueba); **nunca se compilan** en CI |
 
-Puntos ciegos concretos: `main.js` (1.105 líneas de orquestación), `SaturnSimulator` (uniformes y registro de sombras), `Localization` (paridad ES/EN), compilación de los 16 shaders e interacción de HUD/misiones.
+Puntos ciegos concretos: `main.js` (1.191 líneas de orquestación), `SaturnSimulator` (uniformes y registro de sombras), `Localization` (paridad ES/EN), compilación de los 16 shaders e interacción de HUD/misiones.
 
 Criterio propuesto para el próximo incremento que toque código: **toda lógica nueva entra con prueba; todo bug se reproduce primero con una prueba roja.**
 
@@ -247,7 +252,7 @@ Orden de construcción vigente: `assets` + `astro-core` → `scene-render` → `
 |---|---|---|---|---|
 | H-01 | S2 | ~~El despliegue no puede servir el API de texturas~~ **Cerrado por eliminación** | — | Ya no existe el Estudio de texturas ni el endpoint |
 | H-02 | S2 | CI no ejecuta pruebas ni lint; el verde del pipeline solo prueba que compila | `deploy.yml:34-38` | Regresiones de física/UI llegan a `main` sin freno |
-| H-03 | S2 | Carga inicial bloqueante de ~38 MB y ~416 MB de texturas RGBA decodificadas (sin mips): 2 texturas de 8192×4096 (128 MB cada una) | `main.js:237`, `AssetFetcher.loadAllAssets`, dimensiones medidas | Arranque lento en 4G y riesgo real de OOM en GPU móvil/iGPU |
+| H-03 | S2 | ~~Carga inicial de ~38 MB y ~416 MB de texturas~~ **Cerrado por `asset-budget`**: 1,08–2,26 MB iniciales y 32–278 MB de VRAM según preset | `tools/asset-report.mjs` | El primer frame ya no espera modelos ni audio |
 | H-04 | S2 | ~~Endpoint de generación sin autenticación ni cuota~~ **Cerrado por eliminación** | — | El endpoint ya no existe |
 | H-05 | S3 | No hay `lint`, `format` ni `typecheck`; `server.ts` es TypeScript sin `tsconfig` (nunca se comprueba) y no hay `engines` | `package.json:6-12` | Errores de tipo y estilo solo aparecen en runtime; requisito de Node invisible (Node 20 en CI) |
 | H-06 | S3 | `models/` duplica byte a byte `public/models/` (7 GLB, 18,2 MB) y ambos están versionados; además hay dos lockfiles | hashes SHA-256 idénticos; `git ls-files` | Repo de 53,3 MB de payload / 32,6 MB de `.git`; revisiones y clones más caros |
@@ -260,7 +265,7 @@ Orden de construcción vigente: `assets` + `astro-core` → `scene-render` → `
 | H-13 | S4 | Accesibilidad incompleta: sin `prefers-reduced-motion` (hay animaciones GSAP y ruido de shader), el loader es un `div` sin rol ni progreso, el `<canvas>` no tiene etiqueta | `style.css` (sin consulta de movimiento), `index.html` (loader y canvas) | Usuarios con sensibilidad al movimiento y lectores de pantalla pierden contexto |
 | H-14 | S4 | Sin E2E ni regresión visual pese a ser un producto eminentemente visual | `tests/` | Cambios de encuadre, color o shader se validan a ojo |
 
-**Cerrados por `quality-gates` (2026-11-16): H-02 y H-05.** **Cerrados por `remove-texture-studio` (2026-11-16): H-01 y H-04** (la función y el endpoint ya no existen).
+**Cerrados por `quality-gates` (2026-11-16): H-02 y H-05.** **Cerrados por `remove-texture-studio` (2026-11-16): H-01 y H-04** (la función y el endpoint ya no existen). **Cerrado por `asset-budget` (2026-11-16): H-03.**
 
 ### 10.3 Límites de dominio que deben declararse en el producto
 
@@ -276,7 +281,7 @@ No son bugs; son decisiones que conviene explicitar para no vender precisión in
 
 ## 11. Candidatos de siguiente incremento (sin planificar)
 
-**Aplicados (2026-11-16):** `quality-gates` y `remove-texture-studio`. **Producción:** GitHub Pages (estático). `deploy-api` quedó descartado: sin función de IA no hay API que desplegar.
+**Aplicados (2026-11-16):** `quality-gates`, `remove-texture-studio` y `asset-budget`. **Producción:** GitHub Pages (estático). `deploy-api` quedó descartado: sin función de IA no hay API que desplegar.
 
 Elige **uno** de los candidatos restantes. Los demás quedan fuera de alcance hasta nueva spec.
 
@@ -294,7 +299,7 @@ Elige **uno** de los candidatos restantes. Los demás quedan fuera de alcance ha
 
 1. **¿Dónde se publica de verdad?** → **Respondida (2026-11-16): GitHub Pages, estático.** H-01 cerrado por eliminación.
 2. **¿Cuál es el próximo incremento?** → **Respondidas (2026-11-16): `quality-gates` y `remove-texture-studio`.**
-3. **¿Qué presupuesto de rendimiento aceptamos?** (p. ej. LCP < 3 s en 4G, < 300 MB de VRAM, 30 fps mínimos en móvil de gama media).
+3. **¿Qué presupuesto de rendimiento aceptamos?** → **Respondida (2026-11-16):** ver `SPEC-asset-budget.md` §4 (≤ 4 MB / 60 MB en móvil; ≤ 8 MB / 120 MB en escritorio).
 4. **¿Licencia del código?** MIT, Apache-2.0 o propietaria. Y ¿se mantiene la política CC-BY con atribución en UI?
 5. **¿Se permite tocar `src/math/`?** El README lo prohíbe; si el próximo trabajo lo requiere, hay que autorizar la excepción.
 6. **¿Idioma canónico?** Hoy el español es el idioma por defecto y el contenido de misiones solo existe en español.
