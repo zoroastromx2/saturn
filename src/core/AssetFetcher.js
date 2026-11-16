@@ -294,6 +294,7 @@ export class AssetFetcher {
       try {
         return await this.loadHDRTexture(this.assetUrl('textures/starmap_4k.hdr'));
       } catch {
+        // Sin HDR disponible: se usa el JPG equirectangular de respaldo.
       }
     }
 

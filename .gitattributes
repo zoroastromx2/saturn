@@ -1,0 +1,9 @@
+# Normaliza los finales de línea a LF en el repositorio y en el working tree,
+# para que `prettier --check` dé el mismo resultado en Windows, macOS y CI.
+* text=auto eol=lf
+
+*.glb binary
+*.jpg binary
+*.png binary
+*.wav binary
+*.hdr binary

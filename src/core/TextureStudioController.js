@@ -183,7 +183,7 @@ export class TextureStudioController {
       })
     });
 
-    let payload = null;
+    let payload;
     try {
       payload = await response.json();
     } catch {

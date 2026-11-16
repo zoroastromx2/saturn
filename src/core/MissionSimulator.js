@@ -6,7 +6,6 @@ import { CONSTANTS } from '../math/AstroScale.js';
 const J2000_EPOCH_MS = Date.UTC(2000, 0, 1, 12, 0, 0);
 const MS_PER_DAY = 86400000;
 const MS_PER_HOUR = 3600000;
-const FORWARD = new THREE.Vector3(0, 0, 1);
 const WORLD_UP = new THREE.Vector3(0, 1, 0);
 const PATH_SEGMENTS = 300;
 const PIONEER_REAL_WIDTH_METERS = 2.9;
