@@ -24,20 +24,20 @@ Hola AgenC Core. Si estás leyendo esto, debes apegarte a las siguientes reglas 
 
 ## Development Setup
 
-Requisitos: **Node.js ≥ 22.18** (el servidor ejecuta TypeScript con el *type stripping* nativo).
+Requisitos: **Node.js ≥ 20.19** (lo exige Vite 8). La aplicación es 100 % estática: no hay servidor ni API.
 
 ```bash
 npm install
-npm run dev        # Express + Vite en http://localhost:3000
+npm run dev        # Vite en http://localhost:3000
 npm run build      # Build estático en dist/
-npm test           # 106 pruebas de Vitest
+npm run preview    # Sirve dist/ en local
+npm test           # 95 pruebas de Vitest
 ```
 
 Calidad — los mismos gates que CI ejecuta antes de publicar:
 
 ```bash
-npm run lint          # ESLint (JavaScript)
+npm run lint          # ESLint
 npm run format:check  # Prettier
-npm run typecheck     # tsc --noEmit (servidor)
-npm run verify        # lint + formato + tipos + pruebas + build
+npm run verify        # lint + formato + pruebas + build
 ```
