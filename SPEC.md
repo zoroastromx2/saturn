@@ -13,7 +13,7 @@
 ## Resumen
 
 - El proyecto es un **observatorio 3D de Saturno** (Three.js + GLSL) con una decena de módulos de simulación, 6 misiones históricas, instrumento óptico emulado y UI bilingüe ES/EN. Es una **app 100 % estática**: sin servidor ni API.
-- La base es sólida: matemática aislada y documentada, **113 pruebas en 29 archivos que pasan (~1,4 s)** y build correcto (**902,02 kB JS / 239,12 kB gzip**).
+- La base es sólida: matemática aislada y documentada, **119 pruebas en 30 archivos que pasan (~1,4 s)** y build correcto (**905,14 kB JS / 240,19 kB gzip**).
 - El presupuesto está acotado: **1,08–2,26 MB** de carga inicial y **32–278 MB** de VRAM según preset; modelos y audio no bloquean el primer frame.
 - La deuda restante es acotada: contenido de misiones solo en español, cobertura y accesibilidad.
 - El documento registra los incrementos aplicados (`quality-gates`, `remove-texture-studio`) y los candidatos vivos de §11.
@@ -72,7 +72,7 @@ npm install                # lockfile canónico para CI: package-lock.json
 npm run dev                # Vite en http://localhost:3000
 npm run build              # vite build → dist/
 npm run preview            # sirve dist/ en local
-npx vitest run             # 29 archivos · 113 pruebas · ~1,4 s
+npx vitest run             # 30 archivos · 119 pruebas · ~1,4 s
 node tools/asset-report.mjs # presupuesto de activos por preset
 
 # Gates de calidad (desde 2026-11-16)
@@ -85,8 +85,8 @@ Salidas medidas el 2026-11-16:
 
 | Comando | Resultado |
 |---|---|
-| `npx vitest run` | **29/29 archivos, 113/113 pruebas OK**, exit 0 |
-| `npm run build` | `index.html 22,64 kB` · `css 28,13 kB` · `js 902,02 kB` (gzip 239,12 kB), ~1 s |
+| `npx vitest run` | **30/30 archivos, 119/119 pruebas OK**, exit 0 |
+| `npm run build` | `index.html 22,64 kB` · `css 28,13 kB` · `js 905,14 kB` (gzip 240,19 kB), ~1 s |
 | `dist/` | 43,3 MB (incluye los tres presets; cada usuario descarga solo el suyo) |
 
 **Calidad (desde 2026-11-16):** `lint`, `format:check` y `verify` existen y CI los ejecuta antes de publicar. No hay `typecheck` porque no queda TypeScript. Siguen faltando `test:coverage` y `test:e2e` (ver `test-depth`).
@@ -99,11 +99,12 @@ Salidas medidas el 2026-11-16:
 
 ```
 index.html                 Shell DOM: HUD, navegación, tiempo, estadísticas, instrumento
-src/main.js                Orquestación (1.191 líneas): bootstrap, wiring del HUD, reloj, tick
-src/core/                  Simuladores y controladores (29 archivos, 3.862 líneas)
+src/main.js                Orquestación (1.202 líneas): bootstrap, wiring del HUD, reloj, tick
+src/core/                  Simuladores y controladores (30 archivos, 3.918 líneas)
   QualityTier              Preset low/medium/high y rutas por variante
   LoadProgress             Progreso de carga por bytes
   EnvironmentProbe         Entorno PBR reducido (512×256)
+  LocalizedText            Resolución de textos {es,en} con fallback
   SaturnSimulator            Planeta + anillos, registro de sombras de lunas (6 ranuras)
   MoonSimulatorBase           Base Kepleriana: geometría, material, etiqueta, sombra
   Titan/Enceladus/Mimas/      Lunas principales (GLB cuando existe, esfera procedural si no)
@@ -124,7 +125,7 @@ src/math/                  FUENTE DE VERDAD (no modificar sin aprobación)
 src/shaders/               16 archivos GLSL + VintageOpticsShader.js (post-proceso)
 src/data/HistoricalMissions.js   6 misiones: control points, hitos, instrumentos
 src/assets/               Restos de plantilla Vite, sin referencias
-tests/                    29 archivos, 2.216 líneas, entorno node
+tests/                    30 archivos, 2.274 líneas, entorno node
 public/                   Texturas base + tiers low/medium/high, audio, GLB, minor_moons.json
 tools/                    asset-report.mjs y generate-texture-tiers.py
 dist/                     Build de producción (ignorado por git)
@@ -163,7 +164,7 @@ Convenciones observadas:
 | Aspecto | Estado actual |
 |---|---|
 | Runner | Vitest 5.1, `environment: node`, `globals: true`, `include: tests/**/*.test.js` |
-| Volumen | 29 archivos · 113 pruebas · 2.216 líneas · ~1,4 s |
+| Volumen | 30 archivos · 119 pruebas · 2.274 líneas · ~1,4 s |
 | Técnica | Stubs manuales de DOM (`globalThis.document = {…}`), dobles inyectados; **sin jsdom** y **sin `vi.mock`** (0 usos) |
 | Foco real | Matemática (12 pruebas en `AstroScale`, 6 en `KeplerOrbit`, 3 en `RingOptics`), carga resiliente de assets, normalización de GLB, controladores con estado |
 | Cobertura | Sin umbral, sin `@vitest/coverage`, sin informe |
@@ -241,7 +242,7 @@ Orden de construcción vigente: `assets` + `astro-core` → `scene-render` → `
 2. **Sombras correctas por diseño.** Ray-tracing analítico en lugar de shadow maps evita el *z-fighting* a escala planetaria y está documentado en el GLSL (`saturn.frag:117-149`, `rings.frag:43-59`).
 3. **Carga resiliente.** Reintentos con `?retry=N`, respaldos por textura y degradación a sonda procedural si un GLB falla; la app no se cae por un asset ausente (`AssetFetcher.js`).
 4. **Accesibilidad por encima de la media.** `aria-pressed`, `aria-live`, `focus-visible` en 13 selectores, etiquetas en español/inglés, `prefers-color-scheme` y layout móvil con `pointer: coarse`.
-5. **i18n sin huecos.** 100 claves × 2 idiomas; 83 en uso, sin claves faltantes para ellas.
+5. **i18n sin huecos.** 106 claves × 2 idiomas; 89 en uso, incluido el contenido de misión localizado.
 6. **Rendimiento consciente.** Instancing (15.000 rocas, 135 lunas), raymarch con calidad por distancia (`rings.frag:119-123`), escala táctica de sondas por legibilidad, anisotropía tomada del renderer.
 7. **Trazabilidad de assets.** Créditos CC-BY de los 7 modelos visibles en la UI con enlaces a las licencias.
 
@@ -255,7 +256,7 @@ Orden de construcción vigente: `assets` + `astro-core` → `scene-render` → `
 | H-04 | S2 | ~~Endpoint de generación sin autenticación ni cuota~~ **Cerrado por eliminación** | — | El endpoint ya no existe |
 | H-05 | S3 | No hay `lint`, `format` ni `typecheck`; `server.ts` es TypeScript sin `tsconfig` (nunca se comprueba) y no hay `engines` | `package.json:6-12` | Errores de tipo y estilo solo aparecen en runtime; requisito de Node invisible (Node 20 en CI) |
 | H-06 | S3 | ~~`models/` duplicaba `public/models/`; dos lockfiles~~ **Cerrado por `repo-hygiene`**: una sola copia y npm como único gestor | `git ls-files` | Payload 60,4 → 42,8 MB; `.git` sigue igual (historial) |
-| H-07 | S3 | El contenido de misiones (descripciones e hitos) está solo en español, mientras la UI es bilingüe | `HistoricalMissions.js:21,42,171…` | Quien use la UI en inglés recibe media interfaz en español |
+| H-07 | S3 | ~~Contenido de misión solo en español~~ **Cerrado por `i18n-missions`**: nombres, descripciones e hitos en `{es,en}` | `HistoricalMissions.js` | 30 campos localizados con prueba de paridad |
 | H-08 | S3 | Cobertura con puntos ciegos: `main.js`, `SaturnSimulator`, `Localization` y compilación de shaders no se prueban | 25 archivos de test listados | Un error GLSL o un `uniform` mal cableado no lo detecta nadie hasta abrir el navegador |
 | H-09 | S3 | Acoplamiento por conteo exacto: las lunas menores solo se crean si el JSON tiene exactamente 135 entradas | `main.js:274` | Si el catálogo cambia de tamaño, las 135 lunas irregulares desaparecen sin aviso |
 | H-10 | S3 | No hay `LICENSE` para el código; las licencias CC-BY de modelos viven solo en la UI | raíz del repo; `index.html:296-305` | Ambigüedad legal para reutilización o publicación |
@@ -264,7 +265,7 @@ Orden de construcción vigente: `assets` + `astro-core` → `scene-render` → `
 | H-13 | S4 | Accesibilidad incompleta: sin `prefers-reduced-motion` (hay animaciones GSAP y ruido de shader), el loader es un `div` sin rol ni progreso, el `<canvas>` no tiene etiqueta | `style.css` (sin consulta de movimiento), `index.html` (loader y canvas) | Usuarios con sensibilidad al movimiento y lectores de pantalla pierden contexto |
 | H-14 | S4 | Sin E2E ni regresión visual pese a ser un producto eminentemente visual | `tests/` | Cambios de encuadre, color o shader se validan a ojo |
 
-**Cerrados por `quality-gates` (2026-11-16): H-02 y H-05.** **Cerrados por `remove-texture-studio` (2026-11-16): H-01 y H-04** (la función y el endpoint ya no existen). **Cerrado por `asset-budget` (2026-11-16): H-03.** **Cerrados por `repo-hygiene` (2026-11-16): H-06 y H-12.**
+**Cerrados por `quality-gates` (2026-11-16): H-02 y H-05.** **Cerrados por `remove-texture-studio` (2026-11-16): H-01 y H-04** (la función y el endpoint ya no existen). **Cerrado por `asset-budget` (2026-11-16): H-03.** **Cerrados por `repo-hygiene` (2026-11-16): H-06 y H-12.** **Cerrado por `i18n-missions` (2026-11-16): H-07.**
 
 ### 10.3 Límites de dominio que deben declararse en el producto
 
@@ -280,9 +281,9 @@ No son bugs; son decisiones que conviene explicitar para no vender precisión in
 
 ## 11. Candidatos de siguiente incremento (sin planificar)
 
-**Aplicados (2026-11-16):** `quality-gates`, `remove-texture-studio`, `asset-budget` y `repo-hygiene`. **Producción:** GitHub Pages (estático). `deploy-api` quedó descartado: sin función de IA no hay API que desplegar.
+**Aplicados (2026-11-16):** `quality-gates`, `remove-texture-studio`, `asset-budget`, `repo-hygiene` e `i18n-missions`. **Producción:** GitHub Pages (estático). `deploy-api` quedó descartado: sin función de IA no hay API que desplegar.
 
-**Siguiente (2026-11-16):** `repo-hygiene` — eliminar duplicados (H-06) y archivos muertos (H-12). Ver [`SPEC-repo-hygiene.md`](SPEC-repo-hygiene.md).
+**Siguiente (2026-11-16):** `i18n-missions` — localizar nombres, descripciones e hitos de misión (H-07). Ver [`SPEC-i18n-missions.md`](SPEC-i18n-missions.md).
 
 Elige **uno** de los candidatos restantes. Los demás quedan fuera de alcance hasta nueva spec.
 
