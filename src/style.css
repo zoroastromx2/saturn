@@ -1499,6 +1499,47 @@ body.show-labels .minor-group-label {
   white-space: nowrap;
 }
 
+.instrument-filter-btn {
+  align-self: flex-start;
+  margin: 1px 0 2px;
+  padding: 4px 8px;
+  border: 1px solid rgba(159, 231, 255, 0.34);
+  border-radius: 1px;
+  background: rgba(142, 220, 245, 0.05);
+  color: #bfeaff;
+  font: 500 8px/1.2 var(--mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  pointer-events: auto;
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+.instrument-filter-btn:hover {
+  border-color: rgba(159, 231, 255, 0.65);
+  background: rgba(142, 220, 245, 0.11);
+  color: #e3f8ff;
+}
+
+.instrument-filter-btn.active {
+  border-color: rgba(231, 193, 125, 0.7);
+  background: rgba(231, 193, 125, 0.08);
+  color: #e7c17d;
+}
+
+.instrument-filter-btn:focus-visible {
+  outline: 1px solid var(--helio-gold-bright);
+  outline-offset: 2px;
+}
+
+.instrument-filter-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .instrument-readout-row {
   display: grid;
   grid-template-columns: 118px minmax(0, 1fr);

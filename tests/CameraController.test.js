@@ -19,7 +19,7 @@ function createController() {
 }
 
 const missionSim = {
-  activeMission: { name: 'Test mission' },
+  activeMission: { name: 'Test mission', opticsMode: 2 },
   getActiveOpticalConfig() {
     return { defaultFov: 12 };
   }
@@ -28,6 +28,8 @@ const missionSim = {
 describe('CameraController - Instrumento óptico', () => {
   it('debería bloquear la cámara y activar el lente teleobjetivo', () => {
     const { camera, controls, controller } = createController();
+    const opticsPass = { uniforms: { uOpticsMode: { value: 0 } } };
+    controller.setOpticsPass(opticsPass);
 
     controller.engageInstrumentView(missionSim);
 
@@ -37,6 +39,12 @@ describe('CameraController - Instrumento óptico', () => {
     expect(controller.activeLensMode).toBe('NAC');
     expect(controls.enabled).toBe(false);
     expect(controller.currentTarget).toBeNull();
+    expect(opticsPass.uniforms.uOpticsMode.value).toBe(2);
+
+    expect(controller.toggleOpticsEmulation()).toBe(false);
+    expect(opticsPass.uniforms.uOpticsMode.value).toBe(0);
+    expect(controller.toggleOpticsEmulation()).toBe(true);
+    expect(opticsPass.uniforms.uOpticsMode.value).toBe(2);
 
     expect(controller.toggleInstrumentLens()).toBe('WAC');
     expect(controller.activeLensMode).toBe('WAC');
@@ -47,5 +55,6 @@ describe('CameraController - Instrumento óptico', () => {
     expect(controls.enabled).toBe(true);
     expect(camera.fov).toBe(45);
     expect(controller.activeLensMode).toBe('WAC');
+    expect(opticsPass.uniforms.uOpticsMode.value).toBe(0);
   });
 });

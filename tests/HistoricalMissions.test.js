@@ -47,6 +47,7 @@ describe('HistoricalMissions - Catálogo y cinemática', () => {
       const mission = MISSIONS[key];
       expect(mission.key).toBe(key);
       expect(Number.isNaN(Date.parse(mission.timestamp))).toBe(false);
+      expect([1, 2, 3]).toContain(mission.opticsMode);
       expect(mission.controlPoints.length).toBeGreaterThanOrEqual(4);
       expect(mission.milestones.length).toBeGreaterThanOrEqual(3);
       mission.milestones.forEach((milestone) => {

@@ -5,6 +5,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { AssetFetcher } from './core/AssetFetcher.js';
 import { SaturnSimulator } from './core/SaturnSimulator.js';
@@ -31,6 +32,7 @@ import {
 } from './core/TimeHistory.js';
 import { getLanguage, setLanguage, t } from './core/Localization.js';
 import { sliderPositionToScale, scaleToSliderPosition, formatTimeScale } from './math/TimeScale.js';
+import { VintageOpticsShader } from './shaders/VintageOpticsShader.js';
 import './style.css';
 
 let scene, camera, renderer, composer, labelRenderer, controls, cameraController, listener;
@@ -55,7 +57,10 @@ let instrumentViewBtn = null;
 let instrumentLensBtn = null;
 let instrumentViewState = null;
 let instrumentLensState = null;
+let instrumentOpticsBtn = null;
+let instrumentOpticsState = null;
 let instrumentUiSignature = '';
+let vintageOpticsPass = null;
 const THEME_STORAGE_KEY = 'saturn-sim-theme';
 const clock = new THREE.Clock();
 const surfaceMountPosition = new THREE.Vector3();
@@ -74,7 +79,8 @@ function refreshInstrumentControls(force = false) {
   const missionActive = Boolean(missionSim?.activeMission);
   const lensMode = cameraController?.activeLensMode || 'WAC';
   const fov = Math.round(cameraController?.camera?.fov ?? camera?.fov ?? 45);
-  const signature = `${locked}|${missionActive}|${lensMode}|${fov}|${getLanguage()}`;
+  const opticsEnabled = cameraController?.opticsEnabled !== false;
+  const signature = `${locked}|${missionActive}|${lensMode}|${fov}|${opticsEnabled}|${getLanguage()}`;
   if (!force && signature === instrumentUiSignature) return;
   instrumentUiSignature = signature;
 
@@ -99,6 +105,17 @@ function refreshInstrumentControls(force = false) {
   }
   if (instrumentLensReadout) {
     instrumentLensReadout.textContent = `${lensMode} ${fov}°`;
+  }
+
+  if (instrumentOpticsBtn) {
+    instrumentOpticsBtn.disabled = !locked;
+    instrumentOpticsBtn.setAttribute('aria-pressed', String(locked && opticsEnabled));
+    instrumentOpticsBtn.classList.toggle('active', locked && opticsEnabled);
+  }
+  if (instrumentOpticsState) {
+    instrumentOpticsState.textContent = t(
+      opticsEnabled ? 'mission.opticsEmulation' : 'mission.opticsRaw'
+    );
   }
 }
 
@@ -183,7 +200,11 @@ async function bootstrapApp() {
     0.5,
     0.8
   ));
+  vintageOpticsPass = new ShaderPass(VintageOpticsShader);
+  vintageOpticsPass.uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+  composer.addPass(vintageOpticsPass);
   composer.addPass(new OutputPass());
+  cameraController.setOpticsPass(vintageOpticsPass);
 
   labelRenderer = new CSS2DRenderer();
   labelRenderer.setSize(window.innerWidth, window.innerHeight);
@@ -318,6 +339,8 @@ async function bootstrapApp() {
     instrumentLensBtn = document.getElementById('btn-instrument-lens');
     instrumentViewState = document.getElementById('instrument-view-state');
     instrumentLensState = document.getElementById('instrument-lens-state');
+    instrumentOpticsBtn = document.getElementById('btn-optics-mode');
+    instrumentOpticsState = document.getElementById('optics-mode-state');
     let timeHistory = loadTimeHistory();
     let activeHistoryDate = null;
     let followProbe = false;
@@ -734,6 +757,14 @@ async function bootstrapApp() {
       });
     }
 
+    if (instrumentOpticsBtn) {
+      instrumentOpticsBtn.addEventListener('click', () => {
+        if (!cameraController.isInstrumentLocked) return;
+        cameraController.toggleOpticsEmulation();
+        refreshInstrumentControls(true);
+      });
+    }
+
     updateFollowButton();
     refreshInstrumentControls(true);
 
@@ -816,6 +847,9 @@ function onWindowResize() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   composer.setSize(window.innerWidth, window.innerHeight);
   labelRenderer.setSize(window.innerWidth, window.innerHeight);
+  if (vintageOpticsPass) {
+    vintageOpticsPass.uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+  }
 }
 
 function tick() {
@@ -823,6 +857,9 @@ function tick() {
 
   // El tiempo alimenta la rotación kepleriana diferencial de los anillos
   const deltaTime = clock.getDelta();
+  if (vintageOpticsPass) {
+    vintageOpticsPass.uniforms.uTime.value = clock.elapsedTime;
+  }
   orbitalTime += deltaTime * timeScale;
   simulationDate.setTime(simulationDate.getTime() + deltaTime * timeScale * 1000);
   const daysSinceJ2000 = getDaysSinceJ2000();

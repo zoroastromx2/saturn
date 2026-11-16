@@ -26,8 +26,32 @@ export class CameraController {
     this.isInstrumentLocked = false;
     this.activeLensMode = 'WAC';
     this.instrumentTween = null;
+    this.opticsPass = null;
+    this.opticsEnabled = true;
+    this.activeOpticsMode = 0;
     this.surfaceMount = null;
     this.surfaceOrigin = new THREE.Vector3(0, 0, 0);
+  }
+
+  setOpticsPass(opticsPass) {
+    this.opticsPass = opticsPass;
+    this.applyOpticsMode(this.activeOpticsMode);
+  }
+
+  applyOpticsMode(mode) {
+    this.activeOpticsMode = mode;
+    const resolvedMode = this.isInstrumentLocked && this.opticsEnabled ? mode : 0;
+    if (this.opticsPass?.uniforms?.uOpticsMode) {
+      this.opticsPass.uniforms.uOpticsMode.value = resolvedMode;
+    }
+  }
+
+  toggleOpticsEmulation() {
+    if (!this.isInstrumentLocked) return this.opticsEnabled;
+
+    this.opticsEnabled = !this.opticsEnabled;
+    this.applyOpticsMode(this.activeOpticsMode);
+    return this.opticsEnabled;
   }
 
   engageInstrumentView(missionSim) {
@@ -47,6 +71,8 @@ export class CameraController {
 
     const defaultFov = Number(config.defaultFov) || 32;
     this.activeLensMode = defaultFov <= 16 ? 'NAC' : 'WAC';
+    this.opticsEnabled = true;
+    this.applyOpticsMode(Number(missionSim.activeMission?.opticsMode) || 0);
     this.setInstrumentFov(defaultFov, 0.8);
   }
 
@@ -82,6 +108,8 @@ export class CameraController {
     this.isSurfaceLocked = false;
     this.surfaceMount = null;
     this.activeLensMode = 'WAC';
+    this.opticsEnabled = true;
+    this.applyOpticsMode(0);
 
     if (this.instrumentTween) {
       this.instrumentTween.kill();
