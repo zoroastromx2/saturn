@@ -15,7 +15,7 @@
 - El proyecto es un **observatorio 3D de Saturno** (Three.js + GLSL) con una decena de módulos de simulación, 6 misiones históricas, instrumento óptico emulado y UI bilingüe ES/EN. Es una **app 100 % estática**: sin servidor ni API.
 - La base es sólida: matemática aislada y documentada, **113 pruebas en 29 archivos que pasan (~1,4 s)** y build correcto (**902,02 kB JS / 239,12 kB gzip**).
 - El presupuesto está acotado: **1,08–2,26 MB** de carga inicial y **32–278 MB** de VRAM según preset; modelos y audio no bloquean el primer frame.
-- La deuda restante es acotada: duplicación de modelos, contenido de misiones solo en español, cobertura y accesibilidad.
+- La deuda restante es acotada: contenido de misiones solo en español, cobertura y accesibilidad.
 - El documento registra los incrementos aplicados (`quality-gates`, `remove-texture-studio`) y los candidatos vivos de §11.
 
 ---
@@ -61,7 +61,7 @@ Construir un simulador visualmente riguroso del sistema de Saturno — atmósfer
 
 - No hay framework de UI: el DOM es `index.html` (348 líneas) manipulado a mano.
 - Calidad: ESLint 10 (flat config), Prettier 3.10 y `engines.node >= 20.19.0`.
-- Dos lockfiles versionados: `package-lock.json` y `bun.lock` (H-06, pendiente).
+- Un único lockfile: `package-lock.json` (npm).
 
 ---
 
@@ -127,7 +127,6 @@ src/assets/               Restos de plantilla Vite, sin referencias
 tests/                    29 archivos, 2.216 líneas, entorno node
 public/                   Texturas base + tiers low/medium/high, audio, GLB, minor_moons.json
 tools/                    asset-report.mjs y generate-texture-tiers.py
-models/                   Copia idéntica de public/models (18,2 MB) — redundante
 dist/                     Build de producción (ignorado por git)
 ```
 
@@ -255,17 +254,17 @@ Orden de construcción vigente: `assets` + `astro-core` → `scene-render` → `
 | H-03 | S2 | ~~Carga inicial de ~38 MB y ~416 MB de texturas~~ **Cerrado por `asset-budget`**: 1,08–2,26 MB iniciales y 32–278 MB de VRAM según preset | `tools/asset-report.mjs` | El primer frame ya no espera modelos ni audio |
 | H-04 | S2 | ~~Endpoint de generación sin autenticación ni cuota~~ **Cerrado por eliminación** | — | El endpoint ya no existe |
 | H-05 | S3 | No hay `lint`, `format` ni `typecheck`; `server.ts` es TypeScript sin `tsconfig` (nunca se comprueba) y no hay `engines` | `package.json:6-12` | Errores de tipo y estilo solo aparecen en runtime; requisito de Node invisible (Node 20 en CI) |
-| H-06 | S3 | `models/` duplica byte a byte `public/models/` (7 GLB, 18,2 MB) y ambos están versionados; además hay dos lockfiles | hashes SHA-256 idénticos; `git ls-files` | Repo de 53,3 MB de payload / 32,6 MB de `.git`; revisiones y clones más caros |
+| H-06 | S3 | ~~`models/` duplicaba `public/models/`; dos lockfiles~~ **Cerrado por `repo-hygiene`**: una sola copia y npm como único gestor | `git ls-files` | Payload 60,4 → 42,8 MB; `.git` sigue igual (historial) |
 | H-07 | S3 | El contenido de misiones (descripciones e hitos) está solo en español, mientras la UI es bilingüe | `HistoricalMissions.js:21,42,171…` | Quien use la UI en inglés recibe media interfaz en español |
 | H-08 | S3 | Cobertura con puntos ciegos: `main.js`, `SaturnSimulator`, `Localization` y compilación de shaders no se prueban | 25 archivos de test listados | Un error GLSL o un `uniform` mal cableado no lo detecta nadie hasta abrir el navegador |
 | H-09 | S3 | Acoplamiento por conteo exacto: las lunas menores solo se crean si el JSON tiene exactamente 135 entradas | `main.js:274` | Si el catálogo cambia de tamaño, las 135 lunas irregulares desaparecen sin aviso |
 | H-10 | S3 | No hay `LICENSE` para el código; las licencias CC-BY de modelos viven solo en la UI | raíz del repo; `index.html:296-305` | Ambigüedad legal para reutilización o publicación |
 | H-11 | S4 | El comentario de `RING_OUTER_EDGE` dice "Anillo F" pero 136.775 km es el borde exterior del anillo A (el F está a 140.180 km) | `AstroScale.js:88-89` | Futuras decisiones de física sobre datos mal etiquetados |
-| H-12 | S4 | Archivos muertos: `src/counter.js` (plantilla Vite), `src/assets/{hero.png,javascript.svg,vite.svg}`, `public/assets/aistudio/image_7a4811fe.png` | sin referencias en `src/`, `index.html` ni CSS | Ruido y falsos positivos en búsquedas/auditorías |
+| H-12 | S4 | ~~Archivos muertos: `src/counter.js`, restos de `src/assets/` y PNG de AI Studio~~ **Cerrado por `repo-hygiene`** | — | Árbol sin huérfanos |
 | H-13 | S4 | Accesibilidad incompleta: sin `prefers-reduced-motion` (hay animaciones GSAP y ruido de shader), el loader es un `div` sin rol ni progreso, el `<canvas>` no tiene etiqueta | `style.css` (sin consulta de movimiento), `index.html` (loader y canvas) | Usuarios con sensibilidad al movimiento y lectores de pantalla pierden contexto |
 | H-14 | S4 | Sin E2E ni regresión visual pese a ser un producto eminentemente visual | `tests/` | Cambios de encuadre, color o shader se validan a ojo |
 
-**Cerrados por `quality-gates` (2026-11-16): H-02 y H-05.** **Cerrados por `remove-texture-studio` (2026-11-16): H-01 y H-04** (la función y el endpoint ya no existen). **Cerrado por `asset-budget` (2026-11-16): H-03.**
+**Cerrados por `quality-gates` (2026-11-16): H-02 y H-05.** **Cerrados por `remove-texture-studio` (2026-11-16): H-01 y H-04** (la función y el endpoint ya no existen). **Cerrado por `asset-budget` (2026-11-16): H-03.** **Cerrados por `repo-hygiene` (2026-11-16): H-06 y H-12.**
 
 ### 10.3 Límites de dominio que deben declararse en el producto
 
@@ -281,7 +280,9 @@ No son bugs; son decisiones que conviene explicitar para no vender precisión in
 
 ## 11. Candidatos de siguiente incremento (sin planificar)
 
-**Aplicados (2026-11-16):** `quality-gates`, `remove-texture-studio` y `asset-budget`. **Producción:** GitHub Pages (estático). `deploy-api` quedó descartado: sin función de IA no hay API que desplegar.
+**Aplicados (2026-11-16):** `quality-gates`, `remove-texture-studio`, `asset-budget` y `repo-hygiene`. **Producción:** GitHub Pages (estático). `deploy-api` quedó descartado: sin función de IA no hay API que desplegar.
+
+**Siguiente (2026-11-16):** `repo-hygiene` — eliminar duplicados (H-06) y archivos muertos (H-12). Ver [`SPEC-repo-hygiene.md`](SPEC-repo-hygiene.md).
 
 Elige **uno** de los candidatos restantes. Los demás quedan fuera de alcance hasta nueva spec.
 

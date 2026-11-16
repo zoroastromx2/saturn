@@ -42,6 +42,11 @@ npm run format:check  # Prettier
 npm run verify        # lint + formato + pruebas + build
 ```
 
+### Repositorio
+
+- `public/models/` es la **única copia** de los GLB; no hay carpeta `models/` en la raíz.
+- El lockfile canónico es `package-lock.json`; npm es el gestor soportado.
+
 ### Presupuesto de activos
 
 El cliente elige el preset `low`, `medium` o `high` según memoria del dispositivo, tamaño máximo de textura y tipo de puntero. Se puede forzar con `?quality=low` (o `medium` / `high`).
