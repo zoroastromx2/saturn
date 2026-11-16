@@ -18,8 +18,9 @@
   <body>
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
-    <div id="loader" data-i18n="loader.loading">
-      Cargando datos de la misión Cassini...
+    <div id="loader">
+      <span data-i18n="loader.loading">Cargando datos de la misión Cassini...</span>
+      <span id="loader-progress" class="loader-progress">0 %</span>
     </div>
     <div id="ui-container">
       <header id="app-header">

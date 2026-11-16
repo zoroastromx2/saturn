@@ -80,4 +80,29 @@ export class MoonSimulatorBase {
       this.mesh.getWorldPosition(this.shadowPosition);
     }
   }
+
+  /**
+   * Aplica texturas cargadas después del primer frame (fase 1).
+   * No toca geometría ni posición: la luna ya está en escena.
+   */
+  applyMoonTextures({ color = null, normal = null, ao = null } = {}) {
+    const uniforms = this.mesh?.material?.uniforms;
+    if (!uniforms) return;
+
+    if (color) {
+      color.colorSpace = THREE.SRGBColorSpace;
+      color.wrapS = THREE.RepeatWrapping;
+      uniforms.tColor.value = color;
+    }
+    if (normal) {
+      normal.colorSpace = THREE.LinearSRGBColorSpace;
+      normal.wrapS = THREE.RepeatWrapping;
+      uniforms.tNormal.value = normal;
+    }
+    if (ao) {
+      ao.colorSpace = THREE.LinearSRGBColorSpace;
+      ao.wrapS = THREE.RepeatWrapping;
+      uniforms.tAo.value = ao;
+    }
+  }
 }

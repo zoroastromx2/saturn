@@ -333,6 +333,14 @@ body {
   text-transform: uppercase;
 }
 
+.loader-progress {
+  display: block;
+  margin-top: 6px;
+  color: var(--helio-muted);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.16em;
+}
+
 #loader::before {
   content: '';
   display: block;

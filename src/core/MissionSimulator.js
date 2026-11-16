@@ -511,33 +511,54 @@ export class MissionSimulator {
       });
     });
 
-    const usePioneerModel = mission.key === 'pioneer11' && Boolean(this.pioneerModelWrapper);
-    const useVoyagerModel = mission.key === 'voyager1' && Boolean(this.voyagerModelWrapper);
-    const useVoyager2Model = mission.key === 'voyager2' && Boolean(this.voyager2ModelWrapper);
-    const useCassiniHuygensModel =
-      (mission.key === 'cassiniInsertion' || mission.key === 'cassiniGrandFinale') &&
-      Boolean(this.cassiniHuygensModelWrapper);
-    if (this.proceduralProbe) {
-      this.proceduralProbe.visible =
-        !usePioneerModel && !useVoyagerModel && !useVoyager2Model && !useCassiniHuygensModel;
-    }
-    if (this.pioneerModelWrapper) {
-      this.pioneerModelWrapper.visible = usePioneerModel;
-    }
-    if (this.voyagerModelWrapper) {
-      this.voyagerModelWrapper.visible = useVoyagerModel;
-    }
-    if (this.voyager2ModelWrapper) {
-      this.voyager2ModelWrapper.visible = useVoyager2Model;
-    }
-    if (this.cassiniHuygensModelWrapper) {
-      this.cassiniHuygensModelWrapper.visible = useCassiniHuygensModel;
-    }
+    this.refreshProbeVisibility();
     this.huygensShield.visible = mission.key === 'huygens';
     this.probeGroup.visible = true;
     this.update(daysSinceEpoch);
 
     return mission;
+  }
+
+  /** Elige sonda procedural o modelo GLB según la misión activa. */
+  refreshProbeVisibility() {
+    const missionKey = this.activeMission?.key;
+    const usePioneerModel = missionKey === 'pioneer11' && Boolean(this.pioneerModelWrapper);
+    const useVoyagerModel = missionKey === 'voyager1' && Boolean(this.voyagerModelWrapper);
+    const useVoyager2Model = missionKey === 'voyager2' && Boolean(this.voyager2ModelWrapper);
+    const useCassiniHuygensModel =
+      (missionKey === 'cassiniInsertion' || missionKey === 'cassiniGrandFinale') &&
+      Boolean(this.cassiniHuygensModelWrapper);
+
+    if (this.proceduralProbe) {
+      this.proceduralProbe.visible =
+        !usePioneerModel && !useVoyagerModel && !useVoyager2Model && !useCassiniHuygensModel;
+    }
+    if (this.pioneerModelWrapper) this.pioneerModelWrapper.visible = usePioneerModel;
+    if (this.voyagerModelWrapper) this.voyagerModelWrapper.visible = useVoyagerModel;
+    if (this.voyager2ModelWrapper) this.voyager2ModelWrapper.visible = useVoyager2Model;
+    if (this.cassiniHuygensModelWrapper) {
+      this.cassiniHuygensModelWrapper.visible = useCassiniHuygensModel;
+    }
+  }
+
+  /**
+   * Incorpora modelos GLB cargados en fase 1. Si ya hay misión activa,
+   * la sonda procedural se sustituye sin recargar la trayectoria.
+   */
+  setProbeModels(models = {}) {
+    this.pioneerSource = this.pioneerSource || models.pioneer11 || null;
+    this.voyagerSource = this.voyagerSource || models.voyager1 || null;
+    this.voyager2Source = this.voyager2Source || models.voyager2 || null;
+    this.cassiniHuygensSource = this.cassiniHuygensSource || models.cassiniHuygens || null;
+
+    if (this.pioneerSource && !this.pioneerModelWrapper) this.buildPioneerProbe();
+    if (this.voyagerSource && !this.voyagerModelWrapper) this.buildVoyagerProbe();
+    if (this.voyager2Source && !this.voyager2ModelWrapper) this.buildVoyager2Probe();
+    if (this.cassiniHuygensSource && !this.cassiniHuygensModelWrapper) {
+      this.buildCassiniHuygensProbe();
+    }
+
+    this.refreshProbeVisibility();
   }
 
   clearMission() {

@@ -1,7 +1,9 @@
 // src/core/AssetFetcher.js
 import * as THREE from 'three';
-import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import tiersManifest from '../data/TextureTiers.js';
+import { createByteProgress } from './LoadProgress.js';
+import { selectTextureVariant } from './QualityTier.js';
 import { WHITE_TEXTURE, FLAT_NORMAL_TEXTURE } from './MoonTextures.js';
 
 export class AssetFetcher {
@@ -13,6 +15,9 @@ export class AssetFetcher {
     this.retryDelayMs = options.retryDelayMs ?? 250;
     this.maxConcurrency = Math.max(1, options.maxConcurrency ?? 6);
     this.maxAnisotropy = Math.max(1, options.maxAnisotropy ?? 1);
+    this.manifest = options.manifest ?? tiersManifest;
+    this.tier = options.tier ?? 'high';
+    this.onProgress = options.onProgress ?? null;
     this.fetchImpl = options.fetchImpl ?? globalThis.fetch?.bind(globalThis);
     this.activeRequests = 0;
     this.requestQueue = [];
@@ -59,123 +64,162 @@ export class AssetFetcher {
    * Carga todas las texturas requeridas de forma asíncrona con concurrencia acotada,
    * reintentos automáticos y respaldos seguros para evitar fallos transitorios de red.
    */
+  /** Bytes del activo en el preset actual (0 si no hay manifiesto). */
+  textureBytes(key) {
+    return this.manifest?.tiers?.[this.tier]?.[key]?.bytes ?? 0;
+  }
+
+  /** Ruta relativa del activo para el preset, con respaldo al archivo base. */
+  texturePath(key, fallbackFile) {
+    return selectTextureVariant(this.manifest, key, this.tier, fallbackFile) ?? fallbackFile;
+  }
+
+  loadTextureByKey(key, fallbackFile) {
+    return this.loadTextureAsync(this.assetUrl(this.texturePath(key, fallbackFile)));
+  }
+
+  loadOptionalTextureByKey(key, fallbackFile) {
+    return this.loadOptionalTexture(this.texturePath(key, fallbackFile));
+  }
+
+  /**
+   * Fase 0: lo mínimo para el primer frame (Saturno, anillos, fondo y Tierra).
+   * Informa del progreso por bytes mediante `onProgress`.
+   */
+  async loadCriticalAssets() {
+    const criticalKeys = ['saturnAlbedo', 'ringColor', 'ringAlpha', 'earthAlbedo', 'starmap'];
+    const totalBytes = criticalKeys.reduce((sum, key) => sum + this.textureBytes(key), 0);
+    const progress = createByteProgress(totalBytes, (fraction) => this.onProgress?.(fraction));
+    const track = (key, promise) =>
+      promise.then((result) => {
+        progress.add(this.textureBytes(key));
+        return result;
+      });
+
+    const [saturn, rColor, rAlpha, earth, starmap] = await Promise.all([
+      track(
+        'saturnAlbedo',
+        this.loadTextureByKey('saturnAlbedo', 'textures/saturn_atmosphere_8k.jpg')
+      ),
+      track('ringColor', this.loadTextureByKey('ringColor', 'textures/saturn_rings_color.png')),
+      track('ringAlpha', this.loadTextureByKey('ringAlpha', 'textures/saturn_rings_alpha.png')),
+      track(
+        'earthAlbedo',
+        this.loadOptionalTextureByKey('earthAlbedo', 'textures/earth_daymap_4k.jpg')
+      ),
+      track('starmap', this.loadOptionalTextureByKey('starmap', 'textures/milky_way_8k.jpg'))
+    ]);
+
+    saturn.colorSpace = THREE.SRGBColorSpace;
+    rColor.colorSpace = THREE.SRGBColorSpace;
+    // La máscara de densidad debe permanecer lineal o la sombra deja de ser correcta.
+    rAlpha.colorSpace = THREE.LinearSRGBColorSpace;
+    if (earth) earth.colorSpace = THREE.SRGBColorSpace;
+    if (starmap) {
+      starmap.colorSpace = THREE.SRGBColorSpace;
+      starmap.mapping = THREE.EquirectangularReflectionMapping;
+    }
+
+    this.assets.saturnAlbedo = saturn;
+    this.assets.ringColor = rColor;
+    this.assets.ringAlpha = rAlpha;
+    this.assets.earthAlbedo = earth;
+    this.assets.starmap = starmap;
+    // Un único mapa galáctico: el entorno PBR usa una copia reducida (EnvironmentProbe).
+    this.assets.galacticMap = starmap;
+
+    progress.finish();
+    return this.assets;
+  }
+
+  /** Fase 1: lunas, audio, modelos GLB y catálogo de lunas menores. */
+  async loadBackgroundAssets() {
+    const [
+      mimas,
+      tethys,
+      dione,
+      rhea,
+      iapetus,
+      minorMoons,
+      pioneerModel,
+      voyagerModel,
+      voyager2Model,
+      cassiniHuygensModel,
+      titanModel,
+      mimasModel,
+      enceladusModel
+    ] = await Promise.all([
+      this.loadMoonTextureSet('mimas'),
+      this.loadMoonTextureSet('tethys'),
+      this.loadMoonTextureSet('dione'),
+      this.loadMoonTextureSet('rhea'),
+      this.loadMoonTextureSet('iapetus'),
+      this.loadMinorMoons(),
+      this.loadPioneerModel(),
+      this.loadVoyagerModel(),
+      this.loadVoyager2Model(),
+      this.loadCassiniHuygensModel(),
+      this.loadTitanModel(),
+      this.loadMimasModel(),
+      this.loadEnceladusModel()
+    ]);
+
+    this.assets.mimasColor = mimas.color;
+    this.assets.mimasNormal = mimas.normal;
+    this.assets.mimasAo = mimas.ao;
+    this.assets.tethysColor = tethys.color;
+    this.assets.tethysNormal = tethys.normal;
+    this.assets.tethysAo = tethys.ao;
+    this.assets.dioneColor = dione.color;
+    this.assets.dioneNormal = dione.normal;
+    this.assets.dioneAo = dione.ao;
+    this.assets.rheaColor = rhea.color;
+    this.assets.rheaNormal = rhea.normal;
+    this.assets.rheaAo = rhea.ao;
+    this.assets.iapetusColor = iapetus.color;
+    this.assets.iapetusNormal = iapetus.normal;
+    this.assets.iapetusAo = iapetus.ao;
+    this.assets.saturnAudioBuffer = null;
+    this.assets.titanAudioBuffer = null;
+    this.assets.enceladusAudioBuffer = null;
+    this.assets.mimasAudioBuffer = null;
+    this.assets.minorMoons = minorMoons;
+    this.assets.models.pioneer11 = pioneerModel;
+    this.assets.models.voyager1 = voyagerModel;
+    this.assets.models.voyager2 = voyager2Model;
+    this.assets.models.cassiniHuygens = cassiniHuygensModel;
+    this.assets.models.titan = titanModel;
+    this.assets.models.mimas = mimasModel;
+    this.assets.models.enceladus = enceladusModel;
+
+    return this.assets;
+  }
+
+  /** Audio bajo demanda: no se descarga hasta que el usuario activa el sonido. */
+  async loadAudioAssets() {
+    const [saturn, titan, enceladus, mimas] = await Promise.all([
+      this.loadAudioAsync(this.assetUrl('audio/saturn_deep_rumble.wav')),
+      this.loadAudioAsync(this.assetUrl('audio/titan_winds.wav')),
+      this.loadAudioAsync(this.assetUrl('audio/enceladus_ice_crackle.wav')),
+      this.loadAudioAsync(this.assetUrl('audio/mimas_rocky_rumble.wav'))
+    ]);
+
+    this.assets.saturnAudioBuffer = saturn;
+    this.assets.titanAudioBuffer = titan;
+    this.assets.enceladusAudioBuffer = enceladus;
+    this.assets.mimasAudioBuffer = mimas;
+    return this.assets;
+  }
+
+  /**
+   * Carga completa (compatibilidad con pruebas y consumidores que no necesitan fases).
+   */
   async loadAllAssets() {
     console.log('Iniciando descarga de texturas de la misión Cassini...');
-
-    try {
-      let [
-        saturn,
-        rColor,
-        rAlpha,
-        earth,
-        starmap,
-        galacticMap,
-        mimas,
-        tethys,
-        dione,
-        rhea,
-        iapetus,
-        saturnAudio,
-        titanAudio,
-        enceladusAudio,
-        mimasAudio,
-        minorMoons,
-        pioneerModel,
-        voyagerModel,
-        voyager2Model,
-        cassiniHuygensModel,
-        titanModel,
-        mimasModel,
-        enceladusModel
-      ] = await Promise.all([
-        this.loadTextureAsync(this.assetUrl('textures/saturn_atmosphere_8k.jpg')),
-        this.loadTextureAsync(this.assetUrl('textures/saturn_rings_color.png')),
-        // La máscara de densidad/alfa de los anillos (blanco = sólido, negro = vacío)
-        this.loadTextureAsync(this.assetUrl('textures/saturn_rings_alpha.png')),
-        this.loadOptionalTexture('textures/earth_daymap_4k.jpg'),
-        this.loadOptionalTexture('textures/milky_way_8k.jpg'),
-        this.loadGalacticMap(),
-        this.loadMoonTextureSet('mimas'),
-        this.loadMoonTextureSet('tethys'),
-        this.loadMoonTextureSet('dione'),
-        this.loadMoonTextureSet('rhea'),
-        this.loadMoonTextureSet('iapetus'),
-        this.loadAudioAsync(this.assetUrl('audio/saturn_deep_rumble.wav')),
-        this.loadAudioAsync(this.assetUrl('audio/titan_winds.wav')),
-        this.loadAudioAsync(this.assetUrl('audio/enceladus_ice_crackle.wav')),
-        this.loadAudioAsync(this.assetUrl('audio/mimas_rocky_rumble.wav')),
-        this.loadMinorMoons(),
-        this.loadPioneerModel(),
-        this.loadVoyagerModel(),
-        this.loadVoyager2Model(),
-        this.loadCassiniHuygensModel(),
-        this.loadTitanModel(),
-        this.loadMimasModel(),
-        this.loadEnceladusModel()
-      ]);
-
-      // Configuración estricta de espacios de color
-      // Mapas de color (Albedo) deben estar en sRGB
-      saturn.colorSpace = THREE.SRGBColorSpace;
-      rColor.colorSpace = THREE.SRGBColorSpace;
-      if (earth) {
-        earth.colorSpace = THREE.SRGBColorSpace;
-      }
-      if (starmap) {
-        starmap.colorSpace = THREE.SRGBColorSpace;
-        starmap.mapping = THREE.EquirectangularReflectionMapping;
-      }
-      if (galacticMap) {
-        this.configureGalacticMap(galacticMap);
-      } else if (typeof starmap?.clone === 'function') {
-        galacticMap = starmap.clone();
-        this.configureGalacticMap(galacticMap);
-      }
-
-      // Mapas de datos (Alpha/Densidad, Normales) DEBEN mantenerse en Linear
-      // Si el alpha se convierte a sRGB, la curva matemática de la sombra fallará
-      rAlpha.colorSpace = THREE.LinearSRGBColorSpace;
-
-      this.assets.saturnAlbedo = saturn;
-      this.assets.ringColor = rColor;
-      this.assets.ringAlpha = rAlpha;
-      this.assets.earthAlbedo = earth;
-      this.assets.starmap = starmap;
-      this.assets.galacticMap = galacticMap;
-      this.assets.mimasColor = mimas.color;
-      this.assets.mimasNormal = mimas.normal;
-      this.assets.mimasAo = mimas.ao;
-      this.assets.tethysColor = tethys.color;
-      this.assets.tethysNormal = tethys.normal;
-      this.assets.tethysAo = tethys.ao;
-      this.assets.dioneColor = dione.color;
-      this.assets.dioneNormal = dione.normal;
-      this.assets.dioneAo = dione.ao;
-      this.assets.rheaColor = rhea.color;
-      this.assets.rheaNormal = rhea.normal;
-      this.assets.rheaAo = rhea.ao;
-      this.assets.iapetusColor = iapetus.color;
-      this.assets.iapetusNormal = iapetus.normal;
-      this.assets.iapetusAo = iapetus.ao;
-      this.assets.saturnAudioBuffer = saturnAudio;
-      this.assets.titanAudioBuffer = titanAudio;
-      this.assets.enceladusAudioBuffer = enceladusAudio;
-      this.assets.mimasAudioBuffer = mimasAudio;
-      this.assets.minorMoons = minorMoons;
-      this.assets.models.pioneer11 = pioneerModel;
-      this.assets.models.voyager1 = voyagerModel;
-      this.assets.models.voyager2 = voyager2Model;
-      this.assets.models.cassiniHuygens = cassiniHuygensModel;
-      this.assets.models.titan = titanModel;
-      this.assets.models.mimas = mimasModel;
-      this.assets.models.enceladus = enceladusModel;
-
-      console.log('Texturas cargadas exitosamente.');
-      return this.assets;
-    } catch (error) {
-      console.error('Error crítico cargando las texturas:', error);
-      throw error;
-    }
+    await this.loadCriticalAssets();
+    await this.loadBackgroundAssets();
+    console.log('Texturas cargadas exitosamente.');
+    return this.assets;
   }
 
   enqueue(task) {
@@ -281,40 +325,6 @@ export class AssetFetcher {
       );
       return fallbackTexture;
     });
-  }
-
-  loadHDRTexture(url) {
-    return this.enqueue(
-      () =>
-        new Promise((resolve, reject) => {
-          new HDRLoader().load(
-            url,
-            (texture) => resolve(texture),
-            undefined,
-            () => reject(new Error(`Fallo al cargar HDR: ${url}`))
-          );
-        })
-    );
-  }
-
-  async loadGalacticMap() {
-    if (typeof window !== 'undefined') {
-      try {
-        return await this.loadHDRTexture(this.assetUrl('textures/starmap_4k.hdr'));
-      } catch {
-        // Sin HDR disponible: se usa el JPG equirectangular de respaldo.
-      }
-    }
-
-    try {
-      return await this.loadSingleTexture(this.assetUrl('textures/starmap_4k.jpg'));
-    } catch (error) {
-      console.warn(
-        'Mapa galáctico 4K no disponible, usando starmap base:',
-        error?.message || error
-      );
-      return null;
-    }
   }
 
   loadModel(url) {
@@ -469,12 +479,18 @@ export class AssetFetcher {
   }
 
   async loadMoonTextureSet(name) {
+    const colorKey = `${name}Color`;
+    const normalKey = `${name}Normal`;
+    const aoKey = `${name}Ao`;
+    const colorPath = this.texturePath(colorKey, `textures/${name}_color.jpg`);
+    const normalPath = this.texturePath(normalKey, `textures/${name}_normal.jpg`);
+
     const [color, normal, ao] = await Promise.all([
-      this.loadOptionalTexture(`textures/${name}_color.jpg`, WHITE_TEXTURE),
-      this.loadOptionalTexture(`textures/${name}_normal.jpg`, FLAT_NORMAL_TEXTURE),
+      this.loadOptionalTexture(colorPath, WHITE_TEXTURE),
+      this.loadOptionalTexture(normalPath, FLAT_NORMAL_TEXTURE),
       this.loadTextureWithFallback(
-        `textures/${name}_ao.jpg`,
-        `textures/${name}_color.jpg`,
+        this.texturePath(aoKey, `textures/${name}_ao.jpg`),
+        colorPath,
         WHITE_TEXTURE
       )
     ]);

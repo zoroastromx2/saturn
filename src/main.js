@@ -36,6 +36,8 @@ import {
   saveTimeHistory
 } from './core/TimeHistory.js';
 import { getLanguage, setLanguage, t } from './core/Localization.js';
+import { createEnvironmentProbe } from './core/EnvironmentProbe.js';
+import { resolveQualityTier } from './core/QualityTier.js';
 import { sliderPositionToScale, scaleToSliderPosition, formatTimeScale } from './math/TimeScale.js';
 import { VintageOpticsShader } from './shaders/VintageOpticsShader.js';
 import './style.css';
@@ -175,6 +177,20 @@ function setUiCollapsed(collapsed) {
   button.setAttribute('title', label);
 }
 
+function attachAmbientSound(simulator, buffer, radius) {
+  if (!buffer || !listener || !simulator?.mesh) return null;
+  if (simulator.ambientSound) return simulator.ambientSound;
+
+  const sound = new THREE.PositionalAudio(listener);
+  sound.setBuffer(buffer);
+  sound.setLoop(true);
+  sound.setRefDistance(radius * 2);
+  sound.setMaxDistance(radius * 20);
+  simulator.mesh.add(sound);
+  simulator.ambientSound = sound;
+  return sound;
+}
+
 async function bootstrapApp() {
   const uiToggleButton = document.getElementById('btn-toggle-ui');
   if (uiToggleButton) {
@@ -197,6 +213,13 @@ async function bootstrapApp() {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.0;
+
+  const qualityTier = resolveQualityTier({
+    coarsePointer: window.matchMedia('(pointer: coarse)').matches,
+    deviceMemory: navigator.deviceMemory,
+    maxTextureSize: renderer.capabilities.maxTextureSize,
+    override: new URLSearchParams(window.location.search).get('quality')
+  });
 
   scene = new THREE.Scene();
 
@@ -233,13 +256,24 @@ async function bootstrapApp() {
   document.body.appendChild(labelRenderer.domElement);
 
   try {
-    // 2. Bloquear la inicialización gráfica hasta que las texturas estén en RAM
+    // 2. Fase 0: solo lo mínimo para el primer frame (Saturno, anillos, fondo y Tierra)
+    const loaderProgress = document.getElementById('loader-progress');
+    const setLoadProgress = (fraction) => {
+      if (!loaderProgress) return;
+      const percent = Math.max(0, Math.min(100, Math.round(fraction * 100)));
+      loaderProgress.textContent = `${percent} %`;
+    };
+
     const fetcher = new AssetFetcher({
-      maxAnisotropy: renderer.capabilities.getMaxAnisotropy()
+      maxAnisotropy: renderer.capabilities.getMaxAnisotropy(),
+      tier: qualityTier,
+      onProgress: setLoadProgress
     });
-    const assets = await fetcher.loadAllAssets();
-    if (assets.starmap) {
-      scene.environment = assets.starmap;
+    const assets = await fetcher.loadCriticalAssets();
+    const environmentProbe = createEnvironmentProbe(assets.starmap);
+    if (environmentProbe || assets.starmap) {
+      // El entorno PBR nunca usa el mapa 8K: solo la copia reducida.
+      scene.environment = environmentProbe || assets.starmap;
       scene.environmentIntensity = 1.0;
     }
     scene.background = new THREE.Color(0x02030a);
@@ -569,12 +603,29 @@ async function bootstrapApp() {
     }
 
     if (audioBtn) {
+      let audioAssetsPromise = null;
       audioBtn.addEventListener('click', async () => {
         if (listener.context.state === 'suspended') {
           await listener.context.resume();
         }
 
         audioEnabled = !audioEnabled;
+
+        if (audioEnabled && !audioAssetsPromise) {
+          audioAssetsPromise = fetcher.loadAudioAssets();
+        }
+        if (audioEnabled) {
+          try {
+            await audioAssetsPromise;
+            attachAmbientSound(saturnSim, assets.saturnAudioBuffer, saturnSim.eqRadius);
+            attachAmbientSound(titanSim, assets.titanAudioBuffer, titanSim.radius);
+            attachAmbientSound(enceladusSim, assets.enceladusAudioBuffer, enceladusSim.radius);
+            attachAmbientSound(mimasSim, assets.mimasAudioBuffer, mimasSim.radius);
+          } catch {
+            // El audio es opcional: si falla, la escena sigue igual.
+          }
+        }
+
         const ambientSounds = [
           saturnSim.ambientSound,
           titanSim.ambientSound,
@@ -963,7 +1014,38 @@ async function bootstrapApp() {
     applyTheme(currentTheme);
     setLanguage('es');
 
-    // 7. Iniciar el bucle de renderizado solo cuando todo está listo
+    // 7. Fase 1: el resto de texturas y modelos llega después del primer frame.
+    const hydrateBackground = async () => {
+      try {
+        await fetcher.loadBackgroundAssets();
+
+        const textureSets = [
+          [mimasSim, assets.mimasColor, assets.mimasNormal, assets.mimasAo],
+          [tethysSim, assets.tethysColor, assets.tethysNormal, assets.tethysAo],
+          [dioneSim, assets.dioneColor, assets.dioneNormal, assets.dioneAo],
+          [rheaSim, assets.rheaColor, assets.rheaNormal, assets.rheaAo],
+          [iapetusSim, assets.iapetusColor, assets.iapetusNormal, assets.iapetusAo]
+        ];
+        textureSets.forEach(([simulator, color, normal, ao]) => {
+          simulator?.applyMoonTextures?.({ color, normal, ao });
+        });
+
+        titanSim?.applyTitanModel?.(assets.models.titan);
+        enceladusSim?.applyEnceladusModel?.(assets.models.enceladus);
+        mimasSim?.applyMimasModel?.(assets.models.mimas);
+        missionSim?.setProbeModels?.(assets.models);
+
+        if (!minorMoonsSim && assets.minorMoons?.length === 135) {
+          minorMoonsSim = new MinorMoonsSimulator(scene, assets.minorMoons);
+          minorMoonsSim.update(getDaysSinceJ2000());
+          minorMoonsSim.setLabelsVisible(document.body.classList.contains('show-labels'));
+        }
+      } catch (error) {
+        console.warn('Carga en segundo plano incompleta:', error?.message || error);
+      }
+    };
+
+    // 8. Iniciar el bucle de renderizado solo cuando lo crítico está listo
     window.addEventListener('resize', onWindowResize);
 
     // Ocultar pantalla de carga del DOM si existe
@@ -972,6 +1054,10 @@ async function bootstrapApp() {
 
     clock.start();
     tick();
+
+    requestAnimationFrame(() => {
+      window.setTimeout(hydrateBackground, 0);
+    });
   } catch (error) {
     console.error('Error crítico durante el bootstrap:', error);
     document.body.innerHTML = `<h2 style="color:red; text-align:center;">${t('error.bootstrap')}</h2>`;
