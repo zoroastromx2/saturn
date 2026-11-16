@@ -75,6 +75,11 @@ const enceladusWorldPosition = new THREE.Vector3();
 const MOBILE_UI_QUERY = '(max-width: 1024px), (pointer: coarse)';
 const J2000_EPOCH_MS = Date.UTC(2000, 0, 1, 12, 0, 0);
 const MS_PER_DAY = 86400000;
+const TIME_STEP_MS = {
+  minute: 60 * 1000,
+  hour: 60 * 60 * 1000,
+  day: MS_PER_DAY
+};
 
 function getDaysSinceJ2000() {
   return (simulationDate.getTime() - J2000_EPOCH_MS) / MS_PER_DAY;
@@ -385,10 +390,15 @@ async function bootstrapApp() {
     let activeHistoryDate = null;
     let followProbe = false;
     const timeButtons = [
-      { element: document.getElementById('btn-time-pause'), scale: 0.0 },
-      { element: document.getElementById('btn-time-1'), scale: 1.0 },
-      { element: document.getElementById('btn-time-10'), scale: 10.0 },
-      { element: document.getElementById('btn-time-100'), scale: 100.0 }
+      { element: document.getElementById('btn-time-pause'), scale: 0.0 }
+    ].filter(({ element }) => element);
+    const timeStepButtons = [
+      { element: document.getElementById('btn-time-back-minute'), direction: -1, unit: 'minute' },
+      { element: document.getElementById('btn-time-back-hour'), direction: -1, unit: 'hour' },
+      { element: document.getElementById('btn-time-back-day'), direction: -1, unit: 'day' },
+      { element: document.getElementById('btn-time-forward-minute'), direction: 1, unit: 'minute' },
+      { element: document.getElementById('btn-time-forward-hour'), direction: 1, unit: 'hour' },
+      { element: document.getElementById('btn-time-forward-day'), direction: 1, unit: 'day' }
     ].filter(({ element }) => element);
 
     if (timeMachineInput) {
@@ -625,6 +635,18 @@ async function bootstrapApp() {
 
     timeButtons.forEach(({ element, scale }) => {
       element.addEventListener('click', () => setTimeScale(scale, element, true));
+    });
+
+    timeStepButtons.forEach(({ element, direction, unit }) => {
+      element.addEventListener('click', () => {
+        const stepMs = direction * TIME_STEP_MS[unit];
+        simulationDate = new Date(simulationDate.getTime() + stepMs);
+        orbitalTime += stepMs / 1000;
+        if (timeMachineInput) {
+          timeMachineInput.value = simulationDate.toISOString().slice(0, 10);
+        }
+        telemetryController?.refresh();
+      });
     });
 
     if (timeSlider) {

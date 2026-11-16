@@ -1161,7 +1161,7 @@ body:not(.ui-collapsed) .ui-icon-close {
   justify-self: end;
   align-self: end;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
   width: min(360px, 100%);
   padding: 10px;
@@ -1170,6 +1170,21 @@ body:not(.ui-collapsed) .ui-icon-close {
 
 #time-controls .panel-label {
   margin-bottom: 1px;
+}
+
+#time-controls #btn-time-pause {
+  grid-column: 1 / -1;
+}
+
+.time-step-grid {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+#time-controls .time-step-grid button {
+  text-transform: none;
 }
 
 #time-controls button {

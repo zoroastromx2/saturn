@@ -311,9 +311,14 @@
           <span class="panel-index">02</span>
         </div>
         <button id="btn-time-pause" aria-pressed="false" data-i18n="time.pause">|| Pausa</button>
-        <button id="btn-time-1" class="active" aria-pressed="true">&gt; x1</button>
-        <button id="btn-time-10" aria-pressed="false">&gt;&gt; x10</button>
-        <button id="btn-time-100" aria-pressed="false">&gt;&gt;&gt; x100</button>
+        <div class="time-step-grid" role="group" aria-label="Avance temporal" data-i18n-aria-label="time.stepGroupAria">
+          <button id="btn-time-back-minute" type="button" aria-label="Retroceder un minuto" data-i18n-aria-label="time.stepBackMinuteAria">-m</button>
+          <button id="btn-time-back-hour" type="button" aria-label="Retroceder una hora" data-i18n-aria-label="time.stepBackHourAria">-h</button>
+          <button id="btn-time-back-day" type="button" aria-label="Retroceder un día" data-i18n-aria-label="time.stepBackDayAria">-d</button>
+          <button id="btn-time-forward-minute" type="button" aria-label="Avanzar un minuto" data-i18n-aria-label="time.stepForwardMinuteAria">m</button>
+          <button id="btn-time-forward-hour" type="button" aria-label="Avanzar una hora" data-i18n-aria-label="time.stepForwardHourAria">h</button>
+          <button id="btn-time-forward-day" type="button" aria-label="Avanzar un día" data-i18n-aria-label="time.stepForwardDayAria">d</button>
+        </div>
         <div class="time-slider-row">
           <label class="time-slider-label" for="time-speed-slider" data-i18n="time.speedLabel">Velocidad</label>
           <input
