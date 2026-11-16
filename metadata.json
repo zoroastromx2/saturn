@@ -1,0 +1,6 @@
+{
+  "name": "Simulador de Saturno",
+  "description": "Observatorio volumétrico 3D de Saturno, sus anillos y lunas principales con generación dinámica de texturas de alta resolución.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

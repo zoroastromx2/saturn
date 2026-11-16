@@ -89,6 +89,25 @@ const translations = {
     'body.dione': 'Dione',
     'body.rhea': 'Rea',
     'body.iapetus': 'Jápeto',
+    'textureStudio.section': 'Estudio de texturas',
+    'textureStudio.targetLabel': 'Objetivo',
+    'textureStudio.targetAria': 'Seleccionar cuerpo para generar textura',
+    'textureStudio.target.rings': 'Anillos de Saturno',
+    'textureStudio.resolutionLabel': 'Resolución',
+    'textureStudio.resolutionAria': 'Seleccionar resolución de textura',
+    'textureStudio.promptLabel': 'Detalle opcional',
+    'textureStudio.promptPlaceholder': 'Ej. hielo azulado, fisuras tectónicas...',
+    'textureStudio.promptAria': 'Indicaciones opcionales para la textura',
+    'textureStudio.generate': 'Generar y aplicar',
+    'textureStudio.generating': 'Generando textura...',
+    'textureStudio.focus': 'Enfocar objetivo',
+    'textureStudio.reset': 'Restaurar original',
+    'textureStudio.stateBase': 'BASE',
+    'textureStudio.stateCustom': 'IA',
+    'textureStudio.stateBusy': '...',
+    'textureStudio.applied': 'Textura {res} aplicada a {target}.',
+    'textureStudio.restored': 'Textura original restaurada en {target}.',
+    'textureStudio.previewAlt': 'Vista previa de textura generada para {target}',
     'error.bootstrap': 'Error inicializando el simulador. Revisa la consola.'
   },
   en: {
@@ -181,6 +200,25 @@ const translations = {
     'body.dione': 'Dione',
     'body.rhea': 'Rhea',
     'body.iapetus': 'Iapetus',
+    'textureStudio.section': 'Texture studio',
+    'textureStudio.targetLabel': 'Target',
+    'textureStudio.targetAria': 'Select body for texture generation',
+    'textureStudio.target.rings': 'Saturn Rings',
+    'textureStudio.resolutionLabel': 'Resolution',
+    'textureStudio.resolutionAria': 'Select texture resolution',
+    'textureStudio.promptLabel': 'Optional detail',
+    'textureStudio.promptPlaceholder': 'E.g. icy blue ridges, deep fractures...',
+    'textureStudio.promptAria': 'Optional texture prompt instructions',
+    'textureStudio.generate': 'Generate & apply',
+    'textureStudio.generating': 'Generating texture...',
+    'textureStudio.focus': 'Focus target',
+    'textureStudio.reset': 'Restore original',
+    'textureStudio.stateBase': 'BASE',
+    'textureStudio.stateCustom': 'AI',
+    'textureStudio.stateBusy': '...',
+    'textureStudio.applied': 'Applied {res} texture to {target}.',
+    'textureStudio.restored': 'Restored original texture on {target}.',
+    'textureStudio.previewAlt': 'Generated texture preview for {target}',
     'error.bootstrap': 'Error initializing the simulator. Check the console.'
   }
 };
@@ -208,6 +246,10 @@ export function setLanguage(language) {
 
   document.querySelectorAll('[data-i18n-aria-label]').forEach((element) => {
     element.setAttribute('aria-label', t(element.dataset.i18nAriaLabel));
+  });
+
+  document.querySelectorAll('[data-i18n-placeholder]').forEach((element) => {
+    element.setAttribute('placeholder', t(element.dataset.i18nPlaceholder));
   });
 
   document.dispatchEvent(new CustomEvent('languagechange', { detail: { language } }));

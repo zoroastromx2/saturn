@@ -4,6 +4,15 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Observatorio volumétrico 3D de Saturno, sus anillos y lunas principales con generación dinámica de texturas de alta resolución."
+    />
+    <meta property="og:title" content="Simulador de Saturno" />
+    <meta
+      property="og:description"
+      content="Observatorio volumétrico 3D de Saturno, sus anillos y lunas principales con generación dinámica de texturas de alta resolución."
+    />
     <title>Simulador de Saturno</title>
   </head>
   <body>
@@ -203,6 +212,75 @@
               <span class="row-label" data-i18n="console.auroras">Auroras</span>
               <span class="row-state" id="aurora-state">OFF</span>
             </button>
+          </div>
+        </details>
+
+        <details class="control-section texture-studio-section">
+          <summary class="control-section-title">
+            <span data-i18n="textureStudio.section">Estudio de texturas</span>
+            <span class="section-chevron" aria-hidden="true">›</span>
+          </summary>
+          <div class="texture-studio-controls">
+            <div class="texture-studio-grid">
+              <div class="texture-field">
+                <label class="mission-label" for="texture-target-select" data-i18n="textureStudio.targetLabel">Objetivo</label>
+                <select
+                  id="texture-target-select"
+                  class="glass-input texture-select"
+                  aria-label="Seleccionar cuerpo para generar textura"
+                  data-i18n-aria-label="textureStudio.targetAria"
+                >
+                  <option value="rings" data-i18n="textureStudio.target.rings">Anillos de Saturno</option>
+                  <option value="titan" data-i18n="body.titan">Titán</option>
+                  <option value="enceladus" data-i18n="body.enceladus">Encélado</option>
+                  <option value="mimas" data-i18n="body.mimas">Mimas</option>
+                  <option value="tethys" data-i18n="body.tethys">Tetis</option>
+                  <option value="dione" data-i18n="body.dione">Dione</option>
+                  <option value="rhea" data-i18n="body.rhea">Rea</option>
+                  <option value="iapetus" data-i18n="body.iapetus">Jápeto</option>
+                </select>
+              </div>
+              <div class="texture-field texture-field-res">
+                <label class="mission-label" for="texture-resolution-select" data-i18n="textureStudio.resolutionLabel">Resolución</label>
+                <select
+                  id="texture-resolution-select"
+                  class="glass-input texture-select"
+                  aria-label="Seleccionar resolución de textura"
+                  data-i18n-aria-label="textureStudio.resolutionAria"
+                >
+                  <option value="1K">1K</option>
+                  <option value="2K" selected>2K</option>
+                  <option value="4K">4K</option>
+                </select>
+              </div>
+            </div>
+            <label class="mission-label" for="texture-prompt-input" data-i18n="textureStudio.promptLabel">Detalle opcional</label>
+            <input
+              id="texture-prompt-input"
+              class="glass-input texture-prompt-input"
+              type="text"
+              maxlength="400"
+              placeholder="Ej. hielo azulado, fisuras tectónicas..."
+              data-i18n-placeholder="textureStudio.promptPlaceholder"
+              aria-label="Indicaciones opcionales para la textura"
+              data-i18n-aria-label="textureStudio.promptAria"
+            />
+            <button id="btn-generate-texture" class="control-row system-row" type="button">
+              <span class="row-label" data-i18n="textureStudio.generate">Generar y aplicar</span>
+              <span class="row-state" id="texture-generate-state">2K</span>
+            </button>
+            <button id="btn-focus-texture-target" class="control-row system-row" type="button">
+              <span class="row-label" data-i18n="textureStudio.focus">Enfocar objetivo</span>
+              <span class="row-glyph" aria-hidden="true">›</span>
+            </button>
+            <button id="btn-reset-texture" class="control-row system-row" type="button" disabled>
+              <span class="row-label" data-i18n="textureStudio.reset">Restaurar original</span>
+              <span class="row-state" id="texture-reset-state">BASE</span>
+            </button>
+            <div id="texture-preview-wrap" class="texture-preview-wrap" hidden>
+              <img id="texture-preview-thumb" class="texture-preview-thumb" alt="" />
+            </div>
+            <p id="texture-studio-status" class="mission-description texture-studio-status" aria-live="polite" hidden></p>
           </div>
         </details>
       </nav>
