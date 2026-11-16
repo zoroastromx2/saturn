@@ -53,9 +53,18 @@ export default [
     }
   },
   {
-    files: ['vite.config.js', 'eslint.config.js'],
+    files: ['vite.config.js', 'eslint.config.js', 'playwright.config.js'],
     languageOptions: {
       globals: globals.node
+    }
+  },
+  {
+    files: ['e2e/**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.browser
+      }
     }
   },
   prettier
