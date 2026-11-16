@@ -71,7 +71,8 @@ export class TextureStudioController {
 
     return {
       type: 'moon',
-      uniforms
+      uniforms,
+      flipY: moonSim?.mesh?.userData?.textureFlipY
     };
   }
 
@@ -123,6 +124,10 @@ export class TextureStudioController {
     if (binding.type === 'rings') {
       binding.uniforms.uRingTexture.value = texture;
     } else {
+      if (binding.flipY === false) {
+        texture.flipY = false;
+        texture.needsUpdate = true;
+      }
       binding.uniforms.tColor.value = texture;
       if (binding.uniforms.uBaseColor?.value?.set) {
         binding.uniforms.uBaseColor.value.set(1.0, 1.0, 1.0);

@@ -47,7 +47,8 @@ export class AssetFetcher {
         pioneer11: null,
         voyager1: null,
         voyager2: null,
-        cassiniHuygens: null
+        cassiniHuygens: null,
+        titan: null
       }
     };
   }
@@ -80,7 +81,8 @@ export class AssetFetcher {
         pioneerModel,
         voyagerModel,
         voyager2Model,
-        cassiniHuygensModel
+        cassiniHuygensModel,
+        titanModel
       ] = await Promise.all([
         this.loadTextureAsync(this.assetUrl('textures/saturn_atmosphere_8k.jpg')),
         this.loadTextureAsync(this.assetUrl('textures/saturn_rings_color.png')),
@@ -102,7 +104,8 @@ export class AssetFetcher {
         this.loadPioneerModel(),
         this.loadVoyagerModel(),
         this.loadVoyager2Model(),
-        this.loadCassiniHuygensModel()
+        this.loadCassiniHuygensModel(),
+        this.loadTitanModel()
       ]);
 
       // Configuración estricta de espacios de color
@@ -157,6 +160,7 @@ export class AssetFetcher {
       this.assets.models.voyager1 = voyagerModel;
       this.assets.models.voyager2 = voyager2Model;
       this.assets.models.cassiniHuygens = cassiniHuygensModel;
+      this.assets.models.titan = titanModel;
 
       console.log("Texturas cargadas exitosamente.");
       return this.assets;
@@ -365,6 +369,22 @@ export class AssetFetcher {
     } catch (error) {
       console.warn(
         'Modelo Cassini-Huygens no disponible, usando sonda procedural:',
+        error?.message || error
+      );
+      return null;
+    }
+  }
+
+  async loadTitanModel() {
+    if (typeof window === 'undefined' && !this.hasCustomGltfLoader) {
+      return null;
+    }
+
+    try {
+      return await this.loadModel(this.assetUrl('models/titan.glb'));
+    } catch (error) {
+      console.warn(
+        'Modelo Titan no disponible, usando esfera procedural:',
         error?.message || error
       );
       return null;

@@ -123,7 +123,10 @@ export class CameraController {
 
   focusOn(targetMesh, distanceMultiplier, elevationBias = 0.35) {
     if (!targetMesh) return;
-    const radius = targetMesh.geometry?.parameters?.radius ?? 1;
+    const radius = targetMesh.geometry?.parameters?.radius
+      ?? targetMesh.geometry?.boundingSphere?.radius
+      ?? targetMesh.userData?.radius
+      ?? 1;
     this.focusOnObject(targetMesh, radius * distanceMultiplier, elevationBias);
   }
 
