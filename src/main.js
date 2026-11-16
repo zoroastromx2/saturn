@@ -29,8 +29,6 @@ import { TelemetryController } from './core/TelemetryController.js';
 import { StatsController } from './core/StatsController.js';
 import { OrbitPathsController } from './core/OrbitPathsController.js';
 import { SnapshotExporter } from './core/SnapshotExporter.js';
-import { TextureStudioController } from './core/TextureStudioController.js';
-import { getTextureTarget } from './core/TexturePromptCatalog.js';
 import {
   loadTimeHistory,
   parseUtcDateString,
@@ -55,8 +53,7 @@ let fRingSim,
   comparisonMode,
   telemetryController,
   statsController,
-  orbitPathsController,
-  textureStudioController;
+  orbitPathsController;
 let audioEnabled = false;
 let orbitsEnabled = false;
 let timeScale = 1.0;
@@ -307,19 +304,6 @@ async function bootstrapApp() {
       iapetusSim
     ]);
     missionSim = new MissionSimulator(scene, saturnSim, camera, cameraController, titanSim, assets);
-    textureStudioController = new TextureStudioController({
-      saturnSim,
-      moonsById: {
-        titan: titanSim,
-        enceladus: enceladusSim,
-        mimas: mimasSim,
-        tethys: tethysSim,
-        dione: dioneSim,
-        rhea: rheaSim,
-        iapetus: iapetusSim
-      },
-      maxAnisotropy: Math.min(renderer.capabilities.getMaxAnisotropy(), 8)
-    });
     opticalSceneSimulators = {
       saturnSim,
       titanSim,
@@ -922,185 +906,6 @@ async function bootstrapApp() {
     updateFollowButton();
     refreshInstrumentControls(true);
 
-    const textureTargetSelect = document.getElementById('texture-target-select');
-    const textureResolutionSelect = document.getElementById('texture-resolution-select');
-    const texturePromptInput = document.getElementById('texture-prompt-input');
-    const generateTextureBtn = document.getElementById('btn-generate-texture');
-    const generateTextureState = document.getElementById('texture-generate-state');
-    const focusTextureTargetBtn = document.getElementById('btn-focus-texture-target');
-    const resetTextureBtn = document.getElementById('btn-reset-texture');
-    const resetTextureState = document.getElementById('texture-reset-state');
-    const texturePreviewWrap = document.getElementById('texture-preview-wrap');
-    const texturePreviewThumb = document.getElementById('texture-preview-thumb');
-    const textureStudioStatus = document.getElementById('texture-studio-status');
-    let isGeneratingTexture = false;
-    let lastTextureStatus = null;
-
-    const getTextureTargetLabel = (targetId) => {
-      const target = getTextureTarget(targetId);
-      return target ? t(target.labelKey) : targetId;
-    };
-
-    const focusTextureTarget = (targetId) => {
-      if (targetId === 'rings') {
-        cameraController.focusOn(saturnSim.saturnMesh, 3.0);
-        return;
-      }
-      const moonMap = {
-        titan: [titanSim, 5.0],
-        enceladus: [enceladusSim, 5.0],
-        mimas: [mimasSim, 8.0, 0.0],
-        tethys: [tethysSim, 5.0],
-        dione: [dioneSim, 5.0],
-        rhea: [rheaSim, 5.0],
-        iapetus: [iapetusSim, 5.0]
-      };
-      const entry = moonMap[targetId];
-      if (entry?.[0]) {
-        cameraController.focusOn(entry[0].mesh, entry[1], entry[2]);
-      }
-    };
-
-    const setTextureStatus = (statusObj) => {
-      lastTextureStatus = statusObj;
-      if (!textureStudioStatus) return;
-
-      if (!statusObj) {
-        textureStudioStatus.hidden = true;
-        textureStudioStatus.textContent = '';
-        textureStudioStatus.classList.remove('is-error');
-        return;
-      }
-
-      textureStudioStatus.hidden = false;
-      textureStudioStatus.classList.toggle('is-error', Boolean(statusObj.isError));
-      if (statusObj.type === 'generating') {
-        textureStudioStatus.textContent = t('textureStudio.generating');
-      } else if (statusObj.type === 'applied') {
-        textureStudioStatus.textContent = t('textureStudio.applied')
-          .replace('{res}', statusObj.resolution)
-          .replace('{target}', getTextureTargetLabel(statusObj.targetId));
-      } else if (statusObj.type === 'restored') {
-        textureStudioStatus.textContent = t('textureStudio.restored').replace(
-          '{target}',
-          getTextureTargetLabel(statusObj.targetId)
-        );
-      } else {
-        textureStudioStatus.textContent = statusObj.text || '';
-      }
-    };
-
-    const refreshTextureStudioControls = () => {
-      const targetId = textureTargetSelect?.value || 'rings';
-      const resolution = textureResolutionSelect?.value || '2K';
-      const override = textureStudioController?.getOverride(targetId);
-
-      if (generateTextureBtn) {
-        generateTextureBtn.disabled = isGeneratingTexture;
-        generateTextureBtn.classList.toggle('active', isGeneratingTexture);
-      }
-      if (generateTextureState) {
-        generateTextureState.textContent = isGeneratingTexture
-          ? t('textureStudio.stateBusy')
-          : resolution;
-      }
-      if (resetTextureBtn) {
-        resetTextureBtn.disabled = isGeneratingTexture || !override;
-        resetTextureBtn.classList.toggle('active', Boolean(override));
-      }
-      if (resetTextureState) {
-        resetTextureState.textContent = override
-          ? `${t('textureStudio.stateCustom')} ${override.resolution}`
-          : t('textureStudio.stateBase');
-      }
-      if (texturePreviewWrap && texturePreviewThumb) {
-        if (override?.dataUrl) {
-          texturePreviewThumb.src = override.dataUrl;
-          texturePreviewThumb.alt = t('textureStudio.previewAlt').replace(
-            '{target}',
-            getTextureTargetLabel(targetId)
-          );
-          texturePreviewWrap.hidden = false;
-        } else {
-          texturePreviewWrap.hidden = true;
-          texturePreviewThumb.removeAttribute('src');
-          texturePreviewThumb.alt = '';
-        }
-      }
-      if (lastTextureStatus) {
-        setTextureStatus(lastTextureStatus);
-      }
-    };
-
-    if (textureTargetSelect) {
-      textureTargetSelect.addEventListener('change', () => {
-        refreshTextureStudioControls();
-      });
-    }
-
-    if (textureResolutionSelect) {
-      textureResolutionSelect.addEventListener('change', () => {
-        refreshTextureStudioControls();
-      });
-    }
-
-    if (focusTextureTargetBtn) {
-      focusTextureTargetBtn.addEventListener('click', () => {
-        focusTextureTarget(textureTargetSelect?.value || 'rings');
-      });
-    }
-
-    if (generateTextureBtn) {
-      generateTextureBtn.addEventListener('click', async () => {
-        if (isGeneratingTexture) return;
-        const targetId = textureTargetSelect?.value || 'rings';
-        const resolution = textureResolutionSelect?.value || '2K';
-        const customPrompt = texturePromptInput?.value || '';
-
-        isGeneratingTexture = true;
-        setTextureStatus({ type: 'generating' });
-        refreshTextureStudioControls();
-
-        try {
-          const applied = await textureStudioController.generateAndApply({
-            targetId,
-            resolution,
-            customPrompt
-          });
-          statsController?.refresh();
-          setTextureStatus({
-            type: 'applied',
-            targetId: applied.targetId,
-            resolution: applied.resolution
-          });
-          textureStudioStatus?.scrollIntoView({ block: 'nearest' });
-        } catch (error) {
-          setTextureStatus({
-            type: 'error',
-            isError: true,
-            text: error instanceof Error ? error.message : String(error)
-          });
-          textureStudioStatus?.scrollIntoView({ block: 'nearest' });
-        } finally {
-          isGeneratingTexture = false;
-          refreshTextureStudioControls();
-        }
-      });
-    }
-
-    if (resetTextureBtn) {
-      resetTextureBtn.addEventListener('click', () => {
-        const targetId = textureTargetSelect?.value || 'rings';
-        if (textureStudioController.resetTarget(targetId)) {
-          statsController?.refresh();
-          setTextureStatus({ type: 'restored', targetId });
-        }
-        refreshTextureStudioControls();
-      });
-    }
-
-    refreshTextureStudioControls();
-
     const updateDynamicLanguage = () => {
       saturnSim.label.element.textContent = t('body.saturn');
       titanSim.label.element.textContent = t('body.titan');
@@ -1123,7 +928,6 @@ async function bootstrapApp() {
       telemetryController.refresh();
       statsController.refresh();
       renderTimeHistory();
-      refreshTextureStudioControls();
       applyTheme(currentTheme);
     };
 

@@ -3,7 +3,6 @@ import * as THREE from 'three';
 import { AssetFetcher } from '../src/core/AssetFetcher.js';
 import { EnceladusSimulator } from '../src/core/EnceladusSimulator.js';
 import { CameraController } from '../src/core/CameraController.js';
-import { TextureStudioController } from '../src/core/TextureStudioController.js';
 import { WHITE_TEXTURE } from '../src/core/MoonTextures.js';
 
 globalThis.document = {
@@ -109,23 +108,6 @@ describe('Enceladus GLB - Superficie, textura y escala orbital', () => {
 
     expect(simulator.mesh.geometry.parameters.radius).toBeCloseTo(simulator.radius, 6);
     expect(simulator.mesh.material.uniforms.tColor.value).toBeTruthy();
-  });
-
-  it('debería aplicar texturas generadas con la convención UV del GLB', () => {
-    const scene = new THREE.Scene();
-    const { source } = createEnceladusModelSource();
-    const simulator = new EnceladusSimulator(scene, createSaturnSimulator(), 10000, {
-      models: { enceladus: source }
-    });
-    const controller = new TextureStudioController({
-      moonsById: { enceladus: simulator }
-    });
-    const generatedTexture = new THREE.Texture();
-
-    controller.applyTexture('enceladus', generatedTexture);
-
-    expect(generatedTexture.flipY).toBe(false);
-    expect(simulator.mesh.material.uniforms.tColor.value).toBe(generatedTexture);
   });
 
   it('debería encuadrar la cámara usando el radio de la geometría del GLB', () => {

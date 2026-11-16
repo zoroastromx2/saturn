@@ -3,7 +3,6 @@ import * as THREE from 'three';
 import { AssetFetcher } from '../src/core/AssetFetcher.js';
 import { TitanSimulator } from '../src/core/TitanSimulator.js';
 import { CameraController } from '../src/core/CameraController.js';
-import { TextureStudioController } from '../src/core/TextureStudioController.js';
 
 globalThis.document = {
   createElement: () => ({
@@ -90,23 +89,6 @@ describe('Titan GLB - Superficie y escala orbital', () => {
 
     expect(simulator.mesh.geometry.parameters.radius).toBeCloseTo(simulator.radius, 6);
     expect(simulator.mesh.material.uniforms.tColor.value).toBeTruthy();
-  });
-
-  it('debería aplicar texturas generadas con la convención UV del GLB', () => {
-    const scene = new THREE.Scene();
-    const { source } = createTitanModelSource();
-    const simulator = new TitanSimulator(scene, createSaturnSimulator(), 10000, {
-      models: { titan: source }
-    });
-    const controller = new TextureStudioController({
-      moonsById: { titan: simulator }
-    });
-    const generatedTexture = new THREE.Texture();
-
-    controller.applyTexture('titan', generatedTexture);
-
-    expect(generatedTexture.flipY).toBe(false);
-    expect(simulator.mesh.material.uniforms.tColor.value).toBe(generatedTexture);
   });
 
   it('debería encuadrar la cámara usando el radio de la geometría del GLB', () => {
