@@ -21,6 +21,7 @@ import { MinorMoonsSimulator } from './core/MinorMoonsSimulator.js';
 import { DiffuseRingsSimulator } from './core/DiffuseRingsSimulator.js';
 import { SolarLensFlare } from './core/SolarLensFlare.js';
 import { SunSimulator } from './core/SunSimulator.js';
+import { StarfieldSimulator } from './core/StarfieldSimulator.js';
 import { MissionSimulator } from './core/MissionSimulator.js';
 import { ComparisonMode } from './core/ComparisonMode.js';
 import { CameraController } from './core/CameraController.js';
@@ -44,7 +45,7 @@ import './style.css';
 let scene, camera, renderer, composer, labelRenderer, controls, cameraController, listener;
 let saturnSim, titanSim, enceladusSim, mimasSim;
 let tethysSim, dioneSim, rheaSim, iapetusSim;
-let fRingSim, minorMoonsSim, diffuseRingsSim, solarLensFlare, sunSim, missionSim, comparisonMode, telemetryController, statsController, orbitPathsController, textureStudioController;
+let fRingSim, minorMoonsSim, diffuseRingsSim, solarLensFlare, sunSim, starfieldSim, missionSim, comparisonMode, telemetryController, statsController, orbitPathsController, textureStudioController;
 let audioEnabled = false;
 let orbitsEnabled = false;
 let timeScale = 1.0;
@@ -225,22 +226,26 @@ async function bootstrapApp() {
 
   try {
     // 2. Bloquear la inicialización gráfica hasta que las texturas estén en RAM
-    const fetcher = new AssetFetcher();
+    const fetcher = new AssetFetcher({
+      maxAnisotropy: renderer.capabilities.getMaxAnisotropy()
+    });
     const assets = await fetcher.loadAllAssets();
     if (assets.starmap) {
-      scene.background = assets.starmap;
-      scene.backgroundIntensity = 0.15;
       scene.environment = assets.starmap;
       scene.environmentIntensity = 1.0;
-    } else {
-      scene.background = new THREE.Color(0x02030a);
     }
+    scene.background = new THREE.Color(0x02030a);
 
     // 3. Inyectar dependencias a los simuladores
     // Le pasamos los assets para que SaturnSimulator los asigne a los uniforms de GLSL
     simulationDate = new Date();
     const initialDaysSinceJ2000 = getDaysSinceJ2000();
     saturnSim = new SaturnSimulator(scene, assets, listener);
+    starfieldSim = new StarfieldSimulator(
+      scene,
+      assets.galacticMap,
+      renderer.capabilities.getMaxAnisotropy()
+    );
     sunSim = new SunSimulator();
     scene.add(sunSim.mesh);
     sunSim.update(camera, saturnSim.sunDirection);
@@ -1246,6 +1251,13 @@ function tick() {
       saturnSim.sunDirection,
       saturnSim.moonShadowPositions,
       { instrumentLocked: Boolean(cameraController?.isInstrumentLocked) }
+    );
+  }
+  if (starfieldSim && saturnSim) {
+    starfieldSim.update(
+      camera,
+      saturnSim.sunDirection,
+      solarLensFlare?.lastVisibility ?? 1
     );
   }
   if (sunSim && saturnSim) {

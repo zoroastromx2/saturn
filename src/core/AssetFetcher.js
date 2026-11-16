@@ -1,5 +1,6 @@
 // src/core/AssetFetcher.js
 import * as THREE from 'three';
+import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 import { WHITE_TEXTURE, FLAT_NORMAL_TEXTURE } from './MoonTextures.js';
 
 export class AssetFetcher {
@@ -8,6 +9,7 @@ export class AssetFetcher {
     this.audioLoader = options.audioLoader || new THREE.AudioLoader();
     this.retryDelayMs = options.retryDelayMs ?? 250;
     this.maxConcurrency = Math.max(1, options.maxConcurrency ?? 6);
+    this.maxAnisotropy = Math.max(1, options.maxAnisotropy ?? 1);
     this.fetchImpl = options.fetchImpl ?? globalThis.fetch?.bind(globalThis);
     this.activeRequests = 0;
     this.requestQueue = [];
@@ -17,6 +19,7 @@ export class AssetFetcher {
       ringAlpha: null,
       earthAlbedo: null, // Para el ComparisonMode
       starmap: null,
+      galacticMap: null,
       mimasColor: null,
       mimasNormal: null,
       mimasAo: null,
@@ -48,12 +51,13 @@ export class AssetFetcher {
     console.log("Iniciando descarga de texturas de la misión Cassini...");
 
     try {
-      const [
+      let [
         saturn,
         rColor,
         rAlpha,
         earth,
         starmap,
+        galacticMap,
         mimas,
         tethys,
         dione,
@@ -71,6 +75,7 @@ export class AssetFetcher {
         this.loadTextureAsync(this.assetUrl('textures/saturn_rings_alpha.png')),
         this.loadOptionalTexture('textures/earth_daymap_4k.jpg'),
         this.loadOptionalTexture('textures/milky_way_8k.jpg'),
+        this.loadGalacticMap(),
         this.loadMoonTextureSet('mimas'),
         this.loadMoonTextureSet('tethys'),
         this.loadMoonTextureSet('dione'),
@@ -94,6 +99,12 @@ export class AssetFetcher {
         starmap.colorSpace = THREE.SRGBColorSpace;
         starmap.mapping = THREE.EquirectangularReflectionMapping;
       }
+      if (galacticMap) {
+        this.configureGalacticMap(galacticMap);
+      } else if (typeof starmap?.clone === 'function') {
+        galacticMap = starmap.clone();
+        this.configureGalacticMap(galacticMap);
+      }
 
       // Mapas de datos (Alpha/Densidad, Normales) DEBEN mantenerse en Linear
       // Si el alpha se convierte a sRGB, la curva matemática de la sombra fallará
@@ -104,6 +115,7 @@ export class AssetFetcher {
       this.assets.ringAlpha = rAlpha;
       this.assets.earthAlbedo = earth;
       this.assets.starmap = starmap;
+      this.assets.galacticMap = galacticMap;
       this.assets.mimasColor = mimas.color;
       this.assets.mimasNormal = mimas.normal;
       this.assets.mimasAo = mimas.ao;
@@ -231,6 +243,49 @@ export class AssetFetcher {
       console.warn(`Textura opcional no disponible (${path}), usando respaldo:`, error?.message || error);
       return fallbackTexture;
     });
+  }
+
+  loadHDRTexture(url) {
+    return this.enqueue(() => new Promise((resolve, reject) => {
+      new HDRLoader().load(
+        url,
+        (texture) => resolve(texture),
+        undefined,
+        () => reject(new Error(`Fallo al cargar HDR: ${url}`))
+      );
+    }));
+  }
+
+  async loadGalacticMap() {
+    if (typeof window !== 'undefined') {
+      try {
+        return await this.loadHDRTexture(this.assetUrl('textures/starmap_4k.hdr'));
+      } catch {
+      }
+    }
+
+    try {
+      return await this.loadSingleTexture(this.assetUrl('textures/starmap_4k.jpg'));
+    } catch (error) {
+      console.warn(
+        'Mapa galáctico 4K no disponible, usando starmap base:',
+        error?.message || error
+      );
+      return null;
+    }
+  }
+
+  configureGalacticMap(texture) {
+    texture.colorSpace = THREE.LinearSRGBColorSpace;
+    texture.mapping = THREE.EquirectangularReflectionMapping;
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.anisotropy = this.maxAnisotropy;
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.ClampToEdgeWrapping;
+    texture.generateMipmaps = false;
+    texture.needsUpdate = true;
+    return texture;
   }
 
   loadTextureWithFallback(primaryPath, fallbackPath, fallbackTexture = WHITE_TEXTURE) {
