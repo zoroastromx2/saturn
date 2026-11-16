@@ -1,5 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { CONSTANTS, calculateOblateness, getEarthToSaturnRatio, toWebGLUnits, calculateOrbitalVelocity, calculateApsides, kmToAU } from '../src/math/AstroScale';
+import {
+  CONSTANTS,
+  OUTER_RING_BOUNDS,
+  calculateOblateness,
+  getEarthToSaturnRatio,
+  toWebGLUnits,
+  calculateOrbitalVelocity,
+  calculateApsides,
+  kmToAU
+} from '../src/math/AstroScale';
 
 describe('AstroScale - Cálculos Planetarios', () => {
   it('debería calcular el achatamiento (oblateness) de Saturno correctamente (~0.09796)', () => {
@@ -15,6 +24,14 @@ describe('AstroScale - Cálculos Planetarios', () => {
     const tolerance = expectedRatio * 0.001; 
     
     expect(Math.abs(ratio - expectedRatio)).toBeLessThanOrEqual(tolerance);
+  });
+
+  it('debería definir los límites de los anillos G y E en radios de Saturno', () => {
+    expect(OUTER_RING_BOUNDS.G_RING_CENTER).toBeCloseTo(2.82);
+    expect(OUTER_RING_BOUNDS.G_RING_WIDTH).toBeCloseTo(0.08);
+    expect(OUTER_RING_BOUNDS.E_RING_INNER).toBeCloseTo(3.0);
+    expect(OUTER_RING_BOUNDS.E_RING_PEAK).toBeCloseTo(3.95);
+    expect(OUTER_RING_BOUNDS.E_RING_OUTER).toBeCloseTo(8.0);
   });
 
   it('debería escalar correctamente los kilómetros a unidades de WebGL', () => {

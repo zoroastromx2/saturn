@@ -18,6 +18,7 @@ import { RheaSimulator } from './core/RheaSimulator.js';
 import { IapetusSimulator } from './core/IapetusSimulator.js';
 import { FRingSimulator } from './core/FRingSimulator.js';
 import { MinorMoonsSimulator } from './core/MinorMoonsSimulator.js';
+import { DiffuseRingsSimulator } from './core/DiffuseRingsSimulator.js';
 import { MissionSimulator } from './core/MissionSimulator.js';
 import { ComparisonMode } from './core/ComparisonMode.js';
 import { CameraController } from './core/CameraController.js';
@@ -38,7 +39,7 @@ import './style.css';
 let scene, camera, renderer, composer, labelRenderer, controls, cameraController, listener;
 let saturnSim, titanSim, enceladusSim, mimasSim;
 let tethysSim, dioneSim, rheaSim, iapetusSim;
-let fRingSim, minorMoonsSim, missionSim, comparisonMode, telemetryController, statsController, orbitPathsController;
+let fRingSim, minorMoonsSim, diffuseRingsSim, missionSim, comparisonMode, telemetryController, statsController, orbitPathsController;
 let audioEnabled = false;
 let orbitsEnabled = false;
 let timeScale = 1.0;
@@ -64,6 +65,7 @@ let vintageOpticsPass = null;
 const THEME_STORAGE_KEY = 'saturn-sim-theme';
 const clock = new THREE.Clock();
 const surfaceMountPosition = new THREE.Vector3();
+const enceladusWorldPosition = new THREE.Vector3();
 const MOBILE_UI_QUERY = '(max-width: 1024px), (pointer: coarse)';
 const J2000_EPOCH_MS = Date.UTC(2000, 0, 1, 12, 0, 0);
 const MS_PER_DAY = 86400000;
@@ -248,6 +250,7 @@ async function bootstrapApp() {
     iapetusSim = new IapetusSimulator(scene, saturnSim, saturnSim.scaleFactor, assets);
     iapetusSim.update(initialDaysSinceJ2000);
     fRingSim = new FRingSimulator(scene, saturnSim, saturnSim.scaleFactor);
+    diffuseRingsSim = new DiffuseRingsSimulator(scene, saturnSim);
     if (assets.minorMoons?.length === 135) {
       minorMoonsSim = new MinorMoonsSimulator(scene, assets.minorMoons);
       minorMoonsSim.update(initialDaysSinceJ2000);
@@ -893,6 +896,10 @@ function tick() {
   }
   if (fRingSim) {
     fRingSim.update(orbitalTime);
+  }
+  if (diffuseRingsSim) {
+    enceladusSim.mesh.getWorldPosition(enceladusWorldPosition);
+    diffuseRingsSim.update(orbitalTime, enceladusWorldPosition);
   }
   if (minorMoonsSim) {
     minorMoonsSim.update(daysSinceJ2000);

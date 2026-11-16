@@ -96,6 +96,15 @@ export const CONSTANTS = {
   
 };
 
+export const OUTER_RING_BOUNDS = {
+  G_RING_CENTER: 2.82,
+  G_RING_WIDTH: 0.08,
+  G_RING_SIGMA_H: 0.015,
+  E_RING_INNER: 3.0,
+  E_RING_PEAK: 3.95,
+  E_RING_OUTER: 8.0
+};
+
 /**
  * Calcula el factor de achatamiento (oblateness) de un cuerpo celeste.
  * Fórmula: f = (a - b) / a  (donde a = radio ecuatorial, b = radio polar)
