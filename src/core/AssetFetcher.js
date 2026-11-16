@@ -49,7 +49,8 @@ export class AssetFetcher {
         voyager2: null,
         cassiniHuygens: null,
         titan: null,
-        mimas: null
+        mimas: null,
+        enceladus: null
       }
     };
   }
@@ -84,7 +85,8 @@ export class AssetFetcher {
         voyager2Model,
         cassiniHuygensModel,
         titanModel,
-        mimasModel
+        mimasModel,
+        enceladusModel
       ] = await Promise.all([
         this.loadTextureAsync(this.assetUrl('textures/saturn_atmosphere_8k.jpg')),
         this.loadTextureAsync(this.assetUrl('textures/saturn_rings_color.png')),
@@ -108,7 +110,8 @@ export class AssetFetcher {
         this.loadVoyager2Model(),
         this.loadCassiniHuygensModel(),
         this.loadTitanModel(),
-        this.loadMimasModel()
+        this.loadMimasModel(),
+        this.loadEnceladusModel()
       ]);
 
       // Configuración estricta de espacios de color
@@ -165,6 +168,7 @@ export class AssetFetcher {
       this.assets.models.cassiniHuygens = cassiniHuygensModel;
       this.assets.models.titan = titanModel;
       this.assets.models.mimas = mimasModel;
+      this.assets.models.enceladus = enceladusModel;
 
       console.log("Texturas cargadas exitosamente.");
       return this.assets;
@@ -405,6 +409,22 @@ export class AssetFetcher {
     } catch (error) {
       console.warn(
         'Modelo Mimas no disponible, usando esfera procedural:',
+        error?.message || error
+      );
+      return null;
+    }
+  }
+
+  async loadEnceladusModel() {
+    if (typeof window === 'undefined' && !this.hasCustomGltfLoader) {
+      return null;
+    }
+
+    try {
+      return await this.loadModel(this.assetUrl('models/enceladus.glb'));
+    } catch (error) {
+      console.warn(
+        'Modelo Enceladus no disponible, usando esfera procedural:',
         error?.message || error
       );
       return null;

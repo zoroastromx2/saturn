@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { CONSTANTS } from '../math/AstroScale.js';
 import { MoonSimulatorBase } from './MoonSimulatorBase.js';
+import { WHITE_TEXTURE } from './MoonTextures.js';
 import plumeVert from '../shaders/plume.vert';
 import plumeFrag from '../shaders/plume.frag';
 
@@ -18,6 +19,8 @@ export class EnceladusSimulator extends MoonSimulatorBase {
       geometrySegments: 32,
       castsShadow: false
     });
+
+    this.applyEnceladusModel(assets?.models?.enceladus);
 
     this.surfaceCameraMount = new THREE.Object3D();
     this.surfaceCameraMount.name = 'EnceladusSurfaceCameraMount';
@@ -159,5 +162,50 @@ export class EnceladusSimulator extends MoonSimulatorBase {
     this.positionAttribute.needsUpdate = true;
     this.lifetimeAttribute.needsUpdate = true;
     this.maxLifetimeAttribute.needsUpdate = true;
+  }
+
+  applyEnceladusModel(source) {
+    if (!source) return;
+
+    const model = source.clone(true);
+    model.updateMatrixWorld(true);
+
+    let surfaceMesh = null;
+    model.traverse((child) => {
+      if (!child.isMesh) return;
+      if (child.name === 'Enceladus' || child.material?.name === 'Enceladus') {
+        surfaceMesh = child;
+      }
+    });
+    if (!surfaceMesh?.geometry) return;
+
+    const geometry = surfaceMesh.geometry.clone();
+    delete geometry.parameters;
+    geometry.applyMatrix4(surfaceMesh.matrixWorld);
+    geometry.center();
+    geometry.computeBoundingSphere();
+    const sourceRadius = geometry.boundingSphere?.radius;
+    if (!sourceRadius) return;
+
+    const scale = this.radius / sourceRadius;
+    geometry.scale(scale, scale, scale);
+    geometry.computeBoundingSphere();
+
+    this.mesh.geometry.dispose();
+    this.mesh.geometry = geometry;
+    this.mesh.userData.textureFlipY = false;
+
+    const surfaceMaterial = Array.isArray(surfaceMesh.material)
+      ? surfaceMesh.material[0]
+      : surfaceMesh.material;
+    const colorTexture = surfaceMaterial?.map;
+    if (colorTexture) {
+      colorTexture.colorSpace = THREE.SRGBColorSpace;
+      colorTexture.wrapS = THREE.RepeatWrapping;
+      colorTexture.wrapT = THREE.RepeatWrapping;
+      colorTexture.needsUpdate = true;
+      this.mesh.material.uniforms.tColor.value = colorTexture;
+    }
+    this.mesh.material.uniforms.tAo.value = WHITE_TEXTURE;
   }
 }
