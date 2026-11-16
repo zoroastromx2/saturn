@@ -19,6 +19,7 @@ import { IapetusSimulator } from './core/IapetusSimulator.js';
 import { FRingSimulator } from './core/FRingSimulator.js';
 import { MinorMoonsSimulator } from './core/MinorMoonsSimulator.js';
 import { DiffuseRingsSimulator } from './core/DiffuseRingsSimulator.js';
+import { SolarLensFlare } from './core/SolarLensFlare.js';
 import { MissionSimulator } from './core/MissionSimulator.js';
 import { ComparisonMode } from './core/ComparisonMode.js';
 import { CameraController } from './core/CameraController.js';
@@ -42,7 +43,7 @@ import './style.css';
 let scene, camera, renderer, composer, labelRenderer, controls, cameraController, listener;
 let saturnSim, titanSim, enceladusSim, mimasSim;
 let tethysSim, dioneSim, rheaSim, iapetusSim;
-let fRingSim, minorMoonsSim, diffuseRingsSim, missionSim, comparisonMode, telemetryController, statsController, orbitPathsController, textureStudioController;
+let fRingSim, minorMoonsSim, diffuseRingsSim, solarLensFlare, missionSim, comparisonMode, telemetryController, statsController, orbitPathsController, textureStudioController;
 let audioEnabled = false;
 let orbitsEnabled = false;
 let timeScale = 1.0;
@@ -255,6 +256,7 @@ async function bootstrapApp() {
     iapetusSim.update(initialDaysSinceJ2000);
     fRingSim = new FRingSimulator(scene, saturnSim, saturnSim.scaleFactor);
     diffuseRingsSim = new DiffuseRingsSimulator(scene, saturnSim);
+    solarLensFlare = new SolarLensFlare(scene, saturnSim, camera, assets.ringAlpha);
     if (assets.minorMoons?.length === 135) {
       minorMoonsSim = new MinorMoonsSimulator(scene, assets.minorMoons);
       minorMoonsSim.update(initialDaysSinceJ2000);
@@ -1233,6 +1235,14 @@ function tick() {
   }
   if (orbitPathsController && cameraController) {
     orbitPathsController.setActiveTarget(cameraController.currentTarget);
+  }
+  if (solarLensFlare && saturnSim) {
+    solarLensFlare.update(
+      camera,
+      saturnSim.sunDirection,
+      saturnSim.moonShadowPositions,
+      { instrumentLocked: Boolean(cameraController?.isInstrumentLocked) }
+    );
   }
 
   composer.render();
