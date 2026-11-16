@@ -120,6 +120,10 @@
               <span class="row-label" data-i18n="mission.lens">Lente: WAC 32° / NAC 10°</span>
               <span class="row-state" id="instrument-lens-state">WAC</span>
             </button>
+            <button id="btn-snapshot" class="control-row system-row" type="button">
+              <span class="row-label" data-i18n="snapshot.button">📷 Captura JPL</span>
+              <span class="row-state">PNG</span>
+            </button>
             <p id="mission-description" class="mission-description" hidden></p>
           </div>
         </details>
@@ -354,10 +358,15 @@
           <span id="instrument-mission-name">OPTICAL INSTRUMENT</span>
           <span id="instrument-lens-readout">WAC 32°</span>
         </div>
-        <button id="btn-optics-mode" class="instrument-filter-btn" type="button" aria-pressed="true">
-          <span data-i18n="mission.opticsFilter">Filtro Óptico</span>:
-          <span id="optics-mode-state">Emulación</span>
-        </button>
+        <div class="instrument-readout-actions">
+          <button id="btn-optics-mode" class="instrument-filter-btn" type="button" aria-pressed="true">
+            <span data-i18n="mission.opticsFilter">Filtro Óptico</span>:
+            <span id="optics-mode-state">Emulación</span>
+          </button>
+          <button id="btn-snapshot-instrument" class="instrument-filter-btn" type="button" data-i18n="snapshot.button">
+            📷 Captura JPL
+          </button>
+        </div>
         <div class="instrument-readout-row">
           <span class="instrument-readout-key">INSTRUMENT</span>
           <span id="instrument-name" class="instrument-readout-value">—</span>
@@ -372,6 +381,7 @@
         </div>
       </div>
     </div>
+    <div id="shutter-flash" aria-hidden="true"></div>
     <button id="btn-toggle-ui" type="button" aria-controls="ui-container" aria-expanded="true" aria-label="Ocultar controles" title="Ocultar controles">
       <svg class="ui-toggle-icon ui-icon-menu" viewBox="0 0 20 20" aria-hidden="true">
         <path d="M3 5h14M3 10h14M3 15h14" />

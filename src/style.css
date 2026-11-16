@@ -1612,6 +1612,13 @@ body.show-labels .minor-group-label {
     color 150ms ease;
 }
 
+.instrument-readout-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
 .instrument-filter-btn:hover {
   border-color: rgba(159, 231, 255, 0.65);
   background: rgba(142, 220, 245, 0.11);
@@ -1658,6 +1665,28 @@ body.show-labels .minor-group-label {
   text-transform: uppercase;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+#shutter-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: #ffffff;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#shutter-flash.flash {
+  animation: shutter-flash 250ms ease-out;
+}
+
+@keyframes shutter-flash {
+  0% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 @media (max-width: 900px) {

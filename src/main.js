@@ -25,6 +25,7 @@ import { CameraController } from './core/CameraController.js';
 import { TelemetryController } from './core/TelemetryController.js';
 import { StatsController } from './core/StatsController.js';
 import { OrbitPathsController } from './core/OrbitPathsController.js';
+import { SnapshotExporter } from './core/SnapshotExporter.js';
 import { TextureStudioController } from './core/TextureStudioController.js';
 import { getTextureTarget } from './core/TexturePromptCatalog.js';
 import {
@@ -209,6 +210,7 @@ async function bootstrapApp() {
   composer.addPass(vintageOpticsPass);
   composer.addPass(new OutputPass());
   cameraController.setOpticsPass(vintageOpticsPass);
+  const snapshotExporter = new SnapshotExporter();
 
   labelRenderer = new CSS2DRenderer();
   labelRenderer.setSize(window.innerWidth, window.innerHeight);
@@ -359,6 +361,9 @@ async function bootstrapApp() {
     instrumentLensState = document.getElementById('instrument-lens-state');
     instrumentOpticsBtn = document.getElementById('btn-optics-mode');
     instrumentOpticsState = document.getElementById('optics-mode-state');
+    const snapshotBtn = document.getElementById('btn-snapshot');
+    const snapshotInstrumentBtn = document.getElementById('btn-snapshot-instrument');
+    const shutterFlash = document.getElementById('shutter-flash');
     let timeHistory = loadTimeHistory();
     let activeHistoryDate = null;
     let followProbe = false;
@@ -781,6 +786,95 @@ async function bootstrapApp() {
         cameraController.toggleOpticsEmulation();
         refreshInstrumentControls(true);
       });
+    }
+
+    const opticalTargetNames = {
+      SATURN: 'SATURN',
+      TITAN: 'TITAN',
+      ENCELADUS: 'ENCELADUS',
+      TETIS: 'TETIS',
+      RING_F: 'RING F',
+      VELOCITY_VECTOR: 'VELOCITY VECTOR'
+    };
+    const bodyTargetNames = new Set([
+      'Saturn',
+      'Titan',
+      'Enceladus',
+      'Mimas',
+      'Tethys',
+      'Dione',
+      'Rhea',
+      'Iapetus',
+      'Earth'
+    ]);
+
+    const buildSnapshotSceneState = () => {
+      const targetPosition = new THREE.Vector3();
+      let targetName = 'SATURN';
+
+      if (cameraController.isInstrumentLocked && missionSim?.activeMission) {
+        const config = missionSim.getActiveOpticalConfig();
+        const opticalTarget = missionSim.getOpticalTargetPosition(
+          missionSim.currentU,
+          opticalSceneSimulators
+        );
+        if (opticalTarget) {
+          targetPosition.copy(opticalTarget);
+        }
+        targetName = opticalTargetNames[config?.targetKey] || 'SATURN';
+      } else {
+        const currentTarget = cameraController.currentTarget;
+        if (currentTarget?.getWorldPosition && bodyTargetNames.has(currentTarget.name)) {
+          currentTarget.getWorldPosition(targetPosition);
+          targetName = currentTarget.name.toUpperCase();
+        }
+      }
+
+      const activeMission = missionSim?.activeMission;
+      const missionName = activeMission?.name || 'FREE FLIGHT';
+      let instrumentName = 'FREE ORBITAL CAM | HDR RAW';
+
+      if (activeMission && cameraController.isInstrumentLocked) {
+        const config = missionSim.getActiveOpticalConfig();
+        if (config) {
+          const filter = config.instrumentName.includes('Cassini ISS')
+            ? ' | FILTER: CL1+CL2'
+            : '';
+          const optics = cameraController.opticsEnabled ? '' : ' | RAW';
+          instrumentName = `${config.instrumentName}${filter}${optics} | FOV ${camera.fov.toFixed(1)}°`;
+        }
+      }
+
+      return {
+        simulationDate: new Date(simulationDate),
+        sunDirection: saturnSim.sunDirection,
+        targetName,
+        targetPosition,
+        scaleFactor: saturnSim.scaleFactor,
+        saturnEqRadius: saturnSim.eqRadius,
+        missionName,
+        instrumentName
+      };
+    };
+
+    const triggerShutterFlash = () => {
+      if (!shutterFlash) return;
+      shutterFlash.classList.remove('flash');
+      void shutterFlash.offsetWidth;
+      shutterFlash.classList.add('flash');
+      window.setTimeout(() => shutterFlash.classList.remove('flash'), 300);
+    };
+
+    const captureSnapshot = () => {
+      triggerShutterFlash();
+      snapshotExporter.capture(composer, camera, buildSnapshotSceneState());
+    };
+
+    if (snapshotBtn) {
+      snapshotBtn.addEventListener('click', captureSnapshot);
+    }
+    if (snapshotInstrumentBtn) {
+      snapshotInstrumentBtn.addEventListener('click', captureSnapshot);
     }
 
     updateFollowButton();
