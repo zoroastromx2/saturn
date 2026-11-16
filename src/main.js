@@ -289,7 +289,14 @@ async function bootstrapApp() {
       titanSim,
       iapetusSim
     ]);
-    missionSim = new MissionSimulator(scene, saturnSim, camera, cameraController, titanSim);
+    missionSim = new MissionSimulator(
+      scene,
+      saturnSim,
+      camera,
+      cameraController,
+      titanSim,
+      assets
+    );
     textureStudioController = new TextureStudioController({
       saturnSim,
       moonsById: {
@@ -309,7 +316,6 @@ async function bootstrapApp() {
       enceladusSim,
       tethysSim
     };
-
     // 4. Iluminar la Tierra con la misma dirección solar que usan los shaders
     const sunLight = new THREE.DirectionalLight(0xffffff, 2.6);
     sunLight.position.copy(saturnSim.sunDirection).multiplyScalar(1000);

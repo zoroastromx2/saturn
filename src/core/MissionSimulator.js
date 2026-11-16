@@ -9,6 +9,9 @@ const MS_PER_HOUR = 3600000;
 const FORWARD = new THREE.Vector3(0, 0, 1);
 const WORLD_UP = new THREE.Vector3(0, 1, 0);
 const PATH_SEGMENTS = 300;
+const PIONEER_REAL_WIDTH_METERS = 2.9;
+const PIONEER_TACTICAL_VISIBILITY = 1e7;
+const PIONEER_MODEL_ROTATION = new THREE.Euler(0, 0, 0);
 
 function pad2(value) {
   return String(value).padStart(2, '0');
@@ -24,12 +27,22 @@ function colorToCss(color) {
 }
 
 export class MissionSimulator {
-  constructor(scene, saturnSimulator, camera, cameraController, titanSimulator = null) {
+  constructor(
+    scene,
+    saturnSimulator,
+    camera,
+    cameraController,
+    titanSimulator = null,
+    assets = null
+  ) {
     this.scene = scene;
     this.saturnSimulator = saturnSimulator;
     this.camera = camera;
     this.cameraController = cameraController;
     this.titanSimulator = titanSimulator;
+    this.pioneerSource = assets?.models?.pioneer11 || null;
+    this.pioneerModel = null;
+    this.pioneerModelWrapper = null;
     this.eqRadius = saturnSimulator.eqRadius;
     this.scaleFactor = saturnSimulator.scaleFactor
       ?? (CONSTANTS.SATURN.RADIUS_EQUATORIAL / this.eqRadius);
@@ -222,6 +235,58 @@ export class MissionSimulator {
 
     this.huygensShield.visible = false;
     this.probeVisual.add(this.huygensShield);
+
+    this.proceduralProbe = new THREE.Group();
+    this.proceduralProbe.name = 'ProceduralProbe';
+    const proceduralChildren = this.probeVisual.children
+      .filter((child) => child !== this.instrumentMount);
+    proceduralChildren.forEach((child) => this.proceduralProbe.add(child));
+    this.probeVisual.add(this.proceduralProbe);
+    this.buildPioneerProbe();
+  }
+
+  buildPioneerProbe() {
+    if (!this.pioneerSource) return;
+
+    const pioneerMesh = this.pioneerSource.clone(true);
+    pioneerMesh.name = 'Pioneer11Model';
+    pioneerMesh.updateMatrixWorld(true);
+
+    const box = new THREE.Box3().setFromObject(pioneerMesh);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z) || 1;
+    const saturnRadiusMeters = CONSTANTS.SATURN.RADIUS_EQUATORIAL * 1000;
+    const physicalWidth = (PIONEER_REAL_WIDTH_METERS / saturnRadiusMeters) * this.eqRadius;
+    const targetSize = Math.max(physicalWidth * PIONEER_TACTICAL_VISIBILITY, 2.9);
+    const scale = targetSize / maxDim;
+
+    pioneerMesh.scale.setScalar(scale);
+    pioneerMesh.position.set(
+      -center.x * scale,
+      -center.y * scale,
+      -center.z * scale
+    );
+
+    pioneerMesh.traverse((child) => {
+      if (!child.isMesh || !child.material) return;
+
+      const materials = Array.isArray(child.material) ? child.material : [child.material];
+      materials.forEach((material) => {
+        material.envMapIntensity = 1.5;
+        material.needsUpdate = true;
+      });
+      child.castShadow = true;
+      child.receiveShadow = true;
+    });
+
+    this.pioneerModelWrapper = new THREE.Group();
+    this.pioneerModelWrapper.name = 'Pioneer11ModelWrapper';
+    this.pioneerModelWrapper.rotation.copy(PIONEER_MODEL_ROTATION);
+    this.pioneerModelWrapper.visible = false;
+    this.pioneerModelWrapper.add(pioneerMesh);
+    this.probeVisual.add(this.pioneerModelWrapper);
+    this.pioneerModel = pioneerMesh;
   }
 
   loadMission(key, daysSinceEpoch = this.lastDaysSinceEpoch) {
@@ -326,6 +391,13 @@ export class MissionSimulator {
       });
     });
 
+    const usePioneerModel = mission.key === 'pioneer11' && Boolean(this.pioneerModelWrapper);
+    if (this.proceduralProbe) {
+      this.proceduralProbe.visible = !usePioneerModel;
+    }
+    if (this.pioneerModelWrapper) {
+      this.pioneerModelWrapper.visible = usePioneerModel;
+    }
     this.huygensShield.visible = mission.key === 'huygens';
     this.probeGroup.visible = true;
     this.update(daysSinceEpoch);
@@ -358,6 +430,9 @@ export class MissionSimulator {
     this.activeKey = null;
     this.eventMs = 0;
     this.probeGroup.visible = false;
+    if (this.pioneerModelWrapper) {
+      this.pioneerModelWrapper.visible = false;
+    }
     this.huygensShield.visible = false;
   }
 

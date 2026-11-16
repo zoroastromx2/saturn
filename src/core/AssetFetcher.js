@@ -1,12 +1,15 @@
 // src/core/AssetFetcher.js
 import * as THREE from 'three';
 import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { WHITE_TEXTURE, FLAT_NORMAL_TEXTURE } from './MoonTextures.js';
 
 export class AssetFetcher {
   constructor(options = {}) {
     this.textureLoader = options.textureLoader || new THREE.TextureLoader();
     this.audioLoader = options.audioLoader || new THREE.AudioLoader();
+    this.gltfLoader = options.gltfLoader || new GLTFLoader();
+    this.hasCustomGltfLoader = Boolean(options.gltfLoader);
     this.retryDelayMs = options.retryDelayMs ?? 250;
     this.maxConcurrency = Math.max(1, options.maxConcurrency ?? 6);
     this.maxAnisotropy = Math.max(1, options.maxAnisotropy ?? 1);
@@ -39,7 +42,10 @@ export class AssetFetcher {
       titanAudioBuffer: null,
       enceladusAudioBuffer: null,
       mimasAudioBuffer: null,
-      minorMoons: null
+      minorMoons: null,
+      models: {
+        pioneer11: null
+      }
     };
   }
 
@@ -67,7 +73,8 @@ export class AssetFetcher {
         titanAudio,
         enceladusAudio,
         mimasAudio,
-        minorMoons
+        minorMoons,
+        pioneerModel
       ] = await Promise.all([
         this.loadTextureAsync(this.assetUrl('textures/saturn_atmosphere_8k.jpg')),
         this.loadTextureAsync(this.assetUrl('textures/saturn_rings_color.png')),
@@ -85,7 +92,8 @@ export class AssetFetcher {
         this.loadAudioAsync(this.assetUrl('audio/titan_winds.wav')),
         this.loadAudioAsync(this.assetUrl('audio/enceladus_ice_crackle.wav')),
         this.loadAudioAsync(this.assetUrl('audio/mimas_rocky_rumble.wav')),
-        this.loadMinorMoons()
+        this.loadMinorMoons(),
+        this.loadPioneerModel()
       ]);
 
       // Configuración estricta de espacios de color
@@ -136,6 +144,7 @@ export class AssetFetcher {
       this.assets.enceladusAudioBuffer = enceladusAudio;
       this.assets.mimasAudioBuffer = mimasAudio;
       this.assets.minorMoons = minorMoons;
+      this.assets.models.pioneer11 = pioneerModel;
 
       console.log("Texturas cargadas exitosamente.");
       return this.assets;
@@ -269,6 +278,33 @@ export class AssetFetcher {
     } catch (error) {
       console.warn(
         'Mapa galáctico 4K no disponible, usando starmap base:',
+        error?.message || error
+      );
+      return null;
+    }
+  }
+
+  loadModel(url) {
+    return this.enqueue(() => new Promise((resolve, reject) => {
+      this.gltfLoader.load(
+        url,
+        (gltf) => resolve(gltf.scene),
+        undefined,
+        () => reject(new Error(`Fallo al cargar modelo: ${url}`))
+      );
+    }));
+  }
+
+  async loadPioneerModel() {
+    if (typeof window === 'undefined' && !this.hasCustomGltfLoader) {
+      return null;
+    }
+
+    try {
+      return await this.loadModel(this.assetUrl('models/pioneer_11.glb'));
+    } catch (error) {
+      console.warn(
+        'Modelo Pioneer 11 no disponible, usando sonda procedural:',
         error?.message || error
       );
       return null;
