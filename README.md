@@ -31,7 +31,8 @@ npm install
 npm run dev        # Vite en http://localhost:3000
 npm run build      # Build estático en dist/
 npm run preview    # Sirve dist/ en local
-npm test           # 113 pruebas de Vitest
+npm test           # 159 pruebas de Vitest
+npm run test:e2e   # 6 pruebas de humo en Chromium (npx playwright install chromium)
 ```
 
 Calidad — los mismos gates que CI ejecuta antes de publicar:
