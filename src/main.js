@@ -20,6 +20,7 @@ import { FRingSimulator } from './core/FRingSimulator.js';
 import { MinorMoonsSimulator } from './core/MinorMoonsSimulator.js';
 import { DiffuseRingsSimulator } from './core/DiffuseRingsSimulator.js';
 import { SolarLensFlare } from './core/SolarLensFlare.js';
+import { SunSimulator } from './core/SunSimulator.js';
 import { MissionSimulator } from './core/MissionSimulator.js';
 import { ComparisonMode } from './core/ComparisonMode.js';
 import { CameraController } from './core/CameraController.js';
@@ -43,7 +44,7 @@ import './style.css';
 let scene, camera, renderer, composer, labelRenderer, controls, cameraController, listener;
 let saturnSim, titanSim, enceladusSim, mimasSim;
 let tethysSim, dioneSim, rheaSim, iapetusSim;
-let fRingSim, minorMoonsSim, diffuseRingsSim, solarLensFlare, missionSim, comparisonMode, telemetryController, statsController, orbitPathsController, textureStudioController;
+let fRingSim, minorMoonsSim, diffuseRingsSim, solarLensFlare, sunSim, missionSim, comparisonMode, telemetryController, statsController, orbitPathsController, textureStudioController;
 let audioEnabled = false;
 let orbitsEnabled = false;
 let timeScale = 1.0;
@@ -240,6 +241,9 @@ async function bootstrapApp() {
     simulationDate = new Date();
     const initialDaysSinceJ2000 = getDaysSinceJ2000();
     saturnSim = new SaturnSimulator(scene, assets, listener);
+    sunSim = new SunSimulator();
+    scene.add(sunSim.mesh);
+    sunSim.update(camera, saturnSim.sunDirection);
     titanSim = new TitanSimulator(scene, saturnSim, saturnSim.scaleFactor, assets, listener);
     titanSim.update(initialDaysSinceJ2000);
     enceladusSim = new EnceladusSimulator(scene, saturnSim, saturnSim.scaleFactor, assets, listener);
@@ -1243,6 +1247,9 @@ function tick() {
       saturnSim.moonShadowPositions,
       { instrumentLocked: Boolean(cameraController?.isInstrumentLocked) }
     );
+  }
+  if (sunSim && saturnSim) {
+    sunSim.update(camera, saturnSim.sunDirection);
   }
 
   composer.render();
