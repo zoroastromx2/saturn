@@ -13,10 +13,10 @@
 ## Resumen
 
 - El proyecto es un **observatorio 3D de Saturno** (Three.js + GLSL) con una decena de módulos de simulación, 6 misiones históricas, instrumento óptico emulado y UI bilingüe ES/EN. Es una **app 100 % estática**: sin servidor ni API.
-- La base es sólida: matemática aislada y documentada, **128 pruebas en 32 archivos que pasan (~1,5 s)** y build correcto (**905,88 kB JS / 240,45 kB gzip**).
+- La base es sólida: matemática aislada y documentada, **159 pruebas en 35 archivos que pasan (~1,6 s)** y build correcto (**905,88 kB JS / 240,45 kB gzip**).
 - El presupuesto está acotado: **1,08–2,26 MB** de carga inicial y **32–278 MB** de VRAM según preset; modelos y audio no bloquean el primer frame.
-- La deuda restante es acotada: contenido de misiones solo en español, cobertura y accesibilidad.
-- El documento registra los incrementos aplicados (`quality-gates`, `remove-texture-studio`) y los candidatos vivos de §11.
+- La deuda restante es acotada: cobertura de `main.js`, compilación real de shaders y E2E visual.
+- El documento registra los incrementos aplicados y los candidatos vivos de §11.
 
 ---
 
@@ -72,7 +72,7 @@ npm install                # lockfile canónico para CI: package-lock.json
 npm run dev                # Vite en http://localhost:3000
 npm run build              # vite build → dist/
 npm run preview            # sirve dist/ en local
-npx vitest run             # 32 archivos · 128 pruebas · ~1,5 s
+npx vitest run             # 35 archivos · 159 pruebas · ~1,6 s
 node tools/asset-report.mjs # presupuesto de activos por preset
 
 # Gates de calidad (desde 2026-11-16)
@@ -85,7 +85,7 @@ Salidas medidas el 2026-11-16:
 
 | Comando | Resultado |
 |---|---|
-| `npx vitest run` | **32/32 archivos, 128/128 pruebas OK**, exit 0 |
+| `npx vitest run` | **35/35 archivos, 159/159 pruebas OK**, exit 0 |
 | `npm run build` | `index.html 22,56 kB` · `css 28,33 kB` · `js 905,88 kB` (gzip 240,45 kB), ~1 s |
 | `dist/` | 43,3 MB (incluye los tres presets; cada usuario descarga solo el suyo) |
 
@@ -123,10 +123,10 @@ src/math/                  FUENTE DE VERDAD (no modificar sin aprobación)
   KeplerOrbit                Ecuación de Kepler (Newton) y muestreo de órbitas
   RingOptics                 Intersección rayo-plano y rayo-elipsoide
   TimeScale                  Mapeo slider [0..100] ↔ multiplicador [0..100]
-src/shaders/               16 archivos GLSL + VintageOpticsShader.js (post-proceso)
+src/shaders/               12 GLSL en uso + VintageOpticsShader.js (post-proceso)
 src/data/HistoricalMissions.js   6 misiones: control points, hitos, instrumentos
 src/assets/               Restos de plantilla Vite, sin referencias
-tests/                    32 archivos, 2.355 líneas, entorno node
+tests/                    35 archivos, 2.707 líneas, entorno node
 public/                   Texturas base + tiers low/medium/high, audio, GLB, minor_moons.json
 tools/                    asset-report.mjs y generate-texture-tiers.py
 dist/                     Build de producción (ignorado por git)
@@ -165,7 +165,7 @@ Convenciones observadas:
 | Aspecto | Estado actual |
 |---|---|
 | Runner | Vitest 5.1, `environment: node`, `globals: true`, `include: tests/**/*.test.js` |
-| Volumen | 32 archivos · 128 pruebas · 2.355 líneas · ~1,5 s |
+| Volumen | 35 archivos · 159 pruebas · 2.707 líneas · ~1,6 s |
 | Técnica | Stubs manuales de DOM (`globalThis.document = {…}`), dobles inyectados; **sin jsdom** y **sin `vi.mock`** (0 usos) |
 | Foco real | Matemática (12 pruebas en `AstroScale`, 6 en `KeplerOrbit`, 3 en `RingOptics`), carga resiliente de assets, normalización de GLB, controladores con estado |
 | Cobertura | Sin umbral, sin `@vitest/coverage`, sin informe |
@@ -258,7 +258,7 @@ Orden de construcción vigente: `assets` + `astro-core` → `scene-render` → `
 | H-05 | S3 | No hay `lint`, `format` ni `typecheck`; `server.ts` es TypeScript sin `tsconfig` (nunca se comprueba) y no hay `engines` | `package.json:6-12` | Errores de tipo y estilo solo aparecen en runtime; requisito de Node invisible (Node 20 en CI) |
 | H-06 | S3 | ~~`models/` duplicaba `public/models/`; dos lockfiles~~ **Cerrado por `repo-hygiene`**: una sola copia y npm como único gestor | `git ls-files` | Payload 60,4 → 42,8 MB; `.git` sigue igual (historial) |
 | H-07 | S3 | ~~Contenido de misión solo en español~~ **Cerrado por `i18n-missions`**: nombres, descripciones e hitos en `{es,en}` | `HistoricalMissions.js` | 30 campos localizados con prueba de paridad |
-| H-08 | S3 | Cobertura con puntos ciegos: `main.js`, `SaturnSimulator`, `Localization` y compilación de shaders no se prueban | 25 archivos de test listados | Un error GLSL o un `uniform` mal cableado no lo detecta nadie hasta abrir el navegador |
+| H-08 | S3 | ~~Cobertura con puntos ciegos~~ **Parcialmente cerrado por `test-depth` (fase A)**: `SaturnSimulator`, `Localization` y contrato GLSL cubiertos; quedan `main.js` y la compilación real | `tests/ShaderContract.test.js` | El contrato detecta uniforms sin cablear sin compilar |
 | H-09 | S3 | Acoplamiento por conteo exacto: las lunas menores solo se crean si el JSON tiene exactamente 135 entradas | `main.js:274` | Si el catálogo cambia de tamaño, las 135 lunas irregulares desaparecen sin aviso |
 | H-10 | S3 | No hay `LICENSE` para el código; las licencias CC-BY de modelos viven solo en la UI | raíz del repo; `index.html:296-305` | Ambigüedad legal para reutilización o publicación |
 | H-11 | S4 | ~~El comentario de `RING_OUTER_EDGE` decía "Anillo F"~~ **Cerrado por `h11`**: 136.775 km es el borde exterior del anillo A | `AstroScale.js:88` | Etiqueta correcta; el valor no cambió |
@@ -282,9 +282,9 @@ No son bugs; son decisiones que conviene explicitar para no vender precisión in
 
 ## 11. Candidatos de siguiente incremento (sin planificar)
 
-**Aplicados (2026-11-16):** `quality-gates`, `remove-texture-studio`, `asset-budget`, `repo-hygiene`, `i18n-missions`, `a11y` y `h11`. **Producción:** GitHub Pages (estático). `deploy-api` quedó descartado: sin función de IA no hay API que desplegar.
+**Aplicados (2026-11-16):** `quality-gates`, `remove-texture-studio`, `asset-budget`, `repo-hygiene`, `i18n-missions`, `a11y`, `h11` y `test-depth` (fase A). **Producción:** GitHub Pages (estático). `deploy-api` quedó descartado: sin función de IA no hay API que desplegar.
 
-**Siguiente (2026-11-16):** `a11y` — movimiento reducido, semántica del loader y canvas etiquetado (H-13). Ver [`SPEC-a11y.md`](SPEC-a11y.md).
+**Siguiente (2026-11-16):** fases B/C de `test-depth` (Playwright para compilación real y capturas), pendientes de decisión por su coste en CI.
 
 Elige **uno** de los candidatos restantes. Los demás quedan fuera de alcance hasta nueva spec.
 
