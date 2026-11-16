@@ -5,7 +5,6 @@ models/
 coverage/
 saturn-15-nov-2026-3-25-11-a-m/
 package-lock.json
-bun.lock
 # El HTML se mantiene a mano: i18n inline, SVG y atributos largos.
 index.html
 *.md
