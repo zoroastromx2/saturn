@@ -41,7 +41,14 @@ describe('MinorMoonsSimulator - Catálogo GPU de lunas irregulares', () => {
     expect(sim.mesh.geometry.parameters.detail).toBe(0);
 
     const attributeNames = [
-      'aAxis', 'aEcc', 'aInc', 'aLan', 'aArgP', 'aMaEpoch', 'aMeanMotion', 'aRadius'
+      'aAxis',
+      'aEcc',
+      'aInc',
+      'aLan',
+      'aArgP',
+      'aMaEpoch',
+      'aMeanMotion',
+      'aRadius'
     ];
 
     attributeNames.forEach((name) => {

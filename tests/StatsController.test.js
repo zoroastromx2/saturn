@@ -53,7 +53,10 @@ describe('StatsController - Estadísticas de simulación', () => {
   });
 
   it('debería mostrar N/D cuando performance.memory no está soportado', () => {
-    const stats = new StatsController({ info: { memory: { geometries: 4, textures: 2 } } }, { now: () => 0 });
+    const stats = new StatsController(
+      { info: { memory: { geometries: 4, textures: 2 } } },
+      { now: () => 0 }
+    );
     stats.refresh();
     expect(stats.memoryElement.innerText).toBe('N/D');
     expect(stats.gpuElement.innerText).toBe('4 / 2');

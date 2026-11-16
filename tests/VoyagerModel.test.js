@@ -47,14 +47,7 @@ function createSimulator(voyagerModel = null) {
   scene.add(titan.mesh);
   const assets = voyagerModel ? { models: { voyager1: voyagerModel } } : null;
 
-  return new MissionSimulator(
-    scene,
-    saturn,
-    camera,
-    { focusOnObject() {} },
-    titan,
-    assets
-  );
+  return new MissionSimulator(scene, saturn, camera, { focusOnObject() {} }, titan, assets);
 }
 
 describe('Voyager 1 GLB - Normalización y wrapper', () => {

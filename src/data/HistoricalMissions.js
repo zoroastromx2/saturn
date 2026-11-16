@@ -18,7 +18,8 @@ export const MISSIONS = {
     name: 'Pioneer 11',
     timestamp: '1979-09-01T16:29:00Z',
     dateLabel: '1979-09-01 16:29 UTC',
-    description: 'Sobrevuelo hiperbólico bajo los anillos, con máxima aproximación de 20.000 km sobre las nubes.',
+    description:
+      'Sobrevuelo hiperbólico bajo los anillos, con máxima aproximación de 20.000 km sobre las nubes.',
     color: 0x62d9ff,
     opticsMode: 1,
     peakT: 0.5,
@@ -68,7 +69,8 @@ export const MISSIONS = {
     name: 'Voyager 1',
     timestamp: '1980-11-12T23:46:00Z',
     dateLabel: '1980-11-12 23:46 UTC',
-    description: 'Encuentro con Titán, paso bajo el polo sur y deflexión norte sobre el plano de los anillos.',
+    description:
+      'Encuentro con Titán, paso bajo el polo sur y deflexión norte sobre el plano de los anillos.',
     color: 0x62d9ff,
     opticsMode: 2,
     peakT: 0.5,
@@ -118,7 +120,8 @@ export const MISSIONS = {
     name: 'Voyager 2',
     timestamp: '1981-08-25T03:24:00Z',
     dateLabel: '1981-08-25 03:24 UTC',
-    description: 'Paso veloz junto a Encélado y Tetis, captura de los anillos y descenso hacia el plano exterior rumbo a Urano.',
+    description:
+      'Paso veloz junto a Encélado y Tetis, captura de los anillos y descenso hacia el plano exterior rumbo a Urano.',
     color: 0x62d9ff,
     opticsMode: 2,
     peakT: 0.5,
@@ -168,7 +171,8 @@ export const MISSIONS = {
     name: 'Cassini-Huygens',
     timestamp: '2004-07-01T01:12:00Z',
     dateLabel: '2004-07-01 01:12 UTC',
-    description: 'Ascenso por la brecha F-G, encendido de inserción orbital y captura en una órbita elíptica alrededor de Saturno.',
+    description:
+      'Ascenso por la brecha F-G, encendido de inserción orbital y captura en una órbita elíptica alrededor de Saturno.',
     color: 0xf0a33c,
     opticsMode: 3,
     peakT: 0.5,
@@ -218,7 +222,8 @@ export const MISSIONS = {
     name: 'Sonda Huygens',
     timestamp: '2005-01-14T10:13:00Z',
     dateLabel: '2005-01-14 10:13 UTC',
-    description: 'Descenso de Huygens desde la alta atmósfera de Titán hasta la superficie, anclado a la posición viva de la luna.',
+    description:
+      'Descenso de Huygens desde la alta atmósfera de Titán hasta la superficie, anclado a la posición viva de la luna.',
     color: 0xffc45c,
     opticsMode: 3,
     peakT: 1.0,
@@ -264,7 +269,8 @@ export const MISSIONS = {
     name: 'Cassini · Gran Final',
     timestamp: '2017-09-15T11:55:00Z',
     dateLabel: '2017-09-15 11:55 UTC',
-    description: 'Inmersión final entre el Anillo D y la atmósfera, entrada a 113.000 km/h y desintegración sobre las nubes de Saturno.',
+    description:
+      'Inmersión final entre el Anillo D y la atmósfera, entrada a 113.000 km/h y desintegración sobre las nubes de Saturno.',
     color: 0xff8a3d,
     opticsMode: 3,
     peakT: 1.0,

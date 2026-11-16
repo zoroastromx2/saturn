@@ -125,7 +125,11 @@ export function validateTextureRequest(payload) {
     errors.push(`Invalid resolution. Expected one of: ${VALID_RESOLUTIONS.join(', ')}.`);
   }
 
-  if (raw.customPrompt !== undefined && raw.customPrompt !== null && typeof raw.customPrompt !== 'string') {
+  if (
+    raw.customPrompt !== undefined &&
+    raw.customPrompt !== null &&
+    typeof raw.customPrompt !== 'string'
+  ) {
     errors.push('customPrompt must be a string.');
   }
 

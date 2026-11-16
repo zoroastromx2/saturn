@@ -191,8 +191,7 @@ export class TextureStudioController {
     }
 
     if (!response.ok) {
-      const message =
-        payload?.error || `Error HTTP ${response.status} al generar la textura.`;
+      const message = payload?.error || `Error HTTP ${response.status} al generar la textura.`;
       throw new Error(message);
     }
 

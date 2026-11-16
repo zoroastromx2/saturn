@@ -123,10 +123,11 @@ export class CameraController {
 
   focusOn(targetMesh, distanceMultiplier, elevationBias = 0.35) {
     if (!targetMesh) return;
-    const radius = targetMesh.geometry?.parameters?.radius
-      ?? targetMesh.geometry?.boundingSphere?.radius
-      ?? targetMesh.userData?.radius
-      ?? 1;
+    const radius =
+      targetMesh.geometry?.parameters?.radius ??
+      targetMesh.geometry?.boundingSphere?.radius ??
+      targetMesh.userData?.radius ??
+      1;
     this.focusOnObject(targetMesh, radius * distanceMultiplier, elevationBias);
   }
 
@@ -197,7 +198,11 @@ export class CameraController {
       ease: 'power3.inOut',
       onUpdate: () => {
         mount.getWorldPosition(this.targetPosition);
-        this.camera.position.lerpVectors(this.startPosition, this.targetPosition, this.progress.value);
+        this.camera.position.lerpVectors(
+          this.startPosition,
+          this.targetPosition,
+          this.progress.value
+        );
         this.controls.target.lerpVectors(this.startTarget, this.surfaceOrigin, this.progress.value);
         this.camera.lookAt(this.controls.target);
       },
@@ -218,7 +223,8 @@ export class CameraController {
 
     // El destino se recalcula con la posición viva del astro en cada frame.
     this.currentTarget.getWorldPosition(this.targetPosition);
-    this.endPosition.copy(this.targetPosition)
+    this.endPosition
+      .copy(this.targetPosition)
       .addScaledVector(this.offsetDirection, this.focusDistance);
 
     this.camera.position.lerpVectors(this.startPosition, this.endPosition, this.progress.value);

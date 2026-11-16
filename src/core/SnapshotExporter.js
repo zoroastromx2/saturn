@@ -62,15 +62,18 @@ export class SnapshotExporter {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
     ctx.fillRect(0, footerTop, width, 2);
 
-    const simulationDate = sceneState.simulationDate instanceof Date
-      ? sceneState.simulationDate
-      : new Date(sceneState.simulationDate ?? Date.now());
-    const targetPosition = sceneState.targetPosition instanceof THREE.Vector3
-      ? sceneState.targetPosition
-      : new THREE.Vector3();
-    const sunDirection = sceneState.sunDirection instanceof THREE.Vector3
-      ? sceneState.sunDirection.clone().normalize()
-      : new THREE.Vector3(1, 0.35, 0.35).normalize();
+    const simulationDate =
+      sceneState.simulationDate instanceof Date
+        ? sceneState.simulationDate
+        : new Date(sceneState.simulationDate ?? Date.now());
+    const targetPosition =
+      sceneState.targetPosition instanceof THREE.Vector3
+        ? sceneState.targetPosition
+        : new THREE.Vector3();
+    const sunDirection =
+      sceneState.sunDirection instanceof THREE.Vector3
+        ? sceneState.sunDirection.clone().normalize()
+        : new THREE.Vector3(1, 0.35, 0.35).normalize();
 
     const targetToSun = sunDirection.clone().normalize();
     const targetToCamera = camera.position.clone().sub(targetPosition).normalize();
@@ -79,8 +82,8 @@ export class SnapshotExporter {
     ).toFixed(1);
 
     const scaleFactor = sceneState.scaleFactor ?? 10000;
-    const saturnEqRadius = sceneState.saturnEqRadius
-      ?? (CONSTANTS.SATURN.RADIUS_EQUATORIAL / scaleFactor);
+    const saturnEqRadius =
+      sceneState.saturnEqRadius ?? CONSTANTS.SATURN.RADIUS_EQUATORIAL / scaleFactor;
     const distanceKm = camera.position.distanceTo(targetPosition) * scaleFactor;
     const range = Math.round(distanceKm).toLocaleString('en-US');
     const utcString = formatUtc(simulationDate);
@@ -112,7 +115,15 @@ export class SnapshotExporter {
     ctx.fillStyle = '#f59e0b';
     ctx.fillText('NASA / JPL-CALTECH / SSI ARCHIVESIM', leftX, startY);
     drawLabeledLine(ctx, leftX, startY + lineHeight, 'MISSION:', missionName, 'left', fonts);
-    drawLabeledLine(ctx, leftX, startY + lineHeight * 2, 'INSTRUMENT:', instrumentName, 'left', fonts);
+    drawLabeledLine(
+      ctx,
+      leftX,
+      startY + lineHeight * 2,
+      'INSTRUMENT:',
+      instrumentName,
+      'left',
+      fonts
+    );
 
     drawLabeledLine(ctx, centerX, startY, 'TARGET:', targetName, 'center', fonts);
     drawLabeledLine(ctx, centerX, startY + lineHeight, 'RANGE:', `${range} KM`, 'center', fonts);
@@ -126,15 +137,7 @@ export class SnapshotExporter {
       fonts
     );
 
-    drawLabeledLine(
-      ctx,
-      rightX,
-      startY,
-      'EARTH RECEIVED / SCET:',
-      utcString,
-      'right',
-      fonts
-    );
+    drawLabeledLine(ctx, rightX, startY, 'EARTH RECEIVED / SCET:', utcString, 'right', fonts);
     drawLabeledLine(
       ctx,
       rightX,

@@ -40,10 +40,7 @@ function createTitanModelSource() {
   const root = new THREE.Group();
   root.rotation.x = -Math.PI / 2;
   root.scale.setScalar(0.01);
-  const surface = new THREE.Mesh(
-    new THREE.SphereGeometry(100, 16, 8),
-    material
-  );
+  const surface = new THREE.Mesh(new THREE.SphereGeometry(100, 16, 8), material);
   surface.name = 'Titan_Titan_0';
   root.add(surface);
 
@@ -77,12 +74,9 @@ describe('Titan GLB - Superficie y escala orbital', () => {
   it('debería usar la geometría y textura del GLB manteniendo el radio de Titán', () => {
     const scene = new THREE.Scene();
     const { source, texture } = createTitanModelSource();
-    const simulator = new TitanSimulator(
-      scene,
-      createSaturnSimulator(),
-      10000,
-      { models: { titan: source } }
-    );
+    const simulator = new TitanSimulator(scene, createSaturnSimulator(), 10000, {
+      models: { titan: source }
+    });
 
     expect(simulator.mesh.material.uniforms.tColor.value).toBe(texture);
     expect(simulator.mesh.material.uniforms.uBaseColor.value.toArray()).toEqual([1, 1, 1]);
@@ -101,12 +95,9 @@ describe('Titan GLB - Superficie y escala orbital', () => {
   it('debería aplicar texturas generadas con la convención UV del GLB', () => {
     const scene = new THREE.Scene();
     const { source } = createTitanModelSource();
-    const simulator = new TitanSimulator(
-      scene,
-      createSaturnSimulator(),
-      10000,
-      { models: { titan: source } }
-    );
+    const simulator = new TitanSimulator(scene, createSaturnSimulator(), 10000, {
+      models: { titan: source }
+    });
     const controller = new TextureStudioController({
       moonsById: { titan: simulator }
     });
@@ -121,12 +112,9 @@ describe('Titan GLB - Superficie y escala orbital', () => {
   it('debería encuadrar la cámara usando el radio de la geometría del GLB', () => {
     const scene = new THREE.Scene();
     const { source } = createTitanModelSource();
-    const simulator = new TitanSimulator(
-      scene,
-      createSaturnSimulator(),
-      10000,
-      { models: { titan: source } }
-    );
+    const simulator = new TitanSimulator(scene, createSaturnSimulator(), 10000, {
+      models: { titan: source }
+    });
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
     const controller = new CameraController(camera, {
       enabled: true,

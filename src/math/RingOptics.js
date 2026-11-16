@@ -8,7 +8,7 @@
  * Calcula si un punto en la superficie del planeta está cubierto por la sombra de los anillos.
  * Lanza un rayo desde el punto en el planeta hacia la fuente de luz y verifica si
  * perfora el plano de los anillos dentro de los límites interno y externo.
- * 
+ *
  * @param {Object} point - Coordenadas {x, y, z} del punto en la atmósfera.
  * @param {Object} lightDir - Vector normalizado {x, y, z} apuntando hacia el Sol.
  * @param {number} innerRadius - Radio interno de los anillos.
@@ -31,8 +31,8 @@ export function isPointInRingShadow(point, lightDir, innerRadius, outerRadius) {
 
   // Distancia al cuadrado desde el centro (más rápido que usar Math.sqrt)
   const distanceSq = hitX * hitX + hitZ * hitZ;
-  
-  return distanceSq >= (innerRadius * innerRadius) && distanceSq <= (outerRadius * outerRadius);
+
+  return distanceSq >= innerRadius * innerRadius && distanceSq <= outerRadius * outerRadius;
 }
 
 /**
@@ -43,13 +43,15 @@ export function isPointInRingShadow(point, lightDir, innerRadius, outerRadius) {
 export function isPointInPlanetShadow(point, lightDir, radiusEq, radiusPolar) {
   // Ecuación cuadrática para intersección de rayo con elipsoide centrado en el origen:
   // (x^2 + z^2)/a^2 + y^2/b^2 = 1
-  
+
   const a2 = radiusEq * radiusEq;
   const b2 = radiusPolar * radiusPolar;
 
   // Coeficientes A, B, C de la fórmula general cuadrática
-  const A = (lightDir.x * lightDir.x + lightDir.z * lightDir.z) / a2 + (lightDir.y * lightDir.y) / b2;
-  const B = 2.0 * ((point.x * lightDir.x + point.z * lightDir.z) / a2 + (point.y * lightDir.y) / b2);
+  const A =
+    (lightDir.x * lightDir.x + lightDir.z * lightDir.z) / a2 + (lightDir.y * lightDir.y) / b2;
+  const B =
+    2.0 * ((point.x * lightDir.x + point.z * lightDir.z) / a2 + (point.y * lightDir.y) / b2);
   const C = (point.x * point.x + point.z * point.z) / a2 + (point.y * point.y) / b2 - 1.0;
 
   const discriminant = B * B - 4.0 * A * C;

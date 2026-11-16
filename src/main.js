@@ -45,7 +45,18 @@ import './style.css';
 let scene, camera, renderer, composer, labelRenderer, controls, cameraController, listener;
 let saturnSim, titanSim, enceladusSim, mimasSim;
 let tethysSim, dioneSim, rheaSim, iapetusSim;
-let fRingSim, minorMoonsSim, diffuseRingsSim, solarLensFlare, sunSim, starfieldSim, missionSim, comparisonMode, telemetryController, statsController, orbitPathsController, textureStudioController;
+let fRingSim,
+  minorMoonsSim,
+  diffuseRingsSim,
+  solarLensFlare,
+  sunSim,
+  starfieldSim,
+  missionSim,
+  comparisonMode,
+  telemetryController,
+  statsController,
+  orbitPathsController,
+  textureStudioController;
 let audioEnabled = false;
 let orbitsEnabled = false;
 let timeScale = 1.0;
@@ -137,9 +148,7 @@ function updateInstrumentReadout(targetPosition) {
   const config = missionSim?.getActiveOpticalConfig();
   if (!config) return;
 
-  const filterSuffix = config.instrumentName.includes('Cassini ISS')
-    ? ' | FILTER: CL1+CL2'
-    : '';
+  const filterSuffix = config.instrumentName.includes('Cassini ISS') ? ' | FILTER: CL1+CL2' : '';
   if (instrumentName) {
     instrumentName.textContent = `${config.instrumentName}${filterSuffix}`;
   }
@@ -207,12 +216,9 @@ async function bootstrapApp() {
 
   composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
-  composer.addPass(new UnrealBloomPass(
-    new THREE.Vector2(window.innerWidth, window.innerHeight),
-    1.2,
-    0.5,
-    0.8
-  ));
+  composer.addPass(
+    new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.2, 0.5, 0.8)
+  );
   vintageOpticsPass = new ShaderPass(VintageOpticsShader);
   vintageOpticsPass.uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
   composer.addPass(vintageOpticsPass);
@@ -256,7 +262,13 @@ async function bootstrapApp() {
     sunSim.update(camera, saturnSim.sunDirection);
     titanSim = new TitanSimulator(scene, saturnSim, saturnSim.scaleFactor, assets, listener);
     titanSim.update(initialDaysSinceJ2000);
-    enceladusSim = new EnceladusSimulator(scene, saturnSim, saturnSim.scaleFactor, assets, listener);
+    enceladusSim = new EnceladusSimulator(
+      scene,
+      saturnSim,
+      saturnSim.scaleFactor,
+      assets,
+      listener
+    );
     enceladusSim.update(initialDaysSinceJ2000);
     mimasSim = new MimasSimulator(scene, saturnSim, saturnSim.scaleFactor, assets, listener);
     mimasSim.update(initialDaysSinceJ2000);
@@ -294,14 +306,7 @@ async function bootstrapApp() {
       titanSim,
       iapetusSim
     ]);
-    missionSim = new MissionSimulator(
-      scene,
-      saturnSim,
-      camera,
-      cameraController,
-      titanSim,
-      assets
-    );
+    missionSim = new MissionSimulator(scene, saturnSim, camera, cameraController, titanSim, assets);
     textureStudioController = new TextureStudioController({
       saturnSim,
       moonsById: {
@@ -389,9 +394,9 @@ async function bootstrapApp() {
     let timeHistory = loadTimeHistory();
     let activeHistoryDate = null;
     let followProbe = false;
-    const timeButtons = [
-      { element: document.getElementById('btn-time-pause'), scale: 0.0 }
-    ].filter(({ element }) => element);
+    const timeButtons = [{ element: document.getElementById('btn-time-pause'), scale: 0.0 }].filter(
+      ({ element }) => element
+    );
     const timeStepButtons = [
       { element: document.getElementById('btn-time-back-minute'), direction: -1, unit: 'minute' },
       { element: document.getElementById('btn-time-back-hour'), direction: -1, unit: 'hour' },
@@ -876,9 +881,7 @@ async function bootstrapApp() {
       if (activeMission && cameraController.isInstrumentLocked) {
         const config = missionSim.getActiveOpticalConfig();
         if (config) {
-          const filter = config.instrumentName.includes('Cassini ISS')
-            ? ' | FILTER: CL1+CL2'
-            : '';
+          const filter = config.instrumentName.includes('Cassini ISS') ? ' | FILTER: CL1+CL2' : '';
           const optics = cameraController.opticsEnabled ? '' : ' | RAW';
           instrumentName = `${config.instrumentName}${filter}${optics} | FOV ${camera.fov.toFixed(1)}°`;
         }
@@ -978,8 +981,10 @@ async function bootstrapApp() {
           .replace('{res}', statusObj.resolution)
           .replace('{target}', getTextureTargetLabel(statusObj.targetId));
       } else if (statusObj.type === 'restored') {
-        textureStudioStatus.textContent = t('textureStudio.restored')
-          .replace('{target}', getTextureTargetLabel(statusObj.targetId));
+        textureStudioStatus.textContent = t('textureStudio.restored').replace(
+          '{target}',
+          getTextureTargetLabel(statusObj.targetId)
+        );
       } else {
         textureStudioStatus.textContent = statusObj.text || '';
       }
@@ -1163,9 +1168,8 @@ async function bootstrapApp() {
 
     clock.start();
     tick();
-
   } catch (error) {
-    console.error("Error crítico durante el bootstrap:", error);
+    console.error('Error crítico durante el bootstrap:', error);
     document.body.innerHTML = `<h2 style="color:red; text-align:center;">${t('error.bootstrap')}</h2>`;
   }
 }
@@ -1274,19 +1278,12 @@ function tick() {
     orbitPathsController.setActiveTarget(cameraController.currentTarget);
   }
   if (solarLensFlare && saturnSim) {
-    solarLensFlare.update(
-      camera,
-      saturnSim.sunDirection,
-      saturnSim.moonShadowPositions,
-      { instrumentLocked: Boolean(cameraController?.isInstrumentLocked) }
-    );
+    solarLensFlare.update(camera, saturnSim.sunDirection, saturnSim.moonShadowPositions, {
+      instrumentLocked: Boolean(cameraController?.isInstrumentLocked)
+    });
   }
   if (starfieldSim && saturnSim) {
-    starfieldSim.update(
-      camera,
-      saturnSim.sunDirection,
-      solarLensFlare?.lastVisibility ?? 1
-    );
+    starfieldSim.update(camera, saturnSim.sunDirection, solarLensFlare?.lastVisibility ?? 1);
   }
   if (sunSim && saturnSim) {
     sunSim.update(camera, saturnSim.sunDirection);

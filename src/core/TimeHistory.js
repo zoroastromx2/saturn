@@ -40,7 +40,11 @@ export function pushTimeHistory(history, dateStr, maxItems = MAX_TIME_HISTORY) {
   return [normalized, ...previous.filter((item) => item !== normalized)].slice(0, limit);
 }
 
-export function loadTimeHistory(storage = globalThis.localStorage, key = TIME_HISTORY_STORAGE_KEY, maxItems = MAX_TIME_HISTORY) {
+export function loadTimeHistory(
+  storage = globalThis.localStorage,
+  key = TIME_HISTORY_STORAGE_KEY,
+  maxItems = MAX_TIME_HISTORY
+) {
   try {
     const raw = storage?.getItem?.(key);
     if (!raw) return [];
@@ -61,7 +65,11 @@ export function loadTimeHistory(storage = globalThis.localStorage, key = TIME_HI
   }
 }
 
-export function saveTimeHistory(history, storage = globalThis.localStorage, key = TIME_HISTORY_STORAGE_KEY) {
+export function saveTimeHistory(
+  history,
+  storage = globalThis.localStorage,
+  key = TIME_HISTORY_STORAGE_KEY
+) {
   try {
     storage?.setItem?.(key, JSON.stringify(history));
   } catch {

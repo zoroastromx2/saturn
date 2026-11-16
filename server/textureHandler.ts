@@ -1,9 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import type { Request, Response } from 'express';
-import {
-  buildTexturePrompt,
-  validateTextureRequest
-} from '../src/core/TexturePromptCatalog.js';
+import { buildTexturePrompt, validateTextureRequest } from '../src/core/TexturePromptCatalog.js';
 
 export const GEMINI_IMAGE_MODEL = 'gemini-nano-banana-2.1';
 const USER_AGENT_HEADER = 'aistudio-build';

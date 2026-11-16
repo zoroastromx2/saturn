@@ -1,9 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import * as THREE from 'three';
-import {
-  buildTexturePrompt,
-  validateTextureRequest
-} from '../src/core/TexturePromptCatalog.js';
+import { buildTexturePrompt, validateTextureRequest } from '../src/core/TexturePromptCatalog.js';
 import { TextureStudioController } from '../src/core/TextureStudioController.js';
 import { createGenerateTextureHandler, GEMINI_IMAGE_MODEL } from '../server/textureHandler.ts';
 

@@ -30,9 +30,7 @@ export class SunSimulator {
     if (!camera || !sunDirection) return;
 
     const distance = camera.far * FAR_PLANE_FRACTION;
-    this.tempSunPosition.copy(sunDirection)
-      .multiplyScalar(distance)
-      .add(camera.position);
+    this.tempSunPosition.copy(sunDirection).multiplyScalar(distance).add(camera.position);
 
     this.mesh.position.copy(this.tempSunPosition);
     const sunRadius = distance * ANGULAR_RADIUS;

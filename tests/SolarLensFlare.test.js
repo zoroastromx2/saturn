@@ -29,7 +29,9 @@ describe('SolarLensFlare - visibilidad solar analítica', () => {
     const { camera, flare } = createFlare();
     camera.lookAt(0, 0, 0);
 
-    expect(flare.computeSolarVisibility(camera.position, new THREE.Vector3(1, 0, 0), [], null)).toBe(0);
+    expect(
+      flare.computeSolarVisibility(camera.position, new THREE.Vector3(1, 0, 0), [], null)
+    ).toBe(0);
   });
 
   it('debería bloquear el disco solar con Saturno y conservar el limbo atmosférico', () => {
@@ -37,11 +39,15 @@ describe('SolarLensFlare - visibilidad solar analítica', () => {
 
     camera.position.set(-20, 0, 0);
     camera.lookAt(0, 0, 0);
-    expect(flare.computeSolarVisibility(camera.position, new THREE.Vector3(1, 0, 0), [], null)).toBe(0);
+    expect(
+      flare.computeSolarVisibility(camera.position, new THREE.Vector3(1, 0, 0), [], null)
+    ).toBe(0);
 
     camera.position.set(-20, 0, 5.9);
     camera.lookAt(0, 0, 5.9);
-    expect(flare.computeSolarVisibility(camera.position, new THREE.Vector3(1, 0, 0), [], null)).toBe(0);
+    expect(
+      flare.computeSolarVisibility(camera.position, new THREE.Vector3(1, 0, 0), [], null)
+    ).toBe(0);
 
     camera.position.set(-20, 0, 6.2);
     camera.lookAt(0, 0, 6.2);
@@ -60,20 +66,14 @@ describe('SolarLensFlare - visibilidad solar analítica', () => {
     const { camera, flare } = createFlare();
     const moonOnRay = [{ position: new THREE.Vector3(5, 0, 20), radius: 1 }];
 
-    expect(flare.computeSolarVisibility(
-      camera.position,
-      new THREE.Vector3(1, 0, 0),
-      moonOnRay,
-      null
-    )).toBe(0);
+    expect(
+      flare.computeSolarVisibility(camera.position, new THREE.Vector3(1, 0, 0), moonOnRay, null)
+    ).toBe(0);
 
     const moonOffRay = [{ position: new THREE.Vector3(5, 1.2, 20), radius: 1 }];
-    expect(flare.computeSolarVisibility(
-      camera.position,
-      new THREE.Vector3(1, 0, 0),
-      moonOffRay,
-      null
-    )).toBeCloseTo(1, 5);
+    expect(
+      flare.computeSolarVisibility(camera.position, new THREE.Vector3(1, 0, 0), moonOffRay, null)
+    ).toBeCloseTo(1, 5);
   });
 
   it('debería modular la visibilidad con la opacidad radial de los anillos', () => {
@@ -92,18 +92,12 @@ describe('SolarLensFlare - visibilidad solar analítica', () => {
       outer: 13.6775
     };
 
-    expect(flare.computeSolarVisibility(
-      camera.position,
-      new THREE.Vector3(0, -1, 0),
-      [],
-      opaqueRing
-    )).toBe(0);
-    expect(flare.computeSolarVisibility(
-      camera.position,
-      new THREE.Vector3(0, -1, 0),
-      [],
-      openRing
-    )).toBeCloseTo(1, 5);
+    expect(
+      flare.computeSolarVisibility(camera.position, new THREE.Vector3(0, -1, 0), [], opaqueRing)
+    ).toBe(0);
+    expect(
+      flare.computeSolarVisibility(camera.position, new THREE.Vector3(0, -1, 0), [], openRing)
+    ).toBeCloseTo(1, 5);
   });
 
   it('debería crear el starburst, el streak anamórfico y cuatro ghosts', () => {

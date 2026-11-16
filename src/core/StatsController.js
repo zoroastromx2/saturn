@@ -53,9 +53,7 @@ export class StatsController {
 
   refresh() {
     if (this.fpsElement) {
-      this.fpsElement.innerText = this.currentFps === null
-        ? '—'
-        : `${this.currentFps} FPS`;
+      this.fpsElement.innerText = this.currentFps === null ? '—' : `${this.currentFps} FPS`;
     }
 
     if (this.memoryElement) {
@@ -65,9 +63,7 @@ export class StatsController {
 
     if (this.gpuElement) {
       const memory = this.renderer?.info?.memory;
-      this.gpuElement.innerText = memory
-        ? `${memory.geometries} / ${memory.textures}`
-        : '—';
+      this.gpuElement.innerText = memory ? `${memory.geometries} / ${memory.textures}` : '—';
     }
   }
 }

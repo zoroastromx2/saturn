@@ -62,7 +62,8 @@ export class FRingSimulator {
     material.onBeforeCompile = (shader) => {
       shader.uniforms.uTime = material.userData.uniforms.uTime;
 
-      shader.vertexShader = `
+      shader.vertexShader =
+        `
         uniform float uTime;
         attribute float aOrbitRadius;
         attribute float aPhase;

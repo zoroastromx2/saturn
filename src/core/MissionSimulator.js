@@ -23,8 +23,10 @@ function pad2(value) {
 }
 
 function formatUtcDate(date) {
-  return `${date.getUTCFullYear()}-${pad2(date.getUTCMonth() + 1)}-${pad2(date.getUTCDate())} `
-    + `${pad2(date.getUTCHours())}:${pad2(date.getUTCMinutes())} UTC`;
+  return (
+    `${date.getUTCFullYear()}-${pad2(date.getUTCMonth() + 1)}-${pad2(date.getUTCDate())} ` +
+    `${pad2(date.getUTCHours())}:${pad2(date.getUTCMinutes())} UTC`
+  );
 }
 
 function colorToCss(color) {
@@ -58,11 +60,10 @@ export class MissionSimulator {
     this.cassiniHuygensModel = null;
     this.cassiniHuygensModelWrapper = null;
     this.eqRadius = saturnSimulator.eqRadius;
-    this.scaleFactor = saturnSimulator.scaleFactor
-      ?? (CONSTANTS.SATURN.RADIUS_EQUATORIAL / this.eqRadius);
-    this.fRingRadius = (
-      CONSTANTS.SATURN.F_RING_RADIUS / CONSTANTS.SATURN.RADIUS_EQUATORIAL
-    ) * this.eqRadius;
+    this.scaleFactor =
+      saturnSimulator.scaleFactor ?? CONSTANTS.SATURN.RADIUS_EQUATORIAL / this.eqRadius;
+    this.fRingRadius =
+      (CONSTANTS.SATURN.F_RING_RADIUS / CONSTANTS.SATURN.RADIUS_EQUATORIAL) * this.eqRadius;
 
     this.activeMission = null;
     this.activeKey = null;
@@ -161,10 +162,7 @@ export class MissionSimulator {
     dishRim.rotation.x = Math.PI / 2;
     this.probeVisual.add(dishRim);
 
-    const feedHorn = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.045, 0.075, 0.22, 8),
-      darkMetal
-    );
+    const feedHorn = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.075, 0.22, 8), darkMetal);
     feedHorn.position.y = 0.4;
     this.probeVisual.add(feedHorn);
 
@@ -172,19 +170,13 @@ export class MissionSimulator {
       const boomPivot = new THREE.Group();
       boomPivot.rotation.y = (i / 3) * Math.PI * 2;
 
-      const boom = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.018, 0.018, 1.05, 6),
-        darkMetal
-      );
+      const boom = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 1.05, 6), darkMetal);
       boom.rotation.z = Math.PI / 2;
       boom.position.x = 0.72;
       boom.position.y = -0.13;
       boomPivot.add(boom);
 
-      const rtg = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.085, 0.085, 0.28, 8),
-        darkMetal
-      );
+      const rtg = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.085, 0.28, 8), darkMetal);
       rtg.rotation.z = Math.PI / 2;
       rtg.position.set(1.28, -0.13, 0);
       boomPivot.add(rtg);
@@ -200,17 +192,11 @@ export class MissionSimulator {
     magnetometerBoom.position.set(1.08, 0.26, -0.05);
     this.probeVisual.add(magnetometerBoom);
 
-    const magnetometerTip = new THREE.Mesh(
-      new THREE.SphereGeometry(0.052, 10, 8),
-      darkMetal
-    );
+    const magnetometerTip = new THREE.Mesh(new THREE.SphereGeometry(0.052, 10, 8), darkMetal);
     magnetometerTip.position.set(2.16, 0.26, -0.05);
     this.probeVisual.add(magnetometerTip);
 
-    const thruster = new THREE.Mesh(
-      new THREE.ConeGeometry(0.12, 0.28, 12),
-      darkMetal
-    );
+    const thruster = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.28, 12), darkMetal);
     thruster.rotation.x = Math.PI / 2;
     thruster.position.z = 0.46;
     this.probeVisual.add(thruster);
@@ -231,10 +217,7 @@ export class MissionSimulator {
     this.huygensShield = new THREE.Group();
     this.huygensShield.name = 'HuygensHeatShield';
 
-    const shieldCone = new THREE.Mesh(
-      new THREE.ConeGeometry(0.42, 0.34, 24),
-      shieldMaterial
-    );
+    const shieldCone = new THREE.Mesh(new THREE.ConeGeometry(0.42, 0.34, 24), shieldMaterial);
     shieldCone.rotation.x = Math.PI / 2;
     shieldCone.position.z = 0.48;
     this.huygensShield.add(shieldCone);
@@ -252,8 +235,9 @@ export class MissionSimulator {
 
     this.proceduralProbe = new THREE.Group();
     this.proceduralProbe.name = 'ProceduralProbe';
-    const proceduralChildren = this.probeVisual.children
-      .filter((child) => child !== this.instrumentMount);
+    const proceduralChildren = this.probeVisual.children.filter(
+      (child) => child !== this.instrumentMount
+    );
     proceduralChildren.forEach((child) => this.proceduralProbe.add(child));
     this.probeVisual.add(this.proceduralProbe);
     this.buildPioneerProbe();
@@ -279,11 +263,7 @@ export class MissionSimulator {
     const scale = targetSize / maxDim;
 
     pioneerMesh.scale.setScalar(scale);
-    pioneerMesh.position.set(
-      -center.x * scale,
-      -center.y * scale,
-      -center.z * scale
-    );
+    pioneerMesh.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
 
     pioneerMesh.traverse((child) => {
       if (!child.isMesh || !child.material) return;
@@ -323,11 +303,7 @@ export class MissionSimulator {
     const scale = targetSize / maxDim;
 
     voyagerMesh.scale.setScalar(scale);
-    voyagerMesh.position.set(
-      -center.x * scale,
-      -center.y * scale,
-      -center.z * scale
-    );
+    voyagerMesh.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
 
     voyagerMesh.traverse((child) => {
       if (!child.isMesh || !child.material) return;
@@ -367,11 +343,7 @@ export class MissionSimulator {
     const scale = targetSize / maxDim;
 
     voyager2Mesh.scale.setScalar(scale);
-    voyager2Mesh.position.set(
-      -center.x * scale,
-      -center.y * scale,
-      -center.z * scale
-    );
+    voyager2Mesh.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
 
     voyager2Mesh.traverse((child) => {
       if (!child.isMesh || !child.material) return;
@@ -414,11 +386,7 @@ export class MissionSimulator {
     const scale = targetSize / maxDim;
 
     cassiniMesh.scale.setScalar(scale);
-    cassiniMesh.position.set(
-      -center.x * scale,
-      -center.y * scale,
-      -center.z * scale
-    );
+    cassiniMesh.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
 
     cassiniMesh.traverse((child) => {
       if (!child.isMesh || !child.material) return;
@@ -455,9 +423,9 @@ export class MissionSimulator {
     this.eventMs = Date.parse(mission.timestamp);
     this.lastDaysSinceEpoch = daysSinceEpoch;
 
-    const controlPoints = mission.controlPoints.map(([x, y, z]) => (
+    const controlPoints = mission.controlPoints.map(([x, y, z]) =>
       new THREE.Vector3(x, y, z).multiplyScalar(this.eqRadius)
-    ));
+    );
     this.curve = new THREE.CatmullRomCurve3(controlPoints, false, 'centripetal', 0.5);
 
     const sampledPoints = this.curve.getPoints(PATH_SEGMENTS);
@@ -503,9 +471,9 @@ export class MissionSimulator {
       badge.className = 'milestone-badge';
       badge.textContent = milestone.title;
       badge.dataset.expanded = 'false';
-      badge.dataset.detail = `${formatUtcDate(new Date(
-        this.eventMs + (milestone.t - mission.peakT) * mission.windowHours * MS_PER_HOUR
-      ))} · ${mission.name}`;
+      badge.dataset.detail = `${formatUtcDate(
+        new Date(this.eventMs + (milestone.t - mission.peakT) * mission.windowHours * MS_PER_HOUR)
+      )} · ${mission.name}`;
       badge.style.setProperty('--mission-color', missionColor);
       badge.setAttribute('role', 'button');
       badge.setAttribute('tabindex', '0');
@@ -546,14 +514,12 @@ export class MissionSimulator {
     const usePioneerModel = mission.key === 'pioneer11' && Boolean(this.pioneerModelWrapper);
     const useVoyagerModel = mission.key === 'voyager1' && Boolean(this.voyagerModelWrapper);
     const useVoyager2Model = mission.key === 'voyager2' && Boolean(this.voyager2ModelWrapper);
-    const useCassiniHuygensModel = (
-      mission.key === 'cassiniInsertion' || mission.key === 'cassiniGrandFinale'
-    ) && Boolean(this.cassiniHuygensModelWrapper);
+    const useCassiniHuygensModel =
+      (mission.key === 'cassiniInsertion' || mission.key === 'cassiniGrandFinale') &&
+      Boolean(this.cassiniHuygensModelWrapper);
     if (this.proceduralProbe) {
-      this.proceduralProbe.visible = !usePioneerModel
-        && !useVoyagerModel
-        && !useVoyager2Model
-        && !useCassiniHuygensModel;
+      this.proceduralProbe.visible =
+        !usePioneerModel && !useVoyagerModel && !useVoyager2Model && !useCassiniHuygensModel;
     }
     if (this.pioneerModelWrapper) {
       this.pioneerModelWrapper.visible = usePioneerModel;
@@ -650,9 +616,7 @@ export class MissionSimulator {
 
     this.trajectoryGroup.updateMatrixWorld(true);
     this.probeGroup.getWorldPosition(this.tempProbeWorld);
-    const cameraDistance = camera
-      ? camera.position.distanceTo(this.tempProbeWorld)
-      : 20;
+    const cameraDistance = camera ? camera.position.distanceTo(this.tempProbeWorld) : 20;
     const probeScale = THREE.MathUtils.clamp(cameraDistance * 0.02, 0.12, 0.9);
     this.probeVisual.scale.setScalar(probeScale);
 
@@ -661,9 +625,7 @@ export class MissionSimulator {
       const markerDistance = camera
         ? camera.position.distanceTo(this.tempMarkerWorld)
         : cameraDistance;
-      marker.scale.setScalar(
-        THREE.MathUtils.clamp(markerDistance * 0.0065, 0.035, 2.8)
-      );
+      marker.scale.setScalar(THREE.MathUtils.clamp(markerDistance * 0.0065, 0.035, 2.8));
     });
 
     this.tempFrameCenter.copy(this.curveCenter);
@@ -747,11 +709,7 @@ export class MissionSimulator {
       case 'RING_F': {
         this.instrumentMount.getWorldPosition(this.tempInstrumentWorld);
         const angle = Math.atan2(this.tempInstrumentWorld.z, this.tempInstrumentWorld.x);
-        out.set(
-          Math.cos(angle) * this.fRingRadius,
-          0,
-          Math.sin(angle) * this.fRingRadius
-        );
+        out.set(Math.cos(angle) * this.fRingRadius, 0, Math.sin(angle) * this.fRingRadius);
         break;
       }
       case 'VELOCITY_VECTOR': {
@@ -763,10 +721,9 @@ export class MissionSimulator {
         } else {
           this.tempOpticalTangent.set(0, 0, 1);
         }
-        out.copy(this.tempInstrumentWorld).addScaledVector(
-          this.tempOpticalTangent,
-          this.eqRadius * 0.05
-        );
+        out
+          .copy(this.tempInstrumentWorld)
+          .addScaledVector(this.tempOpticalTangent, this.eqRadius * 0.05);
         break;
       }
       case 'SATURN':
@@ -821,18 +778,11 @@ export class MissionSimulator {
     if (!this.activeMission || !this.curve || !this.cameraController) return;
 
     const verticalFov = THREE.MathUtils.degToRad(this.camera.fov);
-    const horizontalFov = 2 * Math.atan(
-      Math.tan(verticalFov / 2) * this.camera.aspect
-    );
-    const fittingDistance = this.curveRadius
-      / Math.tan(Math.min(verticalFov, horizontalFov) / 2)
-      * 1.35;
+    const horizontalFov = 2 * Math.atan(Math.tan(verticalFov / 2) * this.camera.aspect);
+    const fittingDistance =
+      (this.curveRadius / Math.tan(Math.min(verticalFov, horizontalFov) / 2)) * 1.35;
 
-    this.cameraController.focusOnObject(
-      this.framingAnchor,
-      Math.max(4, fittingDistance),
-      0.35
-    );
+    this.cameraController.focusOnObject(this.framingAnchor, Math.max(4, fittingDistance), 0.35);
   }
 
   getFollowDistance() {

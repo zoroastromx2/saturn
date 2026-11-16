@@ -37,8 +37,7 @@ export async function createApp() {
   return app;
 }
 
-const isMainModule =
-  process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename);
+const isMainModule = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename);
 
 if (isMainModule) {
   const port = Number(process.env.PORT) || 3000;

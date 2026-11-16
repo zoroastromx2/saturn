@@ -58,10 +58,18 @@ export class EnceladusSimulator extends MoonSimulatorBase {
   initPlume(scene) {
     const geometry = new THREE.BufferGeometry();
 
-    this.positionAttribute = new THREE.BufferAttribute(this.positions, 3).setUsage(THREE.DynamicDrawUsage);
-    this.velocityAttribute = new THREE.BufferAttribute(this.velocities, 3).setUsage(THREE.DynamicDrawUsage);
-    this.lifetimeAttribute = new THREE.BufferAttribute(this.lifetimes, 1).setUsage(THREE.DynamicDrawUsage);
-    this.maxLifetimeAttribute = new THREE.BufferAttribute(this.maxLifetimes, 1).setUsage(THREE.DynamicDrawUsage);
+    this.positionAttribute = new THREE.BufferAttribute(this.positions, 3).setUsage(
+      THREE.DynamicDrawUsage
+    );
+    this.velocityAttribute = new THREE.BufferAttribute(this.velocities, 3).setUsage(
+      THREE.DynamicDrawUsage
+    );
+    this.lifetimeAttribute = new THREE.BufferAttribute(this.lifetimes, 1).setUsage(
+      THREE.DynamicDrawUsage
+    );
+    this.maxLifetimeAttribute = new THREE.BufferAttribute(this.maxLifetimes, 1).setUsage(
+      THREE.DynamicDrawUsage
+    );
 
     geometry.setAttribute('position', this.positionAttribute);
     geometry.setAttribute('velocity', this.velocityAttribute);
@@ -123,22 +131,16 @@ export class EnceladusSimulator extends MoonSimulatorBase {
         const spread = Math.sqrt(Math.random()) * 0.65;
         const cosSpread = Math.cos(spread);
         const sinSpread = Math.sin(spread);
-        const lateralX = Math.cos(azimuth) * this.southTangentX.x
-          + Math.sin(azimuth) * this.southTangentZ.x;
-        const lateralY = Math.cos(azimuth) * this.southTangentX.y
-          + Math.sin(azimuth) * this.southTangentZ.y;
-        const lateralZ = Math.cos(azimuth) * this.southTangentX.z
-          + Math.sin(azimuth) * this.southTangentZ.z;
+        const lateralX =
+          Math.cos(azimuth) * this.southTangentX.x + Math.sin(azimuth) * this.southTangentZ.x;
+        const lateralY =
+          Math.cos(azimuth) * this.southTangentX.y + Math.sin(azimuth) * this.southTangentZ.y;
+        const lateralZ =
+          Math.cos(azimuth) * this.southTangentX.z + Math.sin(azimuth) * this.southTangentZ.z;
 
-        this.velocities[j] = (
-          this.southDirection.x * cosSpread + lateralX * sinSpread
-        ) * speed;
-        this.velocities[j + 1] = (
-          this.southDirection.y * cosSpread + lateralY * sinSpread
-        ) * speed;
-        this.velocities[j + 2] = (
-          this.southDirection.z * cosSpread + lateralZ * sinSpread
-        ) * speed;
+        this.velocities[j] = (this.southDirection.x * cosSpread + lateralX * sinSpread) * speed;
+        this.velocities[j + 1] = (this.southDirection.y * cosSpread + lateralY * sinSpread) * speed;
+        this.velocities[j + 2] = (this.southDirection.z * cosSpread + lateralZ * sinSpread) * speed;
 
         const life = 2.0 + Math.random() * 3.0;
         this.lifetimes[i] = life;

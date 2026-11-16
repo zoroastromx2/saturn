@@ -46,10 +46,7 @@ function createMimasModelSource() {
   root.rotation.x = -Math.PI / 2;
   const inner = new THREE.Group();
   inner.rotation.x = Math.PI / 2;
-  const surface = new THREE.Mesh(
-    new THREE.SphereGeometry(200, 24, 12),
-    material
-  );
+  const surface = new THREE.Mesh(new THREE.SphereGeometry(200, 24, 12), material);
   surface.name = 'Object_4';
   inner.add(surface);
   root.add(inner);
@@ -84,12 +81,9 @@ describe('Mimas GLB - Superficie, texturas y escala orbital', () => {
   it('debería usar geometría, color y normal del GLB manteniendo el radio de Mimas', () => {
     const scene = new THREE.Scene();
     const { source, colorTexture, normalTexture } = createMimasModelSource();
-    const simulator = new MimasSimulator(
-      scene,
-      createSaturnSimulator(),
-      10000,
-      { models: { mimas: source } }
-    );
+    const simulator = new MimasSimulator(scene, createSaturnSimulator(), 10000, {
+      models: { mimas: source }
+    });
 
     expect(simulator.mesh.material.uniforms.tColor.value).toBe(colorTexture);
     expect(simulator.mesh.material.uniforms.tNormal.value).toBe(normalTexture);
@@ -111,12 +105,9 @@ describe('Mimas GLB - Superficie, texturas y escala orbital', () => {
   it('debería aplicar texturas generadas con la convención UV del GLB', () => {
     const scene = new THREE.Scene();
     const { source } = createMimasModelSource();
-    const simulator = new MimasSimulator(
-      scene,
-      createSaturnSimulator(),
-      10000,
-      { models: { mimas: source } }
-    );
+    const simulator = new MimasSimulator(scene, createSaturnSimulator(), 10000, {
+      models: { mimas: source }
+    });
     const controller = new TextureStudioController({
       moonsById: { mimas: simulator }
     });
@@ -131,12 +122,9 @@ describe('Mimas GLB - Superficie, texturas y escala orbital', () => {
   it('debería encuadrar la cámara usando el radio de la geometría del GLB', () => {
     const scene = new THREE.Scene();
     const { source } = createMimasModelSource();
-    const simulator = new MimasSimulator(
-      scene,
-      createSaturnSimulator(),
-      10000,
-      { models: { mimas: source } }
-    );
+    const simulator = new MimasSimulator(scene, createSaturnSimulator(), 10000, {
+      models: { mimas: source }
+    });
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
     const controller = new CameraController(camera, {
       enabled: true,

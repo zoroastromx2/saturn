@@ -54,9 +54,9 @@ describe('HistoricalMissions - Catálogo y cinemática', () => {
         expect(milestone.t).toBeGreaterThanOrEqual(0);
         expect(milestone.t).toBeLessThanOrEqual(1);
         expect(milestone.title.length).toBeGreaterThan(0);
-        expect([
-          'SATURN', 'TITAN', 'ENCELADUS', 'TETIS', 'RING_F', 'VELOCITY_VECTOR'
-        ]).toContain(milestone.targetKey);
+        expect(['SATURN', 'TITAN', 'ENCELADUS', 'TETIS', 'RING_F', 'VELOCITY_VECTOR']).toContain(
+          milestone.targetKey
+        );
         expect(milestone.targetOffset).toBeInstanceOf(THREE.Vector3);
         expect(milestone.instrumentName.length).toBeGreaterThan(0);
         expect(milestone.defaultFov).toBeGreaterThan(0);
@@ -66,7 +66,10 @@ describe('HistoricalMissions - Catálogo y cinemática', () => {
 
   it('debería crear la spline, la sonda y un marcador por hito', () => {
     const { simulator } = createSimulator();
-    const mission = simulator.loadMission('pioneer11', daysSinceJ2000(MISSIONS.pioneer11.timestamp));
+    const mission = simulator.loadMission(
+      'pioneer11',
+      daysSinceJ2000(MISSIONS.pioneer11.timestamp)
+    );
 
     expect(mission).toBe(MISSIONS.pioneer11);
     expect(simulator.activeMission).toBe(MISSIONS.pioneer11);
@@ -108,7 +111,8 @@ describe('HistoricalMissions - Catálogo y cinemática', () => {
       saturnSim: { saturnMesh: null },
       titanSim: titan
     });
-    const expectedTitanTarget = titan.mesh.getWorldPosition(new THREE.Vector3())
+    const expectedTitanTarget = titan.mesh
+      .getWorldPosition(new THREE.Vector3())
       .addScaledVector(MISSIONS.voyager1.milestones[0].targetOffset, simulator.eqRadius);
     expect(titanTarget.distanceTo(expectedTitanTarget)).toBeLessThan(1e-5);
 
@@ -116,8 +120,10 @@ describe('HistoricalMissions - Catálogo y cinemática', () => {
       saturnSim: { saturnMesh: null },
       titanSim: titan
     });
-    const expectedSaturnTarget = new THREE.Vector3()
-      .addScaledVector(MISSIONS.voyager1.milestones[1].targetOffset, simulator.eqRadius);
+    const expectedSaturnTarget = new THREE.Vector3().addScaledVector(
+      MISSIONS.voyager1.milestones[1].targetOffset,
+      simulator.eqRadius
+    );
     expect(saturnTarget.distanceTo(expectedSaturnTarget)).toBeLessThan(1e-5);
 
     const midTarget = simulator.getOpticalTargetPosition(0.35, {

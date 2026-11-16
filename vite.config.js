@@ -9,15 +9,11 @@ export default defineConfig({
   },
   plugins: [
     glsl({
-      include: [
-        '**/*.glsl', '**/*.wgsl',
-        '**/*.vert', '**/*.frag',
-        '**/*.vs', '**/*.fs'
-      ],
-      exclude: undefined,          // No excluir nada dentro de la carpeta shaders
+      include: ['**/*.glsl', '**/*.wgsl', '**/*.vert', '**/*.frag', '**/*.vs', '**/*.fs'],
+      exclude: undefined, // No excluir nada dentro de la carpeta shaders
       warnDuplicatedImports: true, // Advertir si el agente duplica includes de GLSL
       defaultExtension: 'glsl',
-      compress: false,             // Mantener false en dev para que los errores de línea coincidan
+      compress: false, // Mantener false en dev para que los errores de línea coincidan
       root: '/'
     })
   ],

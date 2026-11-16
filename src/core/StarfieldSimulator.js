@@ -3,12 +3,7 @@ import starfieldVert from '../shaders/starfield.vert';
 import starfieldFrag from '../shaders/starfield.frag';
 
 function createBlackTexture() {
-  const texture = new THREE.DataTexture(
-    new Uint8Array([0, 0, 0, 255]),
-    1,
-    1,
-    THREE.RGBAFormat
-  );
+  const texture = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1, THREE.RGBAFormat);
   texture.colorSpace = THREE.LinearSRGBColorSpace;
   texture.needsUpdate = true;
   return texture;
@@ -16,10 +11,10 @@ function createBlackTexture() {
 
 function createDustMap(sourceTexture, maxAnisotropy) {
   if (
-    typeof document === 'undefined'
-    || !sourceTexture?.image
-    || !sourceTexture.image.width
-    || !sourceTexture.image.height
+    typeof document === 'undefined' ||
+    !sourceTexture?.image ||
+    !sourceTexture.image.width ||
+    !sourceTexture.image.height
   ) {
     return sourceTexture;
   }
@@ -103,19 +98,20 @@ export class StarfieldSimulator {
     if (!camera || !sunDirection) return;
 
     this.mesh.position.copy(camera.position);
-    this.mesh.scale.setScalar(camera.far * 0.90);
+    this.mesh.scale.setScalar(camera.far * 0.9);
     this.uniforms.uFovScale.value = camera.fov / 50.0;
 
     this.tempForward.set(0, 0, -1).applyQuaternion(camera.quaternion).normalize();
     this.tempSunDirection.copy(sunDirection).normalize();
     const visibility = THREE.MathUtils.clamp(Number(solarVisibility) || 0, 0, 1);
     const solarGlare = Math.max(0, this.tempForward.dot(this.tempSunDirection)) * visibility;
-    const targetExposure = 1.15 - 0.90 * solarGlare;
+    const targetExposure = 1.15 - 0.9 * solarGlare;
 
     const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
-    const delta = this.lastUpdateTime === null
-      ? 0
-      : Math.min(0.1, Math.max(0, (now - this.lastUpdateTime) / 1000));
+    const delta =
+      this.lastUpdateTime === null
+        ? 0
+        : Math.min(0.1, Math.max(0, (now - this.lastUpdateTime) / 1000));
     this.lastUpdateTime = now;
     const smoothing = Math.max(0.05, 1 - Math.exp(-delta * 2.8));
 

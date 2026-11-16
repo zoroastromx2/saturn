@@ -12,7 +12,10 @@ import {
 
 describe('AstroScale - Cálculos Planetarios', () => {
   it('debería calcular el achatamiento (oblateness) de Saturno correctamente (~0.09796)', () => {
-    const oblateness = calculateOblateness(CONSTANTS.SATURN.RADIUS_EQUATORIAL, CONSTANTS.SATURN.RADIUS_POLAR);
+    const oblateness = calculateOblateness(
+      CONSTANTS.SATURN.RADIUS_EQUATORIAL,
+      CONSTANTS.SATURN.RADIUS_POLAR
+    );
     // Saturno es el planeta más achatado del sistema solar (casi un 10%)
     expect(oblateness).toBeCloseTo(0.09796, 4);
   });
@@ -20,9 +23,9 @@ describe('AstroScale - Cálculos Planetarios', () => {
   it('debería confirmar que el radio ecuatorial de Saturno es aproximadamente 9.45 veces el de la Tierra', () => {
     const ratio = getEarthToSaturnRatio();
     // Validamos la tolerancia estricta del 0.1% requerida en el prompt
-    const expectedRatio = 9.449; 
-    const tolerance = expectedRatio * 0.001; 
-    
+    const expectedRatio = 9.449;
+    const tolerance = expectedRatio * 0.001;
+
     expect(Math.abs(ratio - expectedRatio)).toBeLessThanOrEqual(tolerance);
   });
 
@@ -41,7 +44,7 @@ describe('AstroScale - Cálculos Planetarios', () => {
 
     const saturnWebGL = toWebGLUnits(CONSTANTS.SATURN.RADIUS_EQUATORIAL, 10000);
     expect(saturnWebGL).toBeCloseTo(6.0268, 4);
-    
+
     // La relación visual en 3D debe mantenerse intacta
     expect(saturnWebGL / earthWebGL).toBeCloseTo(getEarthToSaturnRatio(), 4);
   });
@@ -51,9 +54,18 @@ describe('AstroScale - Cálculos Planetarios', () => {
   });
 
   it('debería calcular correctamente la velocidad orbital media en km/s para Titán, Encélado y Mimas', () => {
-    expect(calculateOrbitalVelocity(CONSTANTS.TITAN.ORBIT_SEMI_MAJOR, CONSTANTS.TITAN.ORBIT_PERIOD)).toBeCloseTo(5.573, 2);
-    expect(calculateOrbitalVelocity(CONSTANTS.ENCELADUS.ORBIT_SEMI_MAJOR, CONSTANTS.ENCELADUS.ORBIT_PERIOD)).toBeCloseTo(12.635, 2);
-    expect(calculateOrbitalVelocity(CONSTANTS.MIMAS.ORBIT_SEMI_MAJOR, CONSTANTS.MIMAS.ORBIT_PERIOD)).toBeCloseTo(14.321, 2);
+    expect(
+      calculateOrbitalVelocity(CONSTANTS.TITAN.ORBIT_SEMI_MAJOR, CONSTANTS.TITAN.ORBIT_PERIOD)
+    ).toBeCloseTo(5.573, 2);
+    expect(
+      calculateOrbitalVelocity(
+        CONSTANTS.ENCELADUS.ORBIT_SEMI_MAJOR,
+        CONSTANTS.ENCELADUS.ORBIT_PERIOD
+      )
+    ).toBeCloseTo(12.635, 2);
+    expect(
+      calculateOrbitalVelocity(CONSTANTS.MIMAS.ORBIT_SEMI_MAJOR, CONSTANTS.MIMAS.ORBIT_PERIOD)
+    ).toBeCloseTo(14.321, 2);
   });
 
   it('debería lanzar un error si el semieje mayor o el período orbital son inválidos', () => {
@@ -86,11 +98,17 @@ describe('AstroScale - Cálculos Planetarios', () => {
   });
 
   it('debería calcular correctamente las distancias de apoápsis y periápsis en km', () => {
-    const titanApsides = calculateApsides(CONSTANTS.TITAN.ORBIT_SEMI_MAJOR, CONSTANTS.TITAN.ORBIT_ECCENTRICITY);
+    const titanApsides = calculateApsides(
+      CONSTANTS.TITAN.ORBIT_SEMI_MAJOR,
+      CONSTANTS.TITAN.ORBIT_ECCENTRICITY
+    );
     expect(titanApsides.apoapsisKm).toBeCloseTo(1257059.856, 2);
     expect(titanApsides.periapsisKm).toBeCloseTo(1186680.144, 2);
 
-    const enceladusApsides = calculateApsides(CONSTANTS.ENCELADUS.ORBIT_SEMI_MAJOR, CONSTANTS.ENCELADUS.ORBIT_ECCENTRICITY);
+    const enceladusApsides = calculateApsides(
+      CONSTANTS.ENCELADUS.ORBIT_SEMI_MAJOR,
+      CONSTANTS.ENCELADUS.ORBIT_ECCENTRICITY
+    );
     expect(enceladusApsides.apoapsisKm).toBeCloseTo(239066.356, 2);
     expect(enceladusApsides.periapsisKm).toBeCloseTo(236829.644, 2);
   });

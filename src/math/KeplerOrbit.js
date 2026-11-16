@@ -9,11 +9,9 @@ export function solveEccentricAnomaly(meanAnomaly, eccentricity) {
   let eccentricAnomaly = eccentricity < 0.8 ? normalizedAnomaly : Math.PI;
 
   for (let i = 0; i < 5; i++) {
-    const delta = (
-      eccentricAnomaly
-      - eccentricity * Math.sin(eccentricAnomaly)
-      - normalizedAnomaly
-    ) / (1 - eccentricity * Math.cos(eccentricAnomaly));
+    const delta =
+      (eccentricAnomaly - eccentricity * Math.sin(eccentricAnomaly) - normalizedAnomaly) /
+      (1 - eccentricity * Math.cos(eccentricAnomaly));
 
     eccentricAnomaly -= delta;
     if (Math.abs(delta) < 1e-10) break;
@@ -23,12 +21,7 @@ export function solveEccentricAnomaly(meanAnomaly, eccentricity) {
 }
 
 export function calculateKeplerianPosition(elements, daysSinceJ2000) {
-  const {
-    semiMajorAxis,
-    periodDays,
-    eccentricity = 0,
-    meanAnomalyEpoch = 0
-  } = elements;
+  const { semiMajorAxis, periodDays, eccentricity = 0, meanAnomalyEpoch = 0 } = elements;
 
   if (semiMajorAxis <= 0 || periodDays <= 0) {
     throw new Error('El semieje mayor y el período orbital deben ser mayores a cero.');
@@ -37,10 +30,12 @@ export function calculateKeplerianPosition(elements, daysSinceJ2000) {
   const meanAnomaly = meanAnomalyEpoch + TWO_PI * (daysSinceJ2000 / periodDays);
   const eccentricAnomaly = solveEccentricAnomaly(meanAnomaly, eccentricity);
   const distance = semiMajorAxis * (1 - eccentricity * Math.cos(eccentricAnomaly));
-  const trueAnomaly = 2 * Math.atan2(
-    Math.sqrt(1 + eccentricity) * Math.sin(eccentricAnomaly / 2),
-    Math.sqrt(1 - eccentricity) * Math.cos(eccentricAnomaly / 2)
-  );
+  const trueAnomaly =
+    2 *
+    Math.atan2(
+      Math.sqrt(1 + eccentricity) * Math.sin(eccentricAnomaly / 2),
+      Math.sqrt(1 - eccentricity) * Math.cos(eccentricAnomaly / 2)
+    );
 
   return {
     x: Math.cos(trueAnomaly) * distance,

@@ -1,6 +1,11 @@
 // src/core/TelemetryController.js
 import * as THREE from 'three';
-import { CONSTANTS, calculateOrbitalVelocity, calculateApsides, kmToAU } from '../math/AstroScale.js';
+import {
+  CONSTANTS,
+  calculateOrbitalVelocity,
+  calculateApsides,
+  kmToAU
+} from '../math/AstroScale.js';
 import { t } from './Localization.js';
 
 const UPDATE_INTERVAL = 0.1;
@@ -29,10 +34,7 @@ const BODY_DATA = {
     period: null,
     velocity: null,
     eccentricity: CONSTANTS.SATURN.ORBIT_ECCENTRICITY,
-    ...calculateApsides(
-      CONSTANTS.SATURN.SUN_DISTANCE_KM,
-      CONSTANTS.SATURN.ORBIT_ECCENTRICITY
-    ),
+    ...calculateApsides(CONSTANTS.SATURN.SUN_DISTANCE_KM, CONSTANTS.SATURN.ORBIT_ECCENTRICITY),
     labelKey: 'body.saturn'
   },
   Earth: {
@@ -40,10 +42,7 @@ const BODY_DATA = {
     period: null,
     velocity: null,
     eccentricity: CONSTANTS.EARTH.ORBIT_ECCENTRICITY,
-    ...calculateApsides(
-      CONSTANTS.EARTH.SUN_DISTANCE_KM,
-      CONSTANTS.EARTH.ORBIT_ECCENTRICITY
-    ),
+    ...calculateApsides(CONSTANTS.EARTH.SUN_DISTANCE_KM, CONSTANTS.EARTH.ORBIT_ECCENTRICITY),
     labelKey: 'body.earth'
   },
   Titan: {
@@ -54,10 +53,7 @@ const BODY_DATA = {
       CONSTANTS.TITAN.ORBIT_PERIOD
     ),
     eccentricity: CONSTANTS.TITAN.ORBIT_ECCENTRICITY,
-    ...calculateApsides(
-      CONSTANTS.TITAN.ORBIT_SEMI_MAJOR,
-      CONSTANTS.TITAN.ORBIT_ECCENTRICITY
-    ),
+    ...calculateApsides(CONSTANTS.TITAN.ORBIT_SEMI_MAJOR, CONSTANTS.TITAN.ORBIT_ECCENTRICITY),
     labelKey: 'body.titan'
   },
   Enceladus: {
@@ -82,10 +78,7 @@ const BODY_DATA = {
       CONSTANTS.MIMAS.ORBIT_PERIOD
     ),
     eccentricity: CONSTANTS.MIMAS.ORBIT_ECCENTRICITY,
-    ...calculateApsides(
-      CONSTANTS.MIMAS.ORBIT_SEMI_MAJOR,
-      CONSTANTS.MIMAS.ORBIT_ECCENTRICITY
-    ),
+    ...calculateApsides(CONSTANTS.MIMAS.ORBIT_SEMI_MAJOR, CONSTANTS.MIMAS.ORBIT_ECCENTRICITY),
     labelKey: 'body.mimas'
   },
   Tethys: {
@@ -96,10 +89,7 @@ const BODY_DATA = {
       CONSTANTS.TETHYS.ORBIT_PERIOD
     ),
     eccentricity: CONSTANTS.TETHYS.ORBIT_ECCENTRICITY,
-    ...calculateApsides(
-      CONSTANTS.TETHYS.ORBIT_SEMI_MAJOR,
-      CONSTANTS.TETHYS.ORBIT_ECCENTRICITY
-    ),
+    ...calculateApsides(CONSTANTS.TETHYS.ORBIT_SEMI_MAJOR, CONSTANTS.TETHYS.ORBIT_ECCENTRICITY),
     labelKey: 'body.tethys'
   },
   Dione: {
@@ -110,10 +100,7 @@ const BODY_DATA = {
       CONSTANTS.DIONE.ORBIT_PERIOD
     ),
     eccentricity: CONSTANTS.DIONE.ORBIT_ECCENTRICITY,
-    ...calculateApsides(
-      CONSTANTS.DIONE.ORBIT_SEMI_MAJOR,
-      CONSTANTS.DIONE.ORBIT_ECCENTRICITY
-    ),
+    ...calculateApsides(CONSTANTS.DIONE.ORBIT_SEMI_MAJOR, CONSTANTS.DIONE.ORBIT_ECCENTRICITY),
     labelKey: 'body.dione'
   },
   Rhea: {
@@ -124,10 +111,7 @@ const BODY_DATA = {
       CONSTANTS.RHEA.ORBIT_PERIOD
     ),
     eccentricity: CONSTANTS.RHEA.ORBIT_ECCENTRICITY,
-    ...calculateApsides(
-      CONSTANTS.RHEA.ORBIT_SEMI_MAJOR,
-      CONSTANTS.RHEA.ORBIT_ECCENTRICITY
-    ),
+    ...calculateApsides(CONSTANTS.RHEA.ORBIT_SEMI_MAJOR, CONSTANTS.RHEA.ORBIT_ECCENTRICITY),
     labelKey: 'body.rhea'
   },
   Iapetus: {
@@ -138,10 +122,7 @@ const BODY_DATA = {
       CONSTANTS.IAPETUS.ORBIT_PERIOD
     ),
     eccentricity: CONSTANTS.IAPETUS.ORBIT_ECCENTRICITY,
-    ...calculateApsides(
-      CONSTANTS.IAPETUS.ORBIT_SEMI_MAJOR,
-      CONSTANTS.IAPETUS.ORBIT_ECCENTRICITY
-    ),
+    ...calculateApsides(CONSTANTS.IAPETUS.ORBIT_SEMI_MAJOR, CONSTANTS.IAPETUS.ORBIT_ECCENTRICITY),
     labelKey: 'body.iapetus'
   }
 };
@@ -154,9 +135,8 @@ export class TelemetryController {
     this.simulationDate = simulationDate;
     this.accumulatedTime = 0;
 
-    this.sunDirection = (sunDirection
-      ? sunDirection.clone()
-      : new THREE.Vector3(1.0, 0.35, 0.35)
+    this.sunDirection = (
+      sunDirection ? sunDirection.clone() : new THREE.Vector3(1.0, 0.35, 0.35)
     ).normalize();
     this.sunPositionKm = this.sunDirection.clone().multiplyScalar(CONSTANTS.SATURN.SUN_DISTANCE_KM);
     this.bodyWorldPosition = new THREE.Vector3();
@@ -211,22 +191,21 @@ export class TelemetryController {
 
     this.targetElement.innerText = t(body.labelKey);
     if (this.simDateElement) {
-      const currentSimDate = typeof this.simulationDate === 'function'
-        ? this.simulationDate()
-        : this.simulationDate;
+      const currentSimDate =
+        typeof this.simulationDate === 'function' ? this.simulationDate() : this.simulationDate;
       this.simDateElement.innerText = formatSimulatedDate(currentSimDate);
     }
     this.altitudeElement.innerText = `${Math.floor(Math.max(0, altitudeKm)).toLocaleString()} km`;
-    this.periodElement.innerText = body.period === null
-      ? '—'
-      : `${body.period.toLocaleString()} ${t('telemetry.days')}`;
+    this.periodElement.innerText =
+      body.period === null ? '—' : `${body.period.toLocaleString()} ${t('telemetry.days')}`;
     if (this.velocityElement) {
-      this.velocityElement.innerText = body.velocity === null
-        ? '—'
-        : `${body.velocity.toLocaleString(undefined, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-          })} km/s`;
+      this.velocityElement.innerText =
+        body.velocity === null
+          ? '—'
+          : `${body.velocity.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            })} km/s`;
     }
     if (this.sunDistanceElement) {
       this.sunDistanceElement.innerText = `${sunDistanceAu.toLocaleString(undefined, {
@@ -235,22 +214,25 @@ export class TelemetryController {
       })} AU`;
     }
     if (this.eccentricityElement) {
-      this.eccentricityElement.innerText = body.eccentricity === null || body.eccentricity === undefined
-        ? '—'
-        : body.eccentricity.toLocaleString(undefined, {
-            minimumFractionDigits: 4,
-            maximumFractionDigits: 4
-          });
+      this.eccentricityElement.innerText =
+        body.eccentricity === null || body.eccentricity === undefined
+          ? '—'
+          : body.eccentricity.toLocaleString(undefined, {
+              minimumFractionDigits: 4,
+              maximumFractionDigits: 4
+            });
     }
     if (this.apoapsisElement) {
-      this.apoapsisElement.innerText = body.apoapsisKm === null || body.apoapsisKm === undefined
-        ? '—'
-        : `${Math.round(body.apoapsisKm).toLocaleString()} km`;
+      this.apoapsisElement.innerText =
+        body.apoapsisKm === null || body.apoapsisKm === undefined
+          ? '—'
+          : `${Math.round(body.apoapsisKm).toLocaleString()} km`;
     }
     if (this.periapsisElement) {
-      this.periapsisElement.innerText = body.periapsisKm === null || body.periapsisKm === undefined
-        ? '—'
-        : `${Math.round(body.periapsisKm).toLocaleString()} km`;
+      this.periapsisElement.innerText =
+        body.periapsisKm === null || body.periapsisKm === undefined
+          ? '—'
+          : `${Math.round(body.periapsisKm).toLocaleString()} km`;
     }
   }
 }

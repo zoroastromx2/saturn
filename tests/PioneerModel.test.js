@@ -47,14 +47,7 @@ function createSimulator(pioneerModel = null) {
   scene.add(titan.mesh);
   const assets = pioneerModel ? { models: { pioneer11: pioneerModel } } : null;
 
-  return new MissionSimulator(
-    scene,
-    saturn,
-    camera,
-    { focusOnObject() {} },
-    titan,
-    assets
-  );
+  return new MissionSimulator(scene, saturn, camera, { focusOnObject() {} }, titan, assets);
 }
 
 describe('Pioneer 11 GLB - Normalización y wrapper', () => {

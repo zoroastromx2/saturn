@@ -47,14 +47,7 @@ function createSimulator(cassiniModel = null) {
   scene.add(titan.mesh);
   const assets = cassiniModel ? { models: { cassiniHuygens: cassiniModel } } : null;
 
-  return new MissionSimulator(
-    scene,
-    saturn,
-    camera,
-    { focusOnObject() {} },
-    titan,
-    assets
-  );
+  return new MissionSimulator(scene, saturn, camera, { focusOnObject() {} }, titan, assets);
 }
 
 describe('Cassini-Huygens GLB - Normalización y wrapper', () => {
@@ -114,7 +107,10 @@ describe('Cassini-Huygens GLB - Normalización y wrapper', () => {
     expect(simulator.proceduralProbe.visible).toBe(true);
     expect(simulator.cassiniHuygensModelWrapper.visible).toBe(false);
 
-    simulator.loadMission('cassiniGrandFinale', daysSinceJ2000(MISSIONS.cassiniGrandFinale.timestamp));
+    simulator.loadMission(
+      'cassiniGrandFinale',
+      daysSinceJ2000(MISSIONS.cassiniGrandFinale.timestamp)
+    );
     expect(simulator.proceduralProbe.visible).toBe(false);
     expect(simulator.cassiniHuygensModelWrapper.visible).toBe(true);
 

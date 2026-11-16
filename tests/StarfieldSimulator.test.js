@@ -3,12 +3,7 @@ import * as THREE from 'three';
 import { StarfieldSimulator } from '../src/core/StarfieldSimulator.js';
 
 function createMap() {
-  const map = new THREE.DataTexture(
-    new Uint8Array([20, 30, 40, 255]),
-    1,
-    1,
-    THREE.RGBAFormat
-  );
+  const map = new THREE.DataTexture(new Uint8Array([20, 30, 40, 255]), 1, 1, THREE.RGBAFormat);
   map.needsUpdate = true;
   return map;
 }
@@ -59,7 +54,7 @@ describe('StarfieldSimulator - Cielo galáctico HDR', () => {
     starfield.update(camera, new THREE.Vector3(1, 0.35, 0.35), 0);
 
     expect(starfield.mesh.position.distanceTo(camera.position)).toBeLessThan(1e-6);
-    expect(starfield.mesh.scale.x).toBeCloseTo(camera.far * 0.90);
+    expect(starfield.mesh.scale.x).toBeCloseTo(camera.far * 0.9);
     expect(starfield.uniforms.uFovScale.value).toBeCloseTo(0.2);
   });
 

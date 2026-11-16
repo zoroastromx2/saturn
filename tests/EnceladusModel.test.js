@@ -56,10 +56,7 @@ function createEnceladusModelSource() {
 
   const surfaceMaterial = new THREE.MeshStandardMaterial({ map: colorTexture });
   surfaceMaterial.name = 'Enceladus';
-  const surface = new THREE.Mesh(
-    new THREE.SphereGeometry(1, 24, 12),
-    surfaceMaterial
-  );
+  const surface = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 12), surfaceMaterial);
   surface.name = 'Enceladus';
   root.add(surface);
 
@@ -93,12 +90,9 @@ describe('Enceladus GLB - Superficie, textura y escala orbital', () => {
   it('debería usar geometría y color del GLB manteniendo el radio de Encélado', () => {
     const scene = new THREE.Scene();
     const { source, colorTexture, plumeTexture } = createEnceladusModelSource();
-    const simulator = new EnceladusSimulator(
-      scene,
-      createSaturnSimulator(),
-      10000,
-      { models: { enceladus: source } }
-    );
+    const simulator = new EnceladusSimulator(scene, createSaturnSimulator(), 10000, {
+      models: { enceladus: source }
+    });
 
     expect(simulator.mesh.material.uniforms.tColor.value).toBe(colorTexture);
     expect(simulator.mesh.material.uniforms.tColor.value).not.toBe(plumeTexture);
@@ -120,12 +114,9 @@ describe('Enceladus GLB - Superficie, textura y escala orbital', () => {
   it('debería aplicar texturas generadas con la convención UV del GLB', () => {
     const scene = new THREE.Scene();
     const { source } = createEnceladusModelSource();
-    const simulator = new EnceladusSimulator(
-      scene,
-      createSaturnSimulator(),
-      10000,
-      { models: { enceladus: source } }
-    );
+    const simulator = new EnceladusSimulator(scene, createSaturnSimulator(), 10000, {
+      models: { enceladus: source }
+    });
     const controller = new TextureStudioController({
       moonsById: { enceladus: simulator }
     });
@@ -140,12 +131,9 @@ describe('Enceladus GLB - Superficie, textura y escala orbital', () => {
   it('debería encuadrar la cámara usando el radio de la geometría del GLB', () => {
     const scene = new THREE.Scene();
     const { source } = createEnceladusModelSource();
-    const simulator = new EnceladusSimulator(
-      scene,
-      createSaturnSimulator(),
-      10000,
-      { models: { enceladus: source } }
-    );
+    const simulator = new EnceladusSimulator(scene, createSaturnSimulator(), 10000, {
+      models: { enceladus: source }
+    });
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
     const controller = new CameraController(camera, {
       enabled: true,

@@ -37,7 +37,11 @@ describe('AssetFetcher - Resiliencia y reintentos de carga', () => {
   it('debería usar texturas base de respaldo si una luna falla tras agotar reintentos sin abortar la app', async () => {
     const mockTextureLoader = {
       load(url, onLoad, _onProgress, onError) {
-        if (url.includes('iapetus_color.jpg') || url.includes('iapetus_normal.jpg') || url.includes('iapetus_ao.jpg')) {
+        if (
+          url.includes('iapetus_color.jpg') ||
+          url.includes('iapetus_normal.jpg') ||
+          url.includes('iapetus_ao.jpg')
+        ) {
           onError(new Error('persistent 503'));
           return;
         }
@@ -47,7 +51,9 @@ describe('AssetFetcher - Resiliencia y reintentos de carga', () => {
 
     const fetcher = new AssetFetcher({
       textureLoader: mockTextureLoader,
-      audioLoader: { load: (_url, _onLoad, _onProgress, onError) => onError(new Error('audio error')) },
+      audioLoader: {
+        load: (_url, _onLoad, _onProgress, onError) => onError(new Error('audio error'))
+      },
       retryDelayMs: 0,
       maxConcurrency: 3
     });

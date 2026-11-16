@@ -12,9 +12,9 @@ export const CONSTANTS = {
     ORBIT_ECCENTRICITY: 0.0167
   },
   ENCELADUS: {
-    RADIUS: 252.1,              // Muy pequeño comparado con Titán
+    RADIUS: 252.1, // Muy pequeño comparado con Titán
     ORBIT_SEMI_MAJOR: 237948.0, // Orbita muy cerca, dentro del Anillo E
-    ORBIT_PERIOD: 1.37,         // Completa una vuelta en ~1.37 días
+    ORBIT_PERIOD: 1.37, // Completa una vuelta en ~1.37 días
     ORBIT_ECCENTRICITY: 0.0047,
     ECCENTRICITY: 0.0047,
     INCLINATION: 0.009,
@@ -72,9 +72,9 @@ export const CONSTANTS = {
     MEAN_ANOMALY_EPOCH: 0.0
   },
   TITAN: {
-    RADIUS: 2574.7,              // Radio volumétrico
+    RADIUS: 2574.7, // Radio volumétrico
     ORBIT_SEMI_MAJOR: 1221870.0, // Distancia orbital (~1.2 millones de km)
-    ORBIT_PERIOD: 15.945,        // Días terrestres para una órbita completa
+    ORBIT_PERIOD: 15.945, // Días terrestres para una órbita completa
     ORBIT_ECCENTRICITY: 0.0288,
     ECCENTRICITY: 0.0288,
     INCLINATION: 0.34854,
@@ -82,7 +82,7 @@ export const CONSTANTS = {
     MEAN_ANOMALY_EPOCH: 0.0
   },
   SATURN: {
-    RADIUS_EQUATORIAL: 60268.0, 
+    RADIUS_EQUATORIAL: 60268.0,
     RADIUS_POLAR: 54364.0,
     RING_INNER_EDGE: 74500.0, // Inicio del Anillo C
     RING_OUTER_EDGE: 136775.0, // Borde exterior del Anillo F
@@ -93,7 +93,6 @@ export const CONSTANTS = {
     SUN_DISTANCE_KM: 1433530000.0,
     ORBIT_ECCENTRICITY: 0.0565
   }
-  
 };
 
 export const OUTER_RING_BOUNDS = {
@@ -110,7 +109,7 @@ export const OUTER_RING_BOUNDS = {
  * Fórmula: f = (a - b) / a  (donde a = radio ecuatorial, b = radio polar)
  */
 export function calculateOblateness(radiusEq, radiusPolar) {
-  if (radiusEq <= 0) throw new Error("El radio ecuatorial debe ser mayor a cero.");
+  if (radiusEq <= 0) throw new Error('El radio ecuatorial debe ser mayor a cero.');
   return (radiusEq - radiusPolar) / radiusEq;
 }
 
@@ -140,7 +139,7 @@ const SECONDS_PER_DAY = 86400.0;
  */
 export function calculateOrbitalVelocity(semiMajorAxisKm, orbitPeriodDays) {
   if (semiMajorAxisKm <= 0 || orbitPeriodDays <= 0) {
-    throw new Error("El semieje mayor y el período orbital deben ser mayores a cero.");
+    throw new Error('El semieje mayor y el período orbital deben ser mayores a cero.');
   }
   return (2 * Math.PI * semiMajorAxisKm) / (orbitPeriodDays * SECONDS_PER_DAY);
 }
@@ -152,7 +151,7 @@ export const ASTRONOMICAL_UNIT_KM = 149597870.7;
  */
 export function kmToAU(distanceKm) {
   if (distanceKm < 0) {
-    throw new Error("La distancia en kilómetros no puede ser negativa.");
+    throw new Error('La distancia en kilómetros no puede ser negativa.');
   }
   return distanceKm / ASTRONOMICAL_UNIT_KM;
 }
@@ -163,10 +162,10 @@ export function kmToAU(distanceKm) {
  */
 export function calculateApsides(semiMajorAxisKm, eccentricity) {
   if (semiMajorAxisKm <= 0) {
-    throw new Error("El semieje mayor debe ser mayor a cero.");
+    throw new Error('El semieje mayor debe ser mayor a cero.');
   }
   if (eccentricity < 0 || eccentricity >= 1) {
-    throw new Error("La excentricidad debe estar en el rango [0, 1).");
+    throw new Error('La excentricidad debe estar en el rango [0, 1).');
   }
   return {
     apoapsisKm: semiMajorAxisKm * (1 + eccentricity),

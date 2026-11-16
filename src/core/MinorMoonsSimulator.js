@@ -83,7 +83,8 @@ export class MinorMoonsSimulator {
     material.onBeforeCompile = (shader) => {
       shader.uniforms.uDaysSinceEpoch = material.userData.uDaysSinceEpoch;
 
-      shader.vertexShader = `
+      shader.vertexShader =
+        `
         uniform float uDaysSinceEpoch;
         attribute float aAxis; attribute float aEcc; attribute float aInc;
         attribute float aLan; attribute float aArgP; attribute float aMaEpoch;
@@ -151,7 +152,7 @@ export class MinorMoonsSimulator {
     this.groupLabels.forEach(({ obj, data }) => {
       const { a, e, i, lan, argP, maEpoch, n } = data;
 
-      const M = maEpoch + (n * daysSinceEpoch);
+      const M = maEpoch + n * daysSinceEpoch;
       const E = M + e * Math.sin(M);
 
       const xOrbit = a * (Math.cos(E) - e);

@@ -60,7 +60,7 @@ export class AssetFetcher {
    * reintentos automáticos y respaldos seguros para evitar fallos transitorios de red.
    */
   async loadAllAssets() {
-    console.log("Iniciando descarga de texturas de la misión Cassini...");
+    console.log('Iniciando descarga de texturas de la misión Cassini...');
 
     try {
       let [
@@ -170,11 +170,10 @@ export class AssetFetcher {
       this.assets.models.mimas = mimasModel;
       this.assets.models.enceladus = enceladusModel;
 
-      console.log("Texturas cargadas exitosamente.");
+      console.log('Texturas cargadas exitosamente.');
       return this.assets;
-
     } catch (error) {
-      console.error("Error crítico cargando las texturas:", error);
+      console.error('Error crítico cargando las texturas:', error);
       throw error;
     }
   }
@@ -246,14 +245,17 @@ export class AssetFetcher {
   }
 
   loadSingleTexture(url) {
-    return this.enqueue(() => new Promise((resolve, reject) => {
-      this.textureLoader.load(
-        url,
-        (texture) => resolve(texture),
-        undefined, // onProgress
-        () => reject(new Error(`Fallo al cargar textura: ${url}`))
-      );
-    }));
+    return this.enqueue(
+      () =>
+        new Promise((resolve, reject) => {
+          this.textureLoader.load(
+            url,
+            (texture) => resolve(texture),
+            undefined, // onProgress
+            () => reject(new Error(`Fallo al cargar textura: ${url}`))
+          );
+        })
+    );
   }
 
   async loadTextureAsync(url, retries = 3) {
@@ -273,20 +275,26 @@ export class AssetFetcher {
 
   loadOptionalTexture(path, fallbackTexture = null) {
     return this.loadTextureAsync(this.assetUrl(path)).catch((error) => {
-      console.warn(`Textura opcional no disponible (${path}), usando respaldo:`, error?.message || error);
+      console.warn(
+        `Textura opcional no disponible (${path}), usando respaldo:`,
+        error?.message || error
+      );
       return fallbackTexture;
     });
   }
 
   loadHDRTexture(url) {
-    return this.enqueue(() => new Promise((resolve, reject) => {
-      new HDRLoader().load(
-        url,
-        (texture) => resolve(texture),
-        undefined,
-        () => reject(new Error(`Fallo al cargar HDR: ${url}`))
-      );
-    }));
+    return this.enqueue(
+      () =>
+        new Promise((resolve, reject) => {
+          new HDRLoader().load(
+            url,
+            (texture) => resolve(texture),
+            undefined,
+            () => reject(new Error(`Fallo al cargar HDR: ${url}`))
+          );
+        })
+    );
   }
 
   async loadGalacticMap() {
@@ -310,14 +318,17 @@ export class AssetFetcher {
   }
 
   loadModel(url) {
-    return this.enqueue(() => new Promise((resolve, reject) => {
-      this.gltfLoader.load(
-        url,
-        (gltf) => resolve(gltf.scene),
-        undefined,
-        () => reject(new Error(`Fallo al cargar modelo: ${url}`))
-      );
-    }));
+    return this.enqueue(
+      () =>
+        new Promise((resolve, reject) => {
+          this.gltfLoader.load(
+            url,
+            (gltf) => resolve(gltf.scene),
+            undefined,
+            () => reject(new Error(`Fallo al cargar modelo: ${url}`))
+          );
+        })
+    );
   }
 
   async loadPioneerModel() {
@@ -449,7 +460,10 @@ export class AssetFetcher {
     return this.loadTextureAsync(this.assetUrl(primaryPath))
       .catch(() => this.loadTextureAsync(this.assetUrl(fallbackPath)))
       .catch((error) => {
-        console.warn(`Textura con respaldo agotado (${primaryPath}), usando textura base:`, error?.message || error);
+        console.warn(
+          `Textura con respaldo agotado (${primaryPath}), usando textura base:`,
+          error?.message || error
+        );
         return fallbackTexture;
       });
   }
@@ -458,7 +472,11 @@ export class AssetFetcher {
     const [color, normal, ao] = await Promise.all([
       this.loadOptionalTexture(`textures/${name}_color.jpg`, WHITE_TEXTURE),
       this.loadOptionalTexture(`textures/${name}_normal.jpg`, FLAT_NORMAL_TEXTURE),
-      this.loadTextureWithFallback(`textures/${name}_ao.jpg`, `textures/${name}_color.jpg`, WHITE_TEXTURE)
+      this.loadTextureWithFallback(
+        `textures/${name}_ao.jpg`,
+        `textures/${name}_color.jpg`,
+        WHITE_TEXTURE
+      )
     ]);
 
     if (color !== WHITE_TEXTURE) {
@@ -478,14 +496,17 @@ export class AssetFetcher {
   }
 
   loadSingleAudio(url) {
-    return this.enqueue(() => new Promise((resolve, reject) => {
-      this.audioLoader.load(
-        url,
-        (buffer) => resolve(buffer),
-        undefined,
-        () => reject(new Error(`Fallo al cargar audio: ${url}`))
-      );
-    }));
+    return this.enqueue(
+      () =>
+        new Promise((resolve, reject) => {
+          this.audioLoader.load(
+            url,
+            (buffer) => resolve(buffer),
+            undefined,
+            () => reject(new Error(`Fallo al cargar audio: ${url}`))
+          );
+        })
+    );
   }
 
   async loadAudioAsync(url, retries = 2) {

@@ -49,9 +49,7 @@ function createCoreTexture() {
     for (let i = 0; i < 8; i++) {
       let delta = Math.abs(angle - (i * Math.PI) / 4);
       delta = Math.min(delta, Math.PI * 2 - delta);
-      spikes += Math.exp(-delta * delta * 110)
-        * Math.exp(-radius * 1.8)
-        * (i % 2 === 0 ? 1 : 0.55);
+      spikes += Math.exp(-delta * delta * 110) * Math.exp(-radius * 1.8) * (i % 2 === 0 ? 1 : 0.55);
     }
 
     const intensity = clamp01(core + halo + spikes * 0.7);
@@ -70,8 +68,7 @@ function createStreakTexture() {
   return createDataTexture(512, 64, (nx, ny) => {
     const taper = Math.exp(-Math.pow(Math.abs(nx) / 0.85, 6));
     const thin = Math.exp(-Math.pow(ny / 0.12, 2));
-    const core = Math.exp(-Math.pow(nx / 0.25, 2))
-      * Math.exp(-Math.pow(ny / 0.05, 2));
+    const core = Math.exp(-Math.pow(nx / 0.25, 2)) * Math.exp(-Math.pow(ny / 0.05, 2));
     const intensity = clamp01(taper * thin * 0.5 + core * 0.7);
 
     return [
@@ -199,7 +196,12 @@ export class SolarLensFlare {
     return sprite;
   }
 
-  computeSolarVisibility(cameraPos, sunDir, moonsBuffer = this.moonPositions, ringTextureData = this.ringData) {
+  computeSolarVisibility(
+    cameraPos,
+    sunDir,
+    moonsBuffer = this.moonPositions,
+    ringTextureData = this.ringData
+  ) {
     this.limbFlareBoost = 1;
     this.lastVisibility = 0;
 
@@ -260,8 +262,9 @@ export class SolarLensFlare {
       if (visibility <= 0.0001) return 0;
     }
 
-    const samples = ringTextureData?.samples
-      ?? (ringTextureData instanceof Float32Array ? ringTextureData : null);
+    const samples =
+      ringTextureData?.samples ??
+      (ringTextureData instanceof Float32Array ? ringTextureData : null);
     const ringInner = ringTextureData?.inner ?? this.ringInner;
     const ringOuter = ringTextureData?.outer ?? this.ringOuter;
 
@@ -289,7 +292,8 @@ export class SolarLensFlare {
   }
 
   setScreenPosition(sprite, ndcX, ndcY, right, up, forward, cameraPos, halfWidth, halfHeight) {
-    this.tempPosition.copy(cameraPos)
+    this.tempPosition
+      .copy(cameraPos)
       .addScaledVector(right, ndcX * halfWidth)
       .addScaledVector(up, ndcY * halfHeight)
       .addScaledVector(forward, FLARE_DEPTH);
@@ -325,10 +329,10 @@ export class SolarLensFlare {
     const ndcY = this.tempProjected.y;
 
     if (
-      this.tempProjected.z < -1
-      || this.tempProjected.z > 1
-      || Math.abs(ndcX) > 1.3
-      || Math.abs(ndcY) > 1.3
+      this.tempProjected.z < -1 ||
+      this.tempProjected.z > 1 ||
+      Math.abs(ndcX) > 1.3 ||
+      Math.abs(ndcY) > 1.3
     ) {
       this.group.visible = false;
       return;
@@ -393,8 +397,7 @@ export class SolarLensFlare {
       halfHeight
     );
     this.streakSprite.scale.set(streakWidth, streakHeight, 1);
-    this.streakSprite.material.opacity = effectiveVisibility
-      * (instrumentLocked ? 0.28 : 0.5);
+    this.streakSprite.material.opacity = effectiveVisibility * (instrumentLocked ? 0.28 : 0.5);
     this.streakSprite.material.color.copy(this.streakColor);
 
     this.ghosts.forEach((ghost) => {
@@ -412,9 +415,8 @@ export class SolarLensFlare {
 
       const ghostScale = halfHeight * ghost.scaleFactor * overallScale;
       ghost.sprite.scale.set(ghostScale, ghostScale, 1);
-      ghost.sprite.material.opacity = effectiveVisibility
-        * ghost.opacity
-        * (instrumentLocked ? 0.35 : 1);
+      ghost.sprite.material.opacity =
+        effectiveVisibility * ghost.opacity * (instrumentLocked ? 0.35 : 1);
     });
 
     this.lastVisibility = visibility;

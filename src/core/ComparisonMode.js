@@ -91,7 +91,11 @@ export class ComparisonMode {
   resetCamera() {
     // Devolver la cámara a la órbita estándar de Saturno
     this.framingTarget.set(0, 0, 0);
-    this.camera.position.set(0, this.saturnSimulator.eqRadius * 3, this.saturnSimulator.ringOuter * 2);
+    this.camera.position.set(
+      0,
+      this.saturnSimulator.eqRadius * 3,
+      this.saturnSimulator.ringOuter * 2
+    );
     this.camera.lookAt(this.framingTarget);
   }
 }

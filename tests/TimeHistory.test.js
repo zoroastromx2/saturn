@@ -49,7 +49,10 @@ describe('TimeHistory - Historial de máquina del tiempo', () => {
     saveTimeHistory(['2017-09-15', '2004-07-01'], mockStorage, 'test-history');
     expect(loadTimeHistory(mockStorage, 'test-history')).toEqual(['2017-09-15', '2004-07-01']);
 
-    store.set('test-history', JSON.stringify(['2004-07-01', 'invalid', '2004-07-01', '2030-01-01']));
+    store.set(
+      'test-history',
+      JSON.stringify(['2004-07-01', 'invalid', '2004-07-01', '2030-01-01'])
+    );
     expect(loadTimeHistory(mockStorage, 'test-history')).toEqual(['2004-07-01', '2030-01-01']);
 
     store.set('test-history', '{broken-json');
