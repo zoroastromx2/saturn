@@ -1,5 +1,6 @@
 // src/core/AssetFetcher.js
 import * as THREE from 'three';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import tiersManifest from '../data/TextureTiers.js';
 import { createByteProgress } from './LoadProgress.js';
@@ -12,6 +13,11 @@ export class AssetFetcher {
     this.audioLoader = options.audioLoader || new THREE.AudioLoader();
     this.gltfLoader = options.gltfLoader || new GLTFLoader();
     this.hasCustomGltfLoader = Boolean(options.gltfLoader);
+    this.dracoLoader = null;
+    if (!this.hasCustomGltfLoader) {
+      this.dracoLoader = new DRACOLoader();
+      this.gltfLoader.setDRACOLoader(this.dracoLoader);
+    }
     this.retryDelayMs = options.retryDelayMs ?? 250;
     this.maxConcurrency = Math.max(1, options.maxConcurrency ?? 6);
     this.maxAnisotropy = Math.max(1, options.maxAnisotropy ?? 1);
@@ -53,6 +59,7 @@ export class AssetFetcher {
         voyager1: null,
         voyager2: null,
         cassiniHuygens: null,
+        huygens: null,
         titan: null,
         mimas: null,
         enceladus: null,
@@ -146,6 +153,7 @@ export class AssetFetcher {
       voyagerModel,
       voyager2Model,
       cassiniHuygensModel,
+      huygensModel,
       titanModel,
       mimasModel,
       enceladusModel,
@@ -161,6 +169,7 @@ export class AssetFetcher {
       this.loadVoyagerModel(),
       this.loadVoyager2Model(),
       this.loadCassiniHuygensModel(),
+      this.loadHuygensModel(),
       this.loadTitanModel(),
       this.loadMimasModel(),
       this.loadEnceladusModel(),
@@ -191,6 +200,7 @@ export class AssetFetcher {
     this.assets.models.voyager1 = voyagerModel;
     this.assets.models.voyager2 = voyager2Model;
     this.assets.models.cassiniHuygens = cassiniHuygensModel;
+    this.assets.models.huygens = huygensModel;
     this.assets.models.titan = titanModel;
     this.assets.models.mimas = mimasModel;
     this.assets.models.enceladus = enceladusModel;
@@ -403,6 +413,22 @@ export class AssetFetcher {
     } catch (error) {
       console.warn(
         'Modelo Cassini-Huygens no disponible, usando sonda procedural:',
+        error?.message || error
+      );
+      return null;
+    }
+  }
+
+  async loadHuygensModel() {
+    if (typeof window === 'undefined' && !this.hasCustomGltfLoader) {
+      return null;
+    }
+
+    try {
+      return await this.loadModel(this.assetUrl('models/Huygens.glb'));
+    } catch (error) {
+      console.warn(
+        'Modelo Huygens no disponible, usando sonda procedural:',
         error?.message || error
       );
       return null;

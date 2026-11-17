@@ -19,6 +19,10 @@ const VOYAGER_MODEL_ROTATION = new THREE.Euler(Math.PI / 2, 0, 0);
 const CASSINI_HUYGENS_REAL_WIDTH_METERS = 4.0;
 const CASSINI_HUYGENS_TACTICAL_VISIBILITY = 1e7;
 const CASSINI_HUYGENS_MODEL_ROTATION = new THREE.Euler(0, 0, 0);
+const HUYGENS_REAL_WIDTH_METERS = 2.7;
+// Menor exageración que las sondas de espacio profundo: Huygens se muestra junto a Titán.
+const HUYGENS_TACTICAL_VISIBILITY = 1e6;
+const HUYGENS_MODEL_ROTATION = new THREE.Euler(0, Math.PI / 2, 0);
 
 function pad2(value) {
   return String(value).padStart(2, '0');
@@ -61,6 +65,9 @@ export class MissionSimulator {
     this.cassiniHuygensSource = assets?.models?.cassiniHuygens || null;
     this.cassiniHuygensModel = null;
     this.cassiniHuygensModelWrapper = null;
+    this.huygensSource = assets?.models?.huygens || null;
+    this.huygensModel = null;
+    this.huygensModelWrapper = null;
     this.eqRadius = saturnSimulator.eqRadius;
     this.scaleFactor =
       saturnSimulator.scaleFactor ?? CONSTANTS.SATURN.RADIUS_EQUATORIAL / this.eqRadius;
@@ -246,6 +253,7 @@ export class MissionSimulator {
     this.buildVoyagerProbe();
     this.buildVoyager2Probe();
     this.buildCassiniHuygensProbe();
+    this.buildHuygensProbe();
   }
 
   buildPioneerProbe() {
@@ -411,6 +419,46 @@ export class MissionSimulator {
     this.cassiniHuygensModel = cassiniMesh;
   }
 
+  buildHuygensProbe() {
+    if (!this.huygensSource) return;
+
+    const huygensMesh = this.huygensSource.clone(true);
+    huygensMesh.name = 'HuygensModel';
+    huygensMesh.updateMatrixWorld(true);
+
+    const box = new THREE.Box3().setFromObject(huygensMesh);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z) || 1;
+    const saturnRadiusMeters = CONSTANTS.SATURN.RADIUS_EQUATORIAL * 1000;
+    const physicalWidth = (HUYGENS_REAL_WIDTH_METERS / saturnRadiusMeters) * this.eqRadius;
+    const targetSize = physicalWidth * HUYGENS_TACTICAL_VISIBILITY;
+    const scale = targetSize / maxDim;
+
+    huygensMesh.scale.setScalar(scale);
+    huygensMesh.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
+
+    huygensMesh.traverse((child) => {
+      if (!child.isMesh || !child.material) return;
+
+      const materials = Array.isArray(child.material) ? child.material : [child.material];
+      materials.forEach((material) => {
+        material.envMapIntensity = 1.5;
+        material.needsUpdate = true;
+      });
+      child.castShadow = true;
+      child.receiveShadow = true;
+    });
+
+    this.huygensModelWrapper = new THREE.Group();
+    this.huygensModelWrapper.name = 'HuygensModelWrapper';
+    this.huygensModelWrapper.rotation.copy(HUYGENS_MODEL_ROTATION);
+    this.huygensModelWrapper.visible = false;
+    this.huygensModelWrapper.add(huygensMesh);
+    this.probeVisual.add(this.huygensModelWrapper);
+    this.huygensModel = huygensMesh;
+  }
+
   loadMission(key, daysSinceEpoch = this.lastDaysSinceEpoch) {
     const mission = MISSIONS[key];
     if (!mission) {
@@ -548,16 +596,24 @@ export class MissionSimulator {
     const useCassiniHuygensModel =
       (missionKey === 'cassiniInsertion' || missionKey === 'cassiniGrandFinale') &&
       Boolean(this.cassiniHuygensModelWrapper);
+    const useHuygensModel = missionKey === 'huygens' && Boolean(this.huygensModelWrapper);
 
     if (this.proceduralProbe) {
       this.proceduralProbe.visible =
-        !usePioneerModel && !useVoyagerModel && !useVoyager2Model && !useCassiniHuygensModel;
+        !usePioneerModel &&
+        !useVoyagerModel &&
+        !useVoyager2Model &&
+        !useCassiniHuygensModel &&
+        !useHuygensModel;
     }
     if (this.pioneerModelWrapper) this.pioneerModelWrapper.visible = usePioneerModel;
     if (this.voyagerModelWrapper) this.voyagerModelWrapper.visible = useVoyagerModel;
     if (this.voyager2ModelWrapper) this.voyager2ModelWrapper.visible = useVoyager2Model;
     if (this.cassiniHuygensModelWrapper) {
       this.cassiniHuygensModelWrapper.visible = useCassiniHuygensModel;
+    }
+    if (this.huygensModelWrapper) {
+      this.huygensModelWrapper.visible = useHuygensModel;
     }
   }
 
@@ -570,12 +626,16 @@ export class MissionSimulator {
     this.voyagerSource = this.voyagerSource || models.voyager1 || null;
     this.voyager2Source = this.voyager2Source || models.voyager2 || null;
     this.cassiniHuygensSource = this.cassiniHuygensSource || models.cassiniHuygens || null;
+    this.huygensSource = this.huygensSource || models.huygens || null;
 
     if (this.pioneerSource && !this.pioneerModelWrapper) this.buildPioneerProbe();
     if (this.voyagerSource && !this.voyagerModelWrapper) this.buildVoyagerProbe();
     if (this.voyager2Source && !this.voyager2ModelWrapper) this.buildVoyager2Probe();
     if (this.cassiniHuygensSource && !this.cassiniHuygensModelWrapper) {
       this.buildCassiniHuygensProbe();
+    }
+    if (this.huygensSource && !this.huygensModelWrapper) {
+      this.buildHuygensProbe();
     }
 
     this.refreshProbeVisibility();
@@ -617,6 +677,9 @@ export class MissionSimulator {
     }
     if (this.cassiniHuygensModelWrapper) {
       this.cassiniHuygensModelWrapper.visible = false;
+    }
+    if (this.huygensModelWrapper) {
+      this.huygensModelWrapper.visible = false;
     }
     this.huygensShield.visible = false;
   }

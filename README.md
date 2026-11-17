@@ -31,7 +31,7 @@ npm install
 npm run dev        # Vite en http://localhost:3000
 npm run build      # Build estático en dist/
 npm run preview    # Sirve dist/ en local
-npm test           # 168 pruebas de Vitest
+npm test           # 171 pruebas de Vitest
 npm run test:e2e   # 6 pruebas de humo en Chromium (npx playwright install chromium)
 npm run test:visual # 5 capturas de regresión visual
 ```
