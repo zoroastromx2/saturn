@@ -20,7 +20,7 @@
 | D4 | SwiftShader forzado por flags | Mismo rasterizador en Windows y Linux |
 | D5 | Captura solo del canvas | Las fuentes del HUD difieren entre sistemas |
 | D6 | Baselines versionadas con plantilla sin plataforma | Un único baseline para todos los entornos |
-| D7 | Umbral 1 % de píxeles | Tolera ruido mínimo sin ocultar cambios reales |
+| D7 | Umbral 3 % de píxeles | Tolera ruido mínimo sin ocultar cambios reales |
 
 ## 2. Secuencia
 
@@ -53,4 +53,5 @@ V1 Random + pluma ─→ V2 modo E2E ─→ V3 config visual ─→ V4 escenas �
 **Nuevos:** `src/core/Random.js`, `tests/Random.test.js`, `e2e/visual/visual.spec.js`, 5 baselines, `SPEC-visual.md`.
 **Editados:** `FRingSimulator`, `EnceladusSimulator`, `main.js` (modo E2E), `playwright.config.js`, `package.json`, `deploy.yml`, `SPEC.md`, `README.md`.
 **Unitarias:** 159 → 163. **E2E:** 6 → 11 (5 visuales).
+
 

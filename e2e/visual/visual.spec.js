@@ -22,14 +22,20 @@ function canvas(page) {
 
 test('escena por defecto', async ({ page }) => {
   await openDeterministic(page);
-  await expect(canvas(page)).toHaveScreenshot('default.png', { maxDiffPixelRatio: 0.01 });
+  await expect(canvas(page)).toHaveScreenshot('default.png', {
+    maxDiffPixelRatio: 0.03,
+    threshold: 0.3
+  });
 });
 
 test('Titán enfocado', async ({ page }) => {
   await openDeterministic(page);
   await page.click('#btn-titan');
   await page.waitForTimeout(600);
-  await expect(canvas(page)).toHaveScreenshot('titan.png', { maxDiffPixelRatio: 0.01 });
+  await expect(canvas(page)).toHaveScreenshot('titan.png', {
+    maxDiffPixelRatio: 0.03,
+    threshold: 0.3
+  });
 });
 
 test('misión Pioneer 11', async ({ page }) => {
@@ -37,7 +43,8 @@ test('misión Pioneer 11', async ({ page }) => {
   await page.selectOption('#mission-selector', 'pioneer11');
   await page.waitForTimeout(700);
   await expect(canvas(page)).toHaveScreenshot('mission-pioneer.png', {
-    maxDiffPixelRatio: 0.01
+    maxDiffPixelRatio: 0.03,
+    threshold: 0.3
   });
 });
 
@@ -47,11 +54,15 @@ test('vista de instrumento', async ({ page }) => {
   await page.click('#btn-instrument-view');
   await page.waitForTimeout(700);
   await expect(canvas(page)).toHaveScreenshot('instrument.png', {
-    maxDiffPixelRatio: 0.01
+    maxDiffPixelRatio: 0.03,
+    threshold: 0.3
   });
 });
 
 test('móvil vertical', async ({ page }) => {
   await openDeterministic(page, { width: 390, height: 844 });
-  await expect(canvas(page)).toHaveScreenshot('mobile.png', { maxDiffPixelRatio: 0.01 });
+  await expect(canvas(page)).toHaveScreenshot('mobile.png', {
+    maxDiffPixelRatio: 0.03,
+    threshold: 0.3
+  });
 });

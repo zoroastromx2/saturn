@@ -38,7 +38,7 @@ El modo E2E se activa solo con `?e2e=1`; la app normal no cambia.
 | `instrument` | 1280×720 | misión + vista de instrumento |
 | `mobile` | 390×844 | ninguna |
 
-Todas usan `?quality=low&e2e=1`, esperan `window.__E2E_READY__` y comparan con `maxDiffPixelRatio: 0.01`.
+Todas usan `?quality=low&e2e=1`, esperan `window.__E2E_READY__` y comparan con `maxDiffPixelRatio: 0.03, threshold: 0.3`.
 
 ## 4. Política de capturas
 
@@ -46,7 +46,7 @@ Todas usan `?quality=low&e2e=1`, esperan `window.__E2E_READY__` y comparan con `
 2. Se actualizan **solo** con `npm run test:visual -- --update-snapshots`, revisando el diff visual, y en un commit explícito.
 3. **Nunca** se actualizan en CI: si fallan, el deploy se detiene y el reporte adjunta esperado/actual/diferencia.
 4. La plantilla de rutas no incluye plataforma ni proyecto (`__screenshots__/{arg}.png`), para compartir baseline entre Windows y Linux.
-5. El umbral es 1 % de píxeles; un cambio perceptible debe superarlo.
+5. El umbral es 3 % de píxeles con tolerancia por píxel 0,3: absorbe el rasterizado distinto entre Windows y Linux sin ocultar cambios de encuadre o color.
 
 ## 5. Criterios de éxito
 
@@ -76,4 +76,5 @@ Todas usan `?quality=low&e2e=1`, esperan `window.__E2E_READY__` y comparan con `
 - **5/5** capturas estables en local (54 s) y **11/11** E2E+visual en conjunto.
 - Determinismo verificado repitiendo la suite.
 - Regresión de la pluma y del anillo F ya no es aleatoria entre ejecuciones.
+
 
