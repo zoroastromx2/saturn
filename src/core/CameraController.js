@@ -1,18 +1,13 @@
 // src/core/CameraController.js
 import * as THREE from 'three';
 import { gsap } from 'gsap';
-import { prefersReducedMotion, transitionDuration, watchReducedMotion } from './ReducedMotion.js';
 
 const TRANSITION_DURATION = 2.0;
 
 export class CameraController {
-  constructor(camera, controls, { reducedMotion = prefersReducedMotion() } = {}) {
+  constructor(camera, controls) {
     this.camera = camera;
     this.controls = controls;
-    this.reducedMotion = Boolean(reducedMotion);
-    this.stopWatchingMotion = watchReducedMotion((reduced) => {
-      this.reducedMotion = reduced;
-    });
 
     this.currentTarget = null;
     this.tween = null;
@@ -96,7 +91,7 @@ export class CameraController {
 
     this.instrumentTween = gsap.to(this.camera, {
       fov,
-      duration: transitionDuration(duration, this.reducedMotion),
+      duration,
       ease: 'power2.out',
       onUpdate: () => this.camera.updateProjectionMatrix(),
       onComplete: () => {
@@ -126,17 +121,13 @@ export class CameraController {
     this.controls.enabled = true;
   }
 
-  focusOn(targetMesh, distanceMultiplier, elevationBias = 0.35) {
+  focusOn(targetMesh, distanceMultiplier, elevationBias = 0.35, duration = TRANSITION_DURATION) {
     if (!targetMesh) return;
-    const radius =
-      targetMesh.geometry?.parameters?.radius ??
-      targetMesh.geometry?.boundingSphere?.radius ??
-      targetMesh.userData?.radius ??
-      1;
-    this.focusOnObject(targetMesh, radius * distanceMultiplier, elevationBias);
+    const radius = targetMesh.geometry?.parameters?.radius ?? 1;
+    this.focusOnObject(targetMesh, radius * distanceMultiplier, elevationBias, duration);
   }
 
-  focusOnObject(targetObject, distance, elevationBias = 0.35) {
+  focusOnObject(targetObject, distance, elevationBias = 0.35, duration = TRANSITION_DURATION) {
     if (!targetObject) return;
     this.exitInstrumentView();
 
@@ -168,7 +159,7 @@ export class CameraController {
     this.progress.value = 0;
     this.tween = gsap.to(this.progress, {
       value: 1,
-      duration: transitionDuration(TRANSITION_DURATION, this.reducedMotion),
+      duration,
       ease: 'power3.inOut',
       onUpdate: () => this.applyTransition(),
       onComplete: () => {
@@ -177,6 +168,32 @@ export class CameraController {
         this.tween = null;
       }
     });
+  }
+
+  cancelTransition() {
+    if (!this.tween) return;
+    this.tween.kill();
+    this.tween = null;
+    if (this.currentTarget) {
+      this.currentTarget.getWorldPosition(this.lastTargetPosition);
+    }
+  }
+
+  orbitTarget(deltaYaw) {
+    if (!this.currentTarget || this.tween || this.isSurfaceLocked || this.isInstrumentLocked) {
+      return;
+    }
+    if (!Number.isFinite(deltaYaw) || Math.abs(deltaYaw) < 1e-8) return;
+
+    this.currentTarget.getWorldPosition(this.targetPosition);
+    this.offsetDirection.subVectors(this.camera.position, this.targetPosition);
+    const cos = Math.cos(deltaYaw);
+    const sin = Math.sin(deltaYaw);
+    const x = this.offsetDirection.x * cos - this.offsetDirection.z * sin;
+    const z = this.offsetDirection.x * sin + this.offsetDirection.z * cos;
+    this.offsetDirection.x = x;
+    this.offsetDirection.z = z;
+    this.camera.position.copy(this.targetPosition).add(this.offsetDirection);
   }
 
   landOnSurface(targetSimulator) {
@@ -199,15 +216,11 @@ export class CameraController {
     this.progress.value = 0;
     this.tween = gsap.to(this.progress, {
       value: 1,
-      duration: transitionDuration(TRANSITION_DURATION, this.reducedMotion),
+      duration: TRANSITION_DURATION,
       ease: 'power3.inOut',
       onUpdate: () => {
         mount.getWorldPosition(this.targetPosition);
-        this.camera.position.lerpVectors(
-          this.startPosition,
-          this.targetPosition,
-          this.progress.value
-        );
+        this.camera.position.lerpVectors(this.startPosition, this.targetPosition, this.progress.value);
         this.controls.target.lerpVectors(this.startTarget, this.surfaceOrigin, this.progress.value);
         this.camera.lookAt(this.controls.target);
       },
@@ -228,8 +241,7 @@ export class CameraController {
 
     // El destino se recalcula con la posición viva del astro en cada frame.
     this.currentTarget.getWorldPosition(this.targetPosition);
-    this.endPosition
-      .copy(this.targetPosition)
+    this.endPosition.copy(this.targetPosition)
       .addScaledVector(this.offsetDirection, this.focusDistance);
 
     this.camera.position.lerpVectors(this.startPosition, this.endPosition, this.progress.value);

@@ -15,14 +15,10 @@ import { MimasSimulator } from './core/MimasSimulator.js';
 import { TethysSimulator } from './core/TethysSimulator.js';
 import { DioneSimulator } from './core/DioneSimulator.js';
 import { RheaSimulator } from './core/RheaSimulator.js';
-import { HyperionSimulator } from './core/HyperionSimulator.js';
 import { IapetusSimulator } from './core/IapetusSimulator.js';
 import { FRingSimulator } from './core/FRingSimulator.js';
 import { MinorMoonsSimulator } from './core/MinorMoonsSimulator.js';
 import { DiffuseRingsSimulator } from './core/DiffuseRingsSimulator.js';
-import { SolarLensFlare } from './core/SolarLensFlare.js';
-import { SunSimulator } from './core/SunSimulator.js';
-import { StarfieldSimulator } from './core/StarfieldSimulator.js';
 import { MissionSimulator } from './core/MissionSimulator.js';
 import { ComparisonMode } from './core/ComparisonMode.js';
 import { CameraController } from './core/CameraController.js';
@@ -30,6 +26,9 @@ import { TelemetryController } from './core/TelemetryController.js';
 import { StatsController } from './core/StatsController.js';
 import { OrbitPathsController } from './core/OrbitPathsController.js';
 import { SnapshotExporter } from './core/SnapshotExporter.js';
+import { TextureStudioController } from './core/TextureStudioController.js';
+import { getTextureTarget } from './core/TexturePromptCatalog.js';
+import { TourController } from './core/TourController.js';
 import {
   loadTimeHistory,
   parseUtcDateString,
@@ -37,31 +36,15 @@ import {
   saveTimeHistory
 } from './core/TimeHistory.js';
 import { getLanguage, setLanguage, t } from './core/Localization.js';
-import { createEnvironmentProbe } from './core/EnvironmentProbe.js';
-import { resolveLocalized } from './core/LocalizedText.js';
-import { resolveQualityTier } from './core/QualityTier.js';
-import { setRandomSeed } from './core/Random.js';
-import { prefersReducedMotion, watchReducedMotion } from './core/ReducedMotion.js';
 import { sliderPositionToScale, scaleToSliderPosition, formatTimeScale } from './math/TimeScale.js';
 import { VintageOpticsShader } from './shaders/VintageOpticsShader.js';
 import './style.css';
 
 let scene, camera, renderer, composer, labelRenderer, controls, cameraController, listener;
 let saturnSim, titanSim, enceladusSim, mimasSim;
-let tethysSim, dioneSim, rheaSim, hyperionSim, iapetusSim;
-let fRingSim,
-  minorMoonsSim,
-  diffuseRingsSim,
-  solarLensFlare,
-  sunSim,
-  starfieldSim,
-  missionSim,
-  comparisonMode,
-  telemetryController,
-  statsController,
-  orbitPathsController;
+let tethysSim, dioneSim, rheaSim, iapetusSim;
+let fRingSim, minorMoonsSim, diffuseRingsSim, missionSim, comparisonMode, telemetryController, statsController, orbitPathsController, textureStudioController, tourController;
 let audioEnabled = false;
-let reducedMotion = false;
 let orbitsEnabled = false;
 let timeScale = 1.0;
 let orbitalTime = 0.0;
@@ -90,11 +73,6 @@ const enceladusWorldPosition = new THREE.Vector3();
 const MOBILE_UI_QUERY = '(max-width: 1024px), (pointer: coarse)';
 const J2000_EPOCH_MS = Date.UTC(2000, 0, 1, 12, 0, 0);
 const MS_PER_DAY = 86400000;
-const TIME_STEP_MS = {
-  minute: 60 * 1000,
-  hour: 60 * 60 * 1000,
-  day: MS_PER_DAY
-};
 
 function getDaysSinceJ2000() {
   return (simulationDate.getTime() - J2000_EPOCH_MS) / MS_PER_DAY;
@@ -152,15 +130,14 @@ function updateInstrumentReadout(targetPosition) {
   const config = missionSim?.getActiveOpticalConfig();
   if (!config) return;
 
-  const filterSuffix = config.instrumentName.includes('Cassini ISS') ? ' | FILTER: CL1+CL2' : '';
+  const filterSuffix = config.instrumentName.includes('Cassini ISS')
+    ? ' | FILTER: CL1+CL2'
+    : '';
   if (instrumentName) {
     instrumentName.textContent = `${config.instrumentName}${filterSuffix}`;
   }
   if (instrumentMissionName) {
-    instrumentMissionName.textContent = resolveLocalized(
-      missionSim.activeMission.name,
-      getLanguage()
-    );
+    instrumentMissionName.textContent = missionSim.activeMission.name;
   }
   if (instrumentDistance) {
     const distanceKm = camera.position.distanceTo(targetPosition) * saturnSim.scaleFactor;
@@ -183,20 +160,6 @@ function setUiCollapsed(collapsed) {
   const label = t(collapsed ? 'ui.showControls' : 'ui.hideControls');
   button.setAttribute('aria-label', label);
   button.setAttribute('title', label);
-}
-
-function attachAmbientSound(simulator, buffer, radius) {
-  if (!buffer || !listener || !simulator?.mesh) return null;
-  if (simulator.ambientSound) return simulator.ambientSound;
-
-  const sound = new THREE.PositionalAudio(listener);
-  sound.setBuffer(buffer);
-  sound.setLoop(true);
-  sound.setRefDistance(radius * 2);
-  sound.setMaxDistance(radius * 20);
-  simulator.mesh.add(sound);
-  simulator.ambientSound = sound;
-  return sound;
 }
 
 async function bootstrapApp() {
@@ -222,25 +185,6 @@ async function bootstrapApp() {
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.0;
 
-  const params = new URLSearchParams(window.location.search);
-  const e2eMode = params.get('e2e') === '1';
-  const qualityTier = resolveQualityTier({
-    coarsePointer: window.matchMedia('(pointer: coarse)').matches,
-    deviceMemory: navigator.deviceMemory,
-    maxTextureSize: renderer.capabilities.maxTextureSize,
-    override: params.get('quality')
-  });
-
-  if (e2eMode) {
-    setRandomSeed(Number(params.get('seed')) || 20261116);
-    window.__E2E_READY__ = false;
-  }
-
-  reducedMotion = prefersReducedMotion();
-  watchReducedMotion((value) => {
-    reducedMotion = value;
-  });
-
   scene = new THREE.Scene();
 
   // La cámara se configura inicialmente para encuadrar a Saturno.
@@ -256,9 +200,12 @@ async function bootstrapApp() {
 
   composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
-  composer.addPass(
-    new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.2, 0.5, 0.8)
-  );
+  composer.addPass(new UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight),
+    1.2,
+    0.5,
+    0.8
+  ));
   vintageOpticsPass = new ShaderPass(VintageOpticsShader);
   vintageOpticsPass.uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
   composer.addPass(vintageOpticsPass);
@@ -276,60 +223,27 @@ async function bootstrapApp() {
   document.body.appendChild(labelRenderer.domElement);
 
   try {
-    // 2. Fase 0: solo lo mínimo para el primer frame (Saturno, anillos, fondo y Tierra)
-    const loaderProgress = document.getElementById('loader-progress');
-    let lastAnnouncedPercent = -1;
-    const setLoadProgress = (fraction) => {
-      if (!loaderProgress) return;
-      const percent = Math.max(0, Math.min(100, Math.round(fraction * 100)));
-      // Anuncia como máximo cada 5 puntos para no saturar al lector de pantalla.
-      if (percent !== 100 && percent - lastAnnouncedPercent < 5) return;
-      lastAnnouncedPercent = percent;
-      loaderProgress.textContent = `${percent} %`;
-    };
-
-    const fetcher = new AssetFetcher({
-      maxAnisotropy: renderer.capabilities.getMaxAnisotropy(),
-      tier: qualityTier,
-      onProgress: setLoadProgress
-    });
-    const assets = await fetcher.loadCriticalAssets();
-    const environmentProbe = createEnvironmentProbe(assets.starmap);
-    if (environmentProbe || assets.starmap) {
-      // El entorno PBR nunca usa el mapa 8K: solo la copia reducida.
-      scene.environment = environmentProbe || assets.starmap;
+    // 2. Bloquear la inicialización gráfica hasta que las texturas estén en RAM
+    const fetcher = new AssetFetcher();
+    const assets = await fetcher.loadAllAssets();
+    if (assets.starmap) {
+      scene.background = assets.starmap;
+      scene.backgroundIntensity = 0.15;
+      scene.environment = assets.starmap;
       scene.environmentIntensity = 1.0;
+    } else {
+      scene.background = new THREE.Color(0x02030a);
     }
-    scene.background = new THREE.Color(0x02030a);
 
     // 3. Inyectar dependencias a los simuladores
     // Le pasamos los assets para que SaturnSimulator los asigne a los uniforms de GLSL
-    simulationDate = e2eMode ? new Date(Date.UTC(2026, 10, 16, 12, 0, 0)) : new Date();
+    simulationDate = new Date();
     const initialDaysSinceJ2000 = getDaysSinceJ2000();
     saturnSim = new SaturnSimulator(scene, assets, listener);
-    starfieldSim = new StarfieldSimulator(
-      scene,
-      assets.galacticMap,
-      renderer.capabilities.getMaxAnisotropy()
-    );
-    sunSim = new SunSimulator();
-    scene.add(sunSim.mesh);
-    sunSim.update(camera, saturnSim.sunDirection);
     titanSim = new TitanSimulator(scene, saturnSim, saturnSim.scaleFactor, assets, listener);
     titanSim.update(initialDaysSinceJ2000);
-    enceladusSim = new EnceladusSimulator(
-      scene,
-      saturnSim,
-      saturnSim.scaleFactor,
-      assets,
-      listener
-    );
+    enceladusSim = new EnceladusSimulator(scene, saturnSim, saturnSim.scaleFactor, assets, listener);
     enceladusSim.update(initialDaysSinceJ2000);
-    if (e2eMode) {
-      // Una sola emisión sembrada y congelada: capturas reproducibles.
-      enceladusSim.update(initialDaysSinceJ2000, 0.016);
-      enceladusSim.frozen = true;
-    }
     mimasSim = new MimasSimulator(scene, saturnSim, saturnSim.scaleFactor, assets, listener);
     mimasSim.update(initialDaysSinceJ2000);
     tethysSim = new TethysSimulator(scene, saturnSim, saturnSim.scaleFactor, assets);
@@ -338,13 +252,10 @@ async function bootstrapApp() {
     dioneSim.update(initialDaysSinceJ2000);
     rheaSim = new RheaSimulator(scene, saturnSim, saturnSim.scaleFactor, assets);
     rheaSim.update(initialDaysSinceJ2000);
-    hyperionSim = new HyperionSimulator(scene, saturnSim, saturnSim.scaleFactor, assets);
-    hyperionSim.update(initialDaysSinceJ2000);
     iapetusSim = new IapetusSimulator(scene, saturnSim, saturnSim.scaleFactor, assets);
     iapetusSim.update(initialDaysSinceJ2000);
     fRingSim = new FRingSimulator(scene, saturnSim, saturnSim.scaleFactor);
     diffuseRingsSim = new DiffuseRingsSimulator(scene, saturnSim);
-    solarLensFlare = new SolarLensFlare(scene, saturnSim, camera, assets.ringAlpha);
     if (assets.minorMoons?.length === 135) {
       minorMoonsSim = new MinorMoonsSimulator(scene, assets.minorMoons);
       minorMoonsSim.update(initialDaysSinceJ2000);
@@ -365,17 +276,30 @@ async function bootstrapApp() {
       tethysSim,
       dioneSim,
       rheaSim,
-      hyperionSim,
       titanSim,
       iapetusSim
     ]);
-    missionSim = new MissionSimulator(scene, saturnSim, camera, cameraController, titanSim, assets);
+    missionSim = new MissionSimulator(scene, saturnSim, camera, cameraController, titanSim);
+    textureStudioController = new TextureStudioController({
+      saturnSim,
+      moonsById: {
+        titan: titanSim,
+        enceladus: enceladusSim,
+        mimas: mimasSim,
+        tethys: tethysSim,
+        dione: dioneSim,
+        rhea: rheaSim,
+        iapetus: iapetusSim
+      },
+      maxAnisotropy: Math.min(renderer.capabilities.getMaxAnisotropy(), 8)
+    });
     opticalSceneSimulators = {
       saturnSim,
       titanSim,
       enceladusSim,
       tethysSim
     };
+
     // 4. Iluminar la Tierra con la misma dirección solar que usan los shaders
     const sunLight = new THREE.DirectionalLight(0xffffff, 2.6);
     sunLight.position.copy(saturnSim.sunDirection).multiplyScalar(1000);
@@ -396,10 +320,20 @@ async function bootstrapApp() {
     const tethysBtn = document.getElementById('btn-tethys');
     const dioneBtn = document.getElementById('btn-dione');
     const rheaBtn = document.getElementById('btn-rhea');
-    const hyperionBtn = document.getElementById('btn-hyperion');
     const iapetusBtn = document.getElementById('btn-iapetus');
     const surfaceEnceladusBtn = document.getElementById('btn-surface-enceladus');
     const surfaceMimasBtn = document.getElementById('btn-surface-mimas');
+    const tourBtn = document.getElementById('btn-toggle-tour');
+    const tourState = document.getElementById('tour-state');
+    const tourHud = document.getElementById('tour-hud');
+    const tourStepCounter = document.getElementById('tour-step-counter');
+    const tourStopTitle = document.getElementById('tour-stop-title');
+    const tourStopDesc = document.getElementById('tour-stop-desc');
+    const tourProgressFill = document.getElementById('tour-progress-fill');
+    const tourPrevBtn = document.getElementById('btn-tour-prev');
+    const tourPauseBtn = document.getElementById('btn-tour-pause');
+    const tourNextBtn = document.getElementById('btn-tour-next');
+    const tourStopBtn = document.getElementById('btn-tour-stop');
     const labelsBtn = document.getElementById('btn-toggle-labels');
     const orbitsBtn = document.getElementById('btn-toggle-orbits');
     const audioBtn = document.getElementById('btn-toggle-audio');
@@ -445,30 +379,120 @@ async function bootstrapApp() {
     let timeHistory = loadTimeHistory();
     let activeHistoryDate = null;
     let followProbe = false;
-    const timeButtons = [{ element: document.getElementById('btn-time-pause'), scale: 0.0 }].filter(
-      ({ element }) => element
-    );
-    const timeStepButtons = [
-      { element: document.getElementById('btn-time-back-minute'), direction: -1, unit: 'minute' },
-      { element: document.getElementById('btn-time-back-hour'), direction: -1, unit: 'hour' },
-      { element: document.getElementById('btn-time-back-day'), direction: -1, unit: 'day' },
-      { element: document.getElementById('btn-time-forward-minute'), direction: 1, unit: 'minute' },
-      { element: document.getElementById('btn-time-forward-hour'), direction: 1, unit: 'hour' },
-      { element: document.getElementById('btn-time-forward-day'), direction: 1, unit: 'day' }
+    const timeButtons = [
+      { element: document.getElementById('btn-time-pause'), scale: 0.0 },
+      { element: document.getElementById('btn-time-1'), scale: 1.0 },
+      { element: document.getElementById('btn-time-10'), scale: 10.0 },
+      { element: document.getElementById('btn-time-100'), scale: 100.0 }
     ].filter(({ element }) => element);
 
     if (timeMachineInput) {
       timeMachineInput.value = simulationDate.toISOString().slice(0, 10);
     }
 
+    const renderTourUi = (state = tourController?.getState()) => {
+      if (!state) return;
+      const { isActive, isPaused, currentIndex, totalStops, currentStop, progress } = state;
+
+      if (tourBtn) {
+        tourBtn.setAttribute('aria-pressed', String(isActive));
+        tourBtn.classList.toggle('active', isActive);
+      }
+      if (tourState) {
+        tourState.textContent = t(isActive ? 'state.on' : 'state.off');
+      }
+      if (tourHud) {
+        tourHud.hidden = !isActive;
+      }
+      if (tourStepCounter) {
+        const currentStr = String(currentIndex + 1).padStart(2, '0');
+        const totalStr = String(totalStops).padStart(2, '0');
+        tourStepCounter.textContent = `${currentStr} / ${totalStr}`;
+      }
+      if (tourStopTitle && currentStop) {
+        tourStopTitle.textContent = t(currentStop.titleKey);
+      }
+      if (tourStopDesc && currentStop) {
+        tourStopDesc.textContent = t(currentStop.descriptionKey);
+      }
+      if (tourProgressFill) {
+        tourProgressFill.style.width = `${Math.round(progress * 1000) / 10}%`;
+      }
+      if (tourPauseBtn) {
+        tourPauseBtn.setAttribute('aria-pressed', String(isPaused));
+        tourPauseBtn.classList.toggle('active', isPaused);
+        tourPauseBtn.textContent = t(isPaused ? 'tour.resume' : 'tour.pause');
+      }
+    };
+
+    tourController = new TourController({
+      targetsByKey: {
+        saturn: saturnSim.saturnMesh,
+        mimas: mimasSim.mesh,
+        enceladus: enceladusSim.mesh,
+        tethys: tethysSim.mesh,
+        dione: dioneSim.mesh,
+        rhea: rheaSim.mesh,
+        titan: titanSim.mesh,
+        iapetus: iapetusSim.mesh
+      },
+      cameraController,
+      onStopChange: () => {
+        if (orbitPathsController && cameraController) {
+          orbitPathsController.setActiveTarget(cameraController.currentTarget);
+        }
+        telemetryController?.refresh();
+      },
+      onStateChange: (state) => {
+        renderTourUi(state);
+      }
+    });
+
+    controls.addEventListener('start', () => {
+      if (tourController?.isActive) {
+        cameraController.cancelTransition();
+        if (!tourController.isPaused) {
+          tourController.pause();
+        }
+      }
+    });
+
+    if (tourBtn) {
+      tourBtn.addEventListener('click', () => {
+        tourController.toggle();
+      });
+    }
+    if (tourPrevBtn) {
+      tourPrevBtn.addEventListener('click', () => {
+        tourController.prev();
+      });
+    }
+    if (tourPauseBtn) {
+      tourPauseBtn.addEventListener('click', () => {
+        tourController.togglePause();
+      });
+    }
+    if (tourNextBtn) {
+      tourNextBtn.addEventListener('click', () => {
+        tourController.next();
+      });
+    }
+    if (tourStopBtn) {
+      tourStopBtn.addEventListener('click', () => {
+        tourController.stop();
+      });
+    }
+
     if (saturnBtn) {
       saturnBtn.addEventListener('click', () => {
+        tourController.stop();
         cameraController.focusOn(saturnSim.saturnMesh, 3.0);
       });
     }
 
     if (earthBtn) {
       earthBtn.addEventListener('click', () => {
+        tourController.stop();
         comparisonMode.earthMesh.visible = true;
         comparisonMode.isActive = true;
         cameraController.focusOn(comparisonMode.earthMesh, 5.0);
@@ -477,60 +501,63 @@ async function bootstrapApp() {
 
     if (titanBtn) {
       titanBtn.addEventListener('click', () => {
+        tourController.stop();
         cameraController.focusOn(titanSim.mesh, 5.0);
       });
     }
 
     if (enceladusBtn) {
       enceladusBtn.addEventListener('click', () => {
+        tourController.stop();
         cameraController.focusOn(enceladusSim.mesh, 5.0);
       });
     }
 
     if (mimasBtn) {
       mimasBtn.addEventListener('click', () => {
+        tourController.stop();
         cameraController.focusOn(mimasSim.mesh, 8.0, 0.0);
       });
     }
 
     if (tethysBtn) {
       tethysBtn.addEventListener('click', () => {
+        tourController.stop();
         cameraController.focusOn(tethysSim.mesh, 5.0);
       });
     }
 
     if (dioneBtn) {
       dioneBtn.addEventListener('click', () => {
+        tourController.stop();
         cameraController.focusOn(dioneSim.mesh, 5.0);
       });
     }
 
     if (rheaBtn) {
       rheaBtn.addEventListener('click', () => {
+        tourController.stop();
         cameraController.focusOn(rheaSim.mesh, 5.0);
-      });
-    }
-
-    if (hyperionBtn) {
-      hyperionBtn.addEventListener('click', () => {
-        cameraController.focusOn(hyperionSim.mesh, 8.0);
       });
     }
 
     if (iapetusBtn) {
       iapetusBtn.addEventListener('click', () => {
+        tourController.stop();
         cameraController.focusOn(iapetusSim.mesh, 5.0);
       });
     }
 
     if (surfaceEnceladusBtn) {
       surfaceEnceladusBtn.addEventListener('click', () => {
+        tourController.stop();
         cameraController.landOnSurface(enceladusSim);
       });
     }
 
     if (surfaceMimasBtn) {
       surfaceMimasBtn.addEventListener('click', () => {
+        tourController.stop();
         cameraController.landOnSurface(mimasSim);
       });
     }
@@ -642,29 +669,12 @@ async function bootstrapApp() {
     }
 
     if (audioBtn) {
-      let audioAssetsPromise = null;
       audioBtn.addEventListener('click', async () => {
         if (listener.context.state === 'suspended') {
           await listener.context.resume();
         }
 
         audioEnabled = !audioEnabled;
-
-        if (audioEnabled && !audioAssetsPromise) {
-          audioAssetsPromise = fetcher.loadAudioAssets();
-        }
-        if (audioEnabled) {
-          try {
-            await audioAssetsPromise;
-            attachAmbientSound(saturnSim, assets.saturnAudioBuffer, saturnSim.eqRadius);
-            attachAmbientSound(titanSim, assets.titanAudioBuffer, titanSim.radius);
-            attachAmbientSound(enceladusSim, assets.enceladusAudioBuffer, enceladusSim.radius);
-            attachAmbientSound(mimasSim, assets.mimasAudioBuffer, mimasSim.radius);
-          } catch {
-            // El audio es opcional: si falla, la escena sigue igual.
-          }
-        }
-
         const ambientSounds = [
           saturnSim.ambientSound,
           titanSim.ambientSound,
@@ -714,18 +724,6 @@ async function bootstrapApp() {
 
     timeButtons.forEach(({ element, scale }) => {
       element.addEventListener('click', () => setTimeScale(scale, element, true));
-    });
-
-    timeStepButtons.forEach(({ element, direction, unit }) => {
-      element.addEventListener('click', () => {
-        const stepMs = direction * TIME_STEP_MS[unit];
-        simulationDate = new Date(simulationDate.getTime() + stepMs);
-        orbitalTime += stepMs / 1000;
-        if (timeMachineInput) {
-          timeMachineInput.value = simulationDate.toISOString().slice(0, 10);
-        }
-        telemetryController?.refresh();
-      });
     });
 
     if (timeSlider) {
@@ -833,14 +831,14 @@ async function bootstrapApp() {
 
       titanSim.update(getDaysSinceJ2000());
       missionSim.update(getDaysSinceJ2000());
-      setTimeScale(e2eMode ? 0 : 100);
+      setTimeScale(100);
       followProbe = false;
       updateFollowButton();
       missionSim.frameMission();
       refreshInstrumentControls(true);
 
       if (missionDescription) {
-        missionDescription.textContent = `${mission.dateLabel} — ${resolveLocalized(mission.description, getLanguage())}`;
+        missionDescription.textContent = `${mission.dateLabel} — ${mission.description}`;
         missionDescription.hidden = false;
       }
       telemetryController?.refresh();
@@ -848,6 +846,9 @@ async function bootstrapApp() {
 
     if (missionSelector) {
       missionSelector.addEventListener('change', () => {
+        if (missionSelector.value) {
+          tourController?.stop();
+        }
         selectMission(missionSelector.value);
       });
     }
@@ -922,7 +923,6 @@ async function bootstrapApp() {
       'Tethys',
       'Dione',
       'Rhea',
-      'Hyperion',
       'Iapetus',
       'Earth'
     ]);
@@ -950,15 +950,15 @@ async function bootstrapApp() {
       }
 
       const activeMission = missionSim?.activeMission;
-      const missionName = activeMission
-        ? resolveLocalized(activeMission.name, getLanguage())
-        : 'FREE FLIGHT';
+      const missionName = activeMission?.name || 'FREE FLIGHT';
       let instrumentName = 'FREE ORBITAL CAM | HDR RAW';
 
       if (activeMission && cameraController.isInstrumentLocked) {
         const config = missionSim.getActiveOpticalConfig();
         if (config) {
-          const filter = config.instrumentName.includes('Cassini ISS') ? ' | FILTER: CL1+CL2' : '';
+          const filter = config.instrumentName.includes('Cassini ISS')
+            ? ' | FILTER: CL1+CL2'
+            : '';
           const optics = cameraController.opticsEnabled ? '' : ' | RAW';
           instrumentName = `${config.instrumentName}${filter}${optics} | FOV ${camera.fov.toFixed(1)}°`;
         }
@@ -999,6 +999,184 @@ async function bootstrapApp() {
     updateFollowButton();
     refreshInstrumentControls(true);
 
+    const textureTargetSelect = document.getElementById('texture-target-select');
+    const textureResolutionSelect = document.getElementById('texture-resolution-select');
+    const texturePromptInput = document.getElementById('texture-prompt-input');
+    const generateTextureBtn = document.getElementById('btn-generate-texture');
+    const generateTextureState = document.getElementById('texture-generate-state');
+    const focusTextureTargetBtn = document.getElementById('btn-focus-texture-target');
+    const resetTextureBtn = document.getElementById('btn-reset-texture');
+    const resetTextureState = document.getElementById('texture-reset-state');
+    const texturePreviewWrap = document.getElementById('texture-preview-wrap');
+    const texturePreviewThumb = document.getElementById('texture-preview-thumb');
+    const textureStudioStatus = document.getElementById('texture-studio-status');
+    let isGeneratingTexture = false;
+    let lastTextureStatus = null;
+
+    const getTextureTargetLabel = (targetId) => {
+      const target = getTextureTarget(targetId);
+      return target ? t(target.labelKey) : targetId;
+    };
+
+    const focusTextureTarget = (targetId) => {
+      tourController?.stop();
+      if (targetId === 'rings') {
+        cameraController.focusOn(saturnSim.saturnMesh, 3.0);
+        return;
+      }
+      const moonMap = {
+        titan: [titanSim, 5.0],
+        enceladus: [enceladusSim, 5.0],
+        mimas: [mimasSim, 8.0, 0.0],
+        tethys: [tethysSim, 5.0],
+        dione: [dioneSim, 5.0],
+        rhea: [rheaSim, 5.0],
+        iapetus: [iapetusSim, 5.0]
+      };
+      const entry = moonMap[targetId];
+      if (entry?.[0]) {
+        cameraController.focusOn(entry[0].mesh, entry[1], entry[2]);
+      }
+    };
+
+    const setTextureStatus = (statusObj) => {
+      lastTextureStatus = statusObj;
+      if (!textureStudioStatus) return;
+
+      if (!statusObj) {
+        textureStudioStatus.hidden = true;
+        textureStudioStatus.textContent = '';
+        textureStudioStatus.classList.remove('is-error');
+        return;
+      }
+
+      textureStudioStatus.hidden = false;
+      textureStudioStatus.classList.toggle('is-error', Boolean(statusObj.isError));
+      if (statusObj.type === 'generating') {
+        textureStudioStatus.textContent = t('textureStudio.generating');
+      } else if (statusObj.type === 'applied') {
+        textureStudioStatus.textContent = t('textureStudio.applied')
+          .replace('{res}', statusObj.resolution)
+          .replace('{target}', getTextureTargetLabel(statusObj.targetId));
+      } else if (statusObj.type === 'restored') {
+        textureStudioStatus.textContent = t('textureStudio.restored')
+          .replace('{target}', getTextureTargetLabel(statusObj.targetId));
+      } else {
+        textureStudioStatus.textContent = statusObj.text || '';
+      }
+    };
+
+    const refreshTextureStudioControls = () => {
+      const targetId = textureTargetSelect?.value || 'rings';
+      const resolution = textureResolutionSelect?.value || '2K';
+      const override = textureStudioController?.getOverride(targetId);
+
+      if (generateTextureBtn) {
+        generateTextureBtn.disabled = isGeneratingTexture;
+        generateTextureBtn.classList.toggle('active', isGeneratingTexture);
+      }
+      if (generateTextureState) {
+        generateTextureState.textContent = isGeneratingTexture
+          ? t('textureStudio.stateBusy')
+          : resolution;
+      }
+      if (resetTextureBtn) {
+        resetTextureBtn.disabled = isGeneratingTexture || !override;
+        resetTextureBtn.classList.toggle('active', Boolean(override));
+      }
+      if (resetTextureState) {
+        resetTextureState.textContent = override
+          ? `${t('textureStudio.stateCustom')} ${override.resolution}`
+          : t('textureStudio.stateBase');
+      }
+      if (texturePreviewWrap && texturePreviewThumb) {
+        if (override?.dataUrl) {
+          texturePreviewThumb.src = override.dataUrl;
+          texturePreviewThumb.alt = t('textureStudio.previewAlt').replace(
+            '{target}',
+            getTextureTargetLabel(targetId)
+          );
+          texturePreviewWrap.hidden = false;
+        } else {
+          texturePreviewWrap.hidden = true;
+          texturePreviewThumb.removeAttribute('src');
+          texturePreviewThumb.alt = '';
+        }
+      }
+      if (lastTextureStatus) {
+        setTextureStatus(lastTextureStatus);
+      }
+    };
+
+    if (textureTargetSelect) {
+      textureTargetSelect.addEventListener('change', () => {
+        refreshTextureStudioControls();
+      });
+    }
+
+    if (textureResolutionSelect) {
+      textureResolutionSelect.addEventListener('change', () => {
+        refreshTextureStudioControls();
+      });
+    }
+
+    if (focusTextureTargetBtn) {
+      focusTextureTargetBtn.addEventListener('click', () => {
+        focusTextureTarget(textureTargetSelect?.value || 'rings');
+      });
+    }
+
+    if (generateTextureBtn) {
+      generateTextureBtn.addEventListener('click', async () => {
+        if (isGeneratingTexture) return;
+        const targetId = textureTargetSelect?.value || 'rings';
+        const resolution = textureResolutionSelect?.value || '2K';
+        const customPrompt = texturePromptInput?.value || '';
+
+        isGeneratingTexture = true;
+        setTextureStatus({ type: 'generating' });
+        refreshTextureStudioControls();
+
+        try {
+          const applied = await textureStudioController.generateAndApply({
+            targetId,
+            resolution,
+            customPrompt
+          });
+          statsController?.refresh();
+          setTextureStatus({
+            type: 'applied',
+            targetId: applied.targetId,
+            resolution: applied.resolution
+          });
+          textureStudioStatus?.scrollIntoView({ block: 'nearest' });
+        } catch (error) {
+          setTextureStatus({
+            type: 'error',
+            isError: true,
+            text: error instanceof Error ? error.message : String(error)
+          });
+          textureStudioStatus?.scrollIntoView({ block: 'nearest' });
+        } finally {
+          isGeneratingTexture = false;
+          refreshTextureStudioControls();
+        }
+      });
+    }
+
+    if (resetTextureBtn) {
+      resetTextureBtn.addEventListener('click', () => {
+        const targetId = textureTargetSelect?.value || 'rings';
+        if (textureStudioController.resetTarget(targetId)) {
+          statsController?.refresh();
+          setTextureStatus({ type: 'restored', targetId });
+        }
+        refreshTextureStudioControls();
+      });
+    }
+
+    refreshTextureStudioControls();
+
     const updateDynamicLanguage = () => {
       saturnSim.label.element.textContent = t('body.saturn');
       titanSim.label.element.textContent = t('body.titan');
@@ -1007,14 +1185,8 @@ async function bootstrapApp() {
       tethysSim.label.element.textContent = t('body.tethys');
       dioneSim.label.element.textContent = t('body.dione');
       rheaSim.label.element.textContent = t('body.rhea');
-      hyperionSim.label.element.textContent = t('body.hyperion');
       iapetusSim.label.element.textContent = t('body.iapetus');
       comparisonMode.label.element.textContent = t('body.earth');
-      if (missionSim?.activeMission && missionDescription) {
-        const mission = missionSim.activeMission;
-        missionDescription.textContent = `${mission.dateLabel} — ${resolveLocalized(mission.description, getLanguage())}`;
-      }
-      missionSim?.refreshLanguage?.();
       setUiCollapsed(uiCollapsed);
       updateLabelsButton();
       updateOrbitsButton();
@@ -1027,6 +1199,8 @@ async function bootstrapApp() {
       telemetryController.refresh();
       statsController.refresh();
       renderTimeHistory();
+      refreshTextureStudioControls();
+      renderTourUi();
       applyTheme(currentTheme);
     };
 
@@ -1062,57 +1236,18 @@ async function bootstrapApp() {
     applyTheme(currentTheme);
     setLanguage('es');
 
-    // 7. Fase 1: el resto de texturas y modelos llega después del primer frame.
-    const hydrateBackground = async () => {
-      try {
-        await fetcher.loadBackgroundAssets();
-
-        const textureSets = [
-          [mimasSim, assets.mimasColor, assets.mimasNormal, assets.mimasAo],
-          [tethysSim, assets.tethysColor, assets.tethysNormal, assets.tethysAo],
-          [dioneSim, assets.dioneColor, assets.dioneNormal, assets.dioneAo],
-          [rheaSim, assets.rheaColor, assets.rheaNormal, assets.rheaAo],
-          [iapetusSim, assets.iapetusColor, assets.iapetusNormal, assets.iapetusAo]
-        ];
-        textureSets.forEach(([simulator, color, normal, ao]) => {
-          simulator?.applyMoonTextures?.({ color, normal, ao });
-        });
-
-        titanSim?.applyTitanModel?.(assets.models.titan);
-        enceladusSim?.applyEnceladusModel?.(assets.models.enceladus);
-        mimasSim?.applyMimasModel?.(assets.models.mimas);
-        hyperionSim?.applyHyperionModel?.(assets.models.hyperion);
-        missionSim?.setProbeModels?.(assets.models);
-
-        if (!minorMoonsSim && assets.minorMoons?.length === 135) {
-          minorMoonsSim = new MinorMoonsSimulator(scene, assets.minorMoons);
-          minorMoonsSim.update(getDaysSinceJ2000());
-          minorMoonsSim.setLabelsVisible(document.body.classList.contains('show-labels'));
-        }
-      } catch (error) {
-        console.warn('Carga en segundo plano incompleta:', error?.message || error);
-      } finally {
-        if (e2eMode) window.__E2E_READY__ = true;
-      }
-    };
-
-    // 8. Iniciar el bucle de renderizado solo cuando lo crítico está listo
+    // 7. Iniciar el bucle de renderizado solo cuando todo está listo
     window.addEventListener('resize', onWindowResize);
 
     // Ocultar pantalla de carga del DOM si existe
     const loaderUi = document.getElementById('loader');
     if (loaderUi) loaderUi.style.display = 'none';
 
-    if (e2eMode) setTimeScale(0);
-
     clock.start();
     tick();
 
-    requestAnimationFrame(() => {
-      window.setTimeout(hydrateBackground, 0);
-    });
   } catch (error) {
-    console.error('Error crítico durante el bootstrap:', error);
+    console.error("Error crítico durante el bootstrap:", error);
     document.body.innerHTML = `<h2 style="color:red; text-align:center;">${t('error.bootstrap')}</h2>`;
   }
 }
@@ -1133,8 +1268,7 @@ function tick() {
 
   // El tiempo alimenta la rotación kepleriana diferencial de los anillos
   const deltaTime = clock.getDelta();
-  // El grano del post-proceso es decorativo: se congela con movimiento reducido.
-  if (vintageOpticsPass && !reducedMotion) {
+  if (vintageOpticsPass) {
     vintageOpticsPass.uniforms.uTime.value = clock.elapsedTime;
   }
   orbitalTime += deltaTime * timeScale;
@@ -1164,9 +1298,6 @@ function tick() {
   }
   if (rheaSim) {
     rheaSim.update(daysSinceJ2000);
-  }
-  if (hyperionSim) {
-    hyperionSim.update(daysSinceJ2000);
   }
   if (iapetusSim) {
     iapetusSim.update(daysSinceJ2000);
@@ -1218,22 +1349,15 @@ function tick() {
     }
   }
 
+  if (tourController) {
+    tourController.update(deltaTime);
+  }
+
   if (telemetryController) {
     telemetryController.update(deltaTime);
   }
   if (orbitPathsController && cameraController) {
     orbitPathsController.setActiveTarget(cameraController.currentTarget);
-  }
-  if (solarLensFlare && saturnSim) {
-    solarLensFlare.update(camera, saturnSim.sunDirection, saturnSim.moonShadowPositions, {
-      instrumentLocked: Boolean(cameraController?.isInstrumentLocked)
-    });
-  }
-  if (starfieldSim && saturnSim) {
-    starfieldSim.update(camera, saturnSim.sunDirection, solarLensFlare?.lastVisibility ?? 1);
-  }
-  if (sunSim && saturnSim) {
-    sunSim.update(camera, saturnSim.sunDirection);
   }
 
   composer.render();

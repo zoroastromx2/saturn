@@ -201,6 +201,10 @@
             <span class="section-chevron" aria-hidden="true">›</span>
           </summary>
           <div class="control-list">
+            <button id="btn-toggle-tour" class="control-row system-row" type="button" aria-pressed="false">
+              <span class="row-label" data-i18n="console.tour">Modo Tour</span>
+              <span class="row-state" id="tour-state">OFF</span>
+            </button>
             <button id="btn-toggle-labels" class="control-row system-row" type="button" aria-pressed="false">
               <span class="row-label" data-i18n="console.labels">Etiquetas</span>
               <span class="row-state" id="labels-state">OFF</span>
@@ -299,6 +303,25 @@
         <span class="telemetry-label" data-i18n="stats.gpu">Geometrías / Texturas</span>
         <span id="stats-gpu" class="telemetry-value">—</span>
       </div>
+      <aside id="tour-hud" aria-label="Modo Tour" data-i18n-aria-label="tour.hudAria" hidden>
+        <div class="panel-label">
+          <span data-i18n="tour.badge">Modo Tour</span>
+          <span id="tour-step-counter" class="panel-index">01 / 10</span>
+        </div>
+        <div class="tour-copy">
+          <h2 id="tour-stop-title" class="tour-stop-title">—</h2>
+          <p id="tour-stop-desc" class="tour-stop-desc">—</p>
+        </div>
+        <div class="tour-progress-track" aria-hidden="true">
+          <div id="tour-progress-fill" class="tour-progress-fill"></div>
+        </div>
+        <div class="tour-actions">
+          <button id="btn-tour-prev" type="button" data-i18n="tour.prev" data-i18n-aria-label="tour.prevAria" aria-label="Parada anterior">‹ Anterior</button>
+          <button id="btn-tour-pause" type="button" aria-pressed="false" data-i18n="tour.pause">Pausar</button>
+          <button id="btn-tour-next" type="button" data-i18n="tour.next" data-i18n-aria-label="tour.nextAria" aria-label="Siguiente parada">Siguiente ›</button>
+          <button id="btn-tour-stop" type="button" data-i18n="tour.stop" data-i18n-aria-label="tour.stopAria" aria-label="Salir del tour">Salir</button>
+        </div>
+      </aside>
     </div>
     <div id="instrument-hud" hidden>
       <div class="instrument-frame" aria-hidden="true">
