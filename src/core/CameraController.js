@@ -33,10 +33,48 @@ export class CameraController {
     this.activeOpticsMode = 0;
     this.surfaceMount = null;
     this.surfaceOrigin = new THREE.Vector3(0, 0, 0);
+    this.isFlybyActive = false;
+    this.isFlybyPaused = false;
   }
 
   setReducedMotion(reduced) {
     this.reducedMotion = Boolean(reduced);
+  }
+
+  setFlybyActive(active, targetMesh = null) {
+    if (active) {
+      this.exitInstrumentView();
+      this.cancelTransition();
+      this.isSurfaceLocked = false;
+      this.surfaceMount = null;
+      this.isFlybyActive = true;
+      this.isFlybyPaused = false;
+      this.controls.enabled = false;
+      if (targetMesh) {
+        this.currentTarget = targetMesh;
+        targetMesh.getWorldPosition(this.lastTargetPosition);
+      }
+      return;
+    }
+
+    this.isFlybyActive = false;
+    this.isFlybyPaused = false;
+    this.controls.enabled = true;
+    if (this.currentTarget) {
+      this.currentTarget.getWorldPosition(this.lastTargetPosition);
+    }
+  }
+
+  setFlybyPaused(paused) {
+    if (!this.isFlybyActive) return;
+    this.isFlybyPaused = Boolean(paused);
+    this.controls.enabled = this.isFlybyPaused;
+    if (this.currentTarget) {
+      this.currentTarget.getWorldPosition(this.lastTargetPosition);
+      if (this.isFlybyPaused && this.controls?.target) {
+        this.controls.target.copy(this.lastTargetPosition);
+      }
+    }
   }
 
   setOpticsPass(opticsPass) {
@@ -71,6 +109,8 @@ export class CameraController {
 
     this.isInstrumentLocked = true;
     this.isSurfaceLocked = false;
+    this.isFlybyActive = false;
+    this.isFlybyPaused = false;
     this.surfaceMount = null;
     this.currentTarget = null;
     this.controls.enabled = false;
@@ -149,6 +189,8 @@ export class CameraController {
     this.exitInstrumentView();
 
     this.isSurfaceLocked = false;
+    this.isFlybyActive = false;
+    this.isFlybyPaused = false;
     this.surfaceMount = null;
     this.controls.enabled = true;
 
@@ -234,6 +276,8 @@ export class CameraController {
 
     this.currentTarget = targetSimulator.mesh;
     this.isSurfaceLocked = false;
+    this.isFlybyActive = false;
+    this.isFlybyPaused = false;
     this.surfaceMount = mount;
     this.controls.enabled = false;
 
@@ -286,6 +330,7 @@ export class CameraController {
 
   update() {
     if (this.isInstrumentLocked) return;
+    if (this.isFlybyActive && !this.isFlybyPaused) return;
 
     if (this.currentTarget && !this.tween && !this.isSurfaceLocked) {
       // Sigue la traslación orbital sin perder el encuadre elegido.

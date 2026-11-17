@@ -28,6 +28,7 @@ import { StatsController } from './core/StatsController.js';
 import { OrbitPathsController } from './core/OrbitPathsController.js';
 import { SnapshotExporter } from './core/SnapshotExporter.js';
 import { TourController } from './core/TourController.js';
+import { FlybyController } from './core/FlybyController.js';
 import { SunSimulator } from './core/SunSimulator.js';
 import { StarfieldSimulator } from './core/StarfieldSimulator.js';
 import { SolarLensFlare } from './core/SolarLensFlare.js';
@@ -49,7 +50,7 @@ let scene, camera, renderer, composer, labelRenderer, controls, cameraController
 let saturnSim, titanSim, enceladusSim, mimasSim;
 let tethysSim, dioneSim, rheaSim, hyperionSim, iapetusSim;
 let sunSim, starfieldSim, solarLensFlare;
-let fRingSim, minorMoonsSim, diffuseRingsSim, missionSim, comparisonMode, telemetryController, statsController, orbitPathsController, tourController;
+let fRingSim, minorMoonsSim, diffuseRingsSim, missionSim, comparisonMode, telemetryController, statsController, orbitPathsController, tourController, flybyController;
 let audioEnabled = false;
 let orbitsEnabled = false;
 let timeScale = 1.0;
@@ -207,6 +208,7 @@ async function bootstrapApp() {
   watchReducedMotion((nextReduced) => {
     reducedMotion = nextReduced;
     cameraController?.setReducedMotion(nextReduced);
+    flybyController?.setReducedMotion(nextReduced);
   });
 
   composer = new EffectComposer(renderer);
@@ -366,6 +368,19 @@ async function bootstrapApp() {
     const tourPauseBtn = document.getElementById('btn-tour-pause');
     const tourNextBtn = document.getElementById('btn-tour-next');
     const tourStopBtn = document.getElementById('btn-tour-stop');
+    const flybyBtn = document.getElementById('btn-toggle-flyby');
+    const flybyState = document.getElementById('flyby-state');
+    const flybyHud = document.getElementById('flyby-hud');
+    const flybyStepCounter = document.getElementById('flyby-step-counter');
+    const flybyMoonSelector = document.getElementById('flyby-moon-selector');
+    const flybyTitle = document.getElementById('flyby-title');
+    const flybyTelemetry = document.getElementById('flyby-telemetry');
+    const flybyProgressFill = document.getElementById('flyby-progress-fill');
+    const flybyPrevBtn = document.getElementById('btn-flyby-prev');
+    const flybyPauseBtn = document.getElementById('btn-flyby-pause');
+    const flybyRegenerateBtn = document.getElementById('btn-flyby-regenerate');
+    const flybyNextBtn = document.getElementById('btn-flyby-next');
+    const flybyStopBtn = document.getElementById('btn-flyby-stop');
     const labelsBtn = document.getElementById('btn-toggle-labels');
     const orbitsBtn = document.getElementById('btn-toggle-orbits');
     const audioBtn = document.getElementById('btn-toggle-audio');
@@ -481,6 +496,86 @@ async function bootstrapApp() {
       }
     });
 
+    const renderFlybyUi = (state = flybyController?.getState()) => {
+      if (!state) return;
+      const {
+        isActive,
+        isPaused,
+        selectedMoonKey,
+        currentMoonIndex,
+        totalMoons,
+        targetKey,
+        profileTitleKey,
+        periapsisAltitudeKm,
+        currentDistanceKm,
+        progress
+      } = state;
+
+      if (flybyBtn) {
+        flybyBtn.setAttribute('aria-pressed', String(isActive));
+        flybyBtn.classList.toggle('active', isActive);
+      }
+      if (flybyState) {
+        flybyState.textContent = t(isActive ? 'state.on' : 'state.off');
+      }
+      if (flybyHud) {
+        flybyHud.hidden = !isActive;
+      }
+      if (flybyStepCounter) {
+        const currentStr = String(currentMoonIndex + 1).padStart(2, '0');
+        const totalStr = String(totalMoons).padStart(2, '0');
+        flybyStepCounter.textContent = `${currentStr} / ${totalStr}`;
+      }
+      if (flybyMoonSelector && flybyMoonSelector.value !== selectedMoonKey) {
+        flybyMoonSelector.value = selectedMoonKey || 'auto';
+      }
+      if (flybyTitle) {
+        const moonLabel = targetKey ? t(`body.${targetKey}`) : '—';
+        const profileLabel = profileTitleKey ? t(profileTitleKey) : '';
+        flybyTitle.textContent = profileLabel ? `${moonLabel} · ${profileLabel}` : moonLabel;
+      }
+      if (flybyTelemetry) {
+        const periStr = `${Math.round(periapsisAltitudeKm || 0).toLocaleString()} km`;
+        const distStr = `${Math.round(currentDistanceKm || 0).toLocaleString()} km`;
+        flybyTelemetry.textContent = `${t('flyby.periapsis')} ${periStr} · ${t('flyby.distance')} ${distStr}`;
+      }
+      if (flybyProgressFill) {
+        flybyProgressFill.style.width = `${Math.round(progress * 1000) / 10}%`;
+      }
+      if (flybyPauseBtn) {
+        flybyPauseBtn.setAttribute('aria-pressed', String(isPaused));
+        flybyPauseBtn.classList.toggle('active', isPaused);
+        flybyPauseBtn.textContent = t(isPaused ? 'flyby.resume' : 'flyby.pause');
+      }
+    };
+
+    flybyController = new FlybyController({
+      targetsByKey: {
+        dione: dioneSim.mesh,
+        rhea: rheaSim.mesh,
+        titan: titanSim.mesh,
+        enceladus: enceladusSim.mesh,
+        mimas: mimasSim.mesh,
+        tethys: tethysSim.mesh,
+        hyperion: hyperionSim.mesh,
+        iapetus: iapetusSim.mesh
+      },
+      sunDirection: saturnSim.sunDirection,
+      scaleFactor: saturnSim.scaleFactor,
+      cameraController,
+      scene,
+      reducedMotion,
+      onTargetChange: () => {
+        if (orbitPathsController && cameraController) {
+          orbitPathsController.setActiveTarget(cameraController.currentTarget);
+        }
+        telemetryController?.refresh();
+      },
+      onStateChange: (state) => {
+        renderFlybyUi(state);
+      }
+    });
+
     controls.addEventListener('start', () => {
       if (tourController?.isActive) {
         cameraController.cancelTransition();
@@ -492,11 +587,13 @@ async function bootstrapApp() {
 
     if (tourBtn) {
       tourBtn.addEventListener('click', () => {
+        flybyController?.stop();
         tourController.toggle();
       });
     }
     if (tourPrevBtn) {
       tourPrevBtn.addEventListener('click', () => {
+        flybyController?.stop();
         tourController.prev();
       });
     }
@@ -507,6 +604,7 @@ async function bootstrapApp() {
     }
     if (tourNextBtn) {
       tourNextBtn.addEventListener('click', () => {
+        flybyController?.stop();
         tourController.next();
       });
     }
@@ -516,9 +614,51 @@ async function bootstrapApp() {
       });
     }
 
+    if (flybyBtn) {
+      flybyBtn.addEventListener('click', () => {
+        tourController?.stop();
+        flybyController.toggle();
+      });
+    }
+    if (flybyMoonSelector) {
+      flybyMoonSelector.addEventListener('change', () => {
+        tourController?.stop();
+        flybyController.selectMoon(flybyMoonSelector.value);
+      });
+    }
+    if (flybyPrevBtn) {
+      flybyPrevBtn.addEventListener('click', () => {
+        tourController?.stop();
+        flybyController.prevMoon();
+      });
+    }
+    if (flybyPauseBtn) {
+      flybyPauseBtn.addEventListener('click', () => {
+        flybyController.togglePause();
+      });
+    }
+    if (flybyRegenerateBtn) {
+      flybyRegenerateBtn.addEventListener('click', () => {
+        tourController?.stop();
+        flybyController.regeneratePath();
+      });
+    }
+    if (flybyNextBtn) {
+      flybyNextBtn.addEventListener('click', () => {
+        tourController?.stop();
+        flybyController.nextMoon();
+      });
+    }
+    if (flybyStopBtn) {
+      flybyStopBtn.addEventListener('click', () => {
+        flybyController.stop();
+      });
+    }
+
     if (saturnBtn) {
       saturnBtn.addEventListener('click', () => {
         tourController.stop();
+        flybyController?.stop();
         cameraController.focusOn(saturnSim.saturnMesh, 3.0);
       });
     }
@@ -526,6 +666,7 @@ async function bootstrapApp() {
     if (earthBtn) {
       earthBtn.addEventListener('click', () => {
         tourController.stop();
+        flybyController?.stop();
         comparisonMode.earthMesh.visible = true;
         comparisonMode.isActive = true;
         cameraController.focusOn(comparisonMode.earthMesh, 5.0);
@@ -535,6 +676,7 @@ async function bootstrapApp() {
     if (titanBtn) {
       titanBtn.addEventListener('click', () => {
         tourController.stop();
+        flybyController?.stop();
         cameraController.focusOn(titanSim.mesh, 5.0);
       });
     }
@@ -542,6 +684,7 @@ async function bootstrapApp() {
     if (enceladusBtn) {
       enceladusBtn.addEventListener('click', () => {
         tourController.stop();
+        flybyController?.stop();
         cameraController.focusOn(enceladusSim.mesh, 5.0);
       });
     }
@@ -549,6 +692,7 @@ async function bootstrapApp() {
     if (mimasBtn) {
       mimasBtn.addEventListener('click', () => {
         tourController.stop();
+        flybyController?.stop();
         cameraController.focusOn(mimasSim.mesh, 8.0, 0.0);
       });
     }
@@ -556,6 +700,7 @@ async function bootstrapApp() {
     if (tethysBtn) {
       tethysBtn.addEventListener('click', () => {
         tourController.stop();
+        flybyController?.stop();
         cameraController.focusOn(tethysSim.mesh, 5.0);
       });
     }
@@ -563,6 +708,7 @@ async function bootstrapApp() {
     if (dioneBtn) {
       dioneBtn.addEventListener('click', () => {
         tourController.stop();
+        flybyController?.stop();
         cameraController.focusOn(dioneSim.mesh, 5.0);
       });
     }
@@ -570,6 +716,7 @@ async function bootstrapApp() {
     if (rheaBtn) {
       rheaBtn.addEventListener('click', () => {
         tourController.stop();
+        flybyController?.stop();
         cameraController.focusOn(rheaSim.mesh, 5.0);
       });
     }
@@ -577,6 +724,7 @@ async function bootstrapApp() {
     if (hyperionBtn) {
       hyperionBtn.addEventListener('click', () => {
         tourController.stop();
+        flybyController?.stop();
         cameraController.focusOn(hyperionSim.mesh, 6.0);
       });
     }
@@ -584,6 +732,7 @@ async function bootstrapApp() {
     if (iapetusBtn) {
       iapetusBtn.addEventListener('click', () => {
         tourController.stop();
+        flybyController?.stop();
         cameraController.focusOn(iapetusSim.mesh, 5.0);
       });
     }
@@ -591,6 +740,7 @@ async function bootstrapApp() {
     if (surfaceEnceladusBtn) {
       surfaceEnceladusBtn.addEventListener('click', () => {
         tourController.stop();
+        flybyController?.stop();
         cameraController.landOnSurface(enceladusSim);
       });
     }
@@ -598,6 +748,7 @@ async function bootstrapApp() {
     if (surfaceMimasBtn) {
       surfaceMimasBtn.addEventListener('click', () => {
         tourController.stop();
+        flybyController?.stop();
         cameraController.landOnSurface(mimasSim);
       });
     }
@@ -970,6 +1121,7 @@ async function bootstrapApp() {
       missionSelector.addEventListener('change', () => {
         if (missionSelector.value) {
           tourController?.stop();
+          flybyController?.stop();
         }
         selectMission(missionSelector.value);
       });
@@ -978,6 +1130,8 @@ async function bootstrapApp() {
     if (followProbeBtn) {
       followProbeBtn.addEventListener('click', () => {
         if (!missionSim.activeMission) return;
+        tourController?.stop();
+        flybyController?.stop();
         if (cameraController.isInstrumentLocked) {
           cameraController.exitInstrumentView();
           refreshInstrumentControls(true);
@@ -999,6 +1153,8 @@ async function bootstrapApp() {
     if (instrumentViewBtn) {
       instrumentViewBtn.addEventListener('click', () => {
         if (!missionSim.activeMission) return;
+        tourController?.stop();
+        flybyController?.stop();
 
         followProbe = false;
         updateFollowButton();
@@ -1146,6 +1302,7 @@ async function bootstrapApp() {
       statsController.refresh();
       renderTimeHistory();
       renderTourUi();
+      renderFlybyUi();
       applyTheme(currentTheme);
     };
 
@@ -1345,6 +1502,10 @@ function tick() {
 
   if (tourController) {
     tourController.update(deltaTime);
+  }
+  if (flybyController) {
+    flybyController.setTrajectoryVisible(!cameraController?.isInstrumentLocked);
+    flybyController.update(deltaTime);
   }
 
   if (sunSim) {

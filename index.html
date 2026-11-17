@@ -205,6 +205,10 @@
               <span class="row-label" data-i18n="console.tour">Modo Tour</span>
               <span class="row-state" id="tour-state">OFF</span>
             </button>
+            <button id="btn-toggle-flyby" class="control-row system-row" type="button" aria-pressed="false">
+              <span class="row-label" data-i18n="console.flyby">Modo Sobrevolar</span>
+              <span class="row-state" id="flyby-state">OFF</span>
+            </button>
             <button id="btn-toggle-labels" class="control-row system-row" type="button" aria-pressed="false">
               <span class="row-label" data-i18n="console.labels">Etiquetas</span>
               <span class="row-state" id="labels-state">OFF</span>
@@ -320,6 +324,45 @@
           <button id="btn-tour-pause" type="button" aria-pressed="false" data-i18n="tour.pause">Pausar</button>
           <button id="btn-tour-next" type="button" data-i18n="tour.next" data-i18n-aria-label="tour.nextAria" aria-label="Siguiente parada">Siguiente ›</button>
           <button id="btn-tour-stop" type="button" data-i18n="tour.stop" data-i18n-aria-label="tour.stopAria" aria-label="Salir del tour">Salir</button>
+        </div>
+      </aside>
+      <aside id="flyby-hud" aria-label="Modo Sobrevolar" data-i18n-aria-label="flyby.hudAria" hidden>
+        <div class="panel-label">
+          <span data-i18n="flyby.badge">Modo Sobrevolar</span>
+          <span id="flyby-step-counter" class="panel-index">01 / 08</span>
+        </div>
+        <div class="flyby-target-row">
+          <label class="mission-label" for="flyby-moon-selector" data-i18n="flyby.targetLabel">Luna</label>
+          <select
+            id="flyby-moon-selector"
+            class="glass-input flyby-moon-selector"
+            aria-label="Seleccionar luna para sobrevuelo"
+            data-i18n-aria-label="flyby.targetAria"
+          >
+            <option value="auto" data-i18n="flyby.autoOption">Secuencia automática (Dione, Rea…)</option>
+            <option value="dione" data-i18n="body.dione">Dione</option>
+            <option value="rhea" data-i18n="body.rhea">Rea</option>
+            <option value="titan" data-i18n="body.titan">Titán</option>
+            <option value="enceladus" data-i18n="body.enceladus">Encélado</option>
+            <option value="mimas" data-i18n="body.mimas">Mimas</option>
+            <option value="tethys" data-i18n="body.tethys">Tetis</option>
+            <option value="hyperion" data-i18n="body.hyperion">Hiperión</option>
+            <option value="iapetus" data-i18n="body.iapetus">Jápeto</option>
+          </select>
+        </div>
+        <div class="tour-copy">
+          <h2 id="flyby-title" class="tour-stop-title">—</h2>
+          <p id="flyby-telemetry" class="flyby-telemetry">—</p>
+        </div>
+        <div class="tour-progress-track" aria-hidden="true">
+          <div id="flyby-progress-fill" class="tour-progress-fill"></div>
+        </div>
+        <div class="flyby-actions">
+          <button id="btn-flyby-prev" type="button" data-i18n="flyby.prev" data-i18n-aria-label="flyby.prevAria" aria-label="Luna anterior del sobrevuelo">‹ Ant.</button>
+          <button id="btn-flyby-pause" type="button" aria-pressed="false" data-i18n="flyby.pause">Pausar</button>
+          <button id="btn-flyby-regenerate" type="button" data-i18n="flyby.regenerate" data-i18n-aria-label="flyby.regenerateAria" aria-label="Generar nueva trayectoria de sobrevuelo">Nueva ruta</button>
+          <button id="btn-flyby-next" type="button" data-i18n="flyby.next" data-i18n-aria-label="flyby.nextAria" aria-label="Siguiente luna del sobrevuelo">Sig. ›</button>
+          <button id="btn-flyby-stop" type="button" data-i18n="flyby.stop" data-i18n-aria-label="flyby.stopAria" aria-label="Salir del Modo Sobrevolar">Salir</button>
         </div>
       </aside>
     </div>
