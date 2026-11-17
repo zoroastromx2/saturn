@@ -1,7 +1,22 @@
+// src/core/HyperionSimulator.js
 import * as THREE from 'three';
 import { CONSTANTS } from '../math/AstroScale.js';
 import { MoonSimulatorBase } from './MoonSimulatorBase.js';
 import { WHITE_TEXTURE } from './MoonTextures.js';
+
+function computeRmsRadius(geometry) {
+  const positions = geometry?.attributes?.position;
+  if (!positions || positions.count === 0) return 0;
+
+  let sumSquares = 0;
+  for (let i = 0; i < positions.count; i += 1) {
+    const x = positions.getX(i);
+    const y = positions.getY(i);
+    const z = positions.getZ(i);
+    sumSquares += x * x + y * y + z * z;
+  }
+  return Math.sqrt(sumSquares / positions.count);
+}
 
 export class HyperionSimulator extends MoonSimulatorBase {
   constructor(scene, saturnSimulator, scaleFactor, assets = {}) {
@@ -14,7 +29,7 @@ export class HyperionSimulator extends MoonSimulatorBase {
       inclination: CONSTANTS.HYPERION.INCLINATION,
       lan: CONSTANTS.HYPERION.LAN,
       meanAnomalyEpoch: CONSTANTS.HYPERION.MEAN_ANOMALY_EPOCH,
-      geometrySegments: 96,
+      geometrySegments: 64,
       castsShadow: false
     });
 
@@ -40,22 +55,10 @@ export class HyperionSimulator extends MoonSimulatorBase {
     geometry.applyMatrix4(surfaceMesh.matrixWorld);
     geometry.center();
 
-    const positions = geometry.attributes.position;
-    if (!positions?.count) return;
+    const rmsRadius = computeRmsRadius(geometry);
+    if (!rmsRadius) return;
 
-    let sumSquares = 0;
-    for (let i = 0; i < positions.count; i += 1) {
-      const x = positions.getX(i);
-      const y = positions.getY(i);
-      const z = positions.getZ(i);
-      sumSquares += x * x + y * y + z * z;
-    }
-
-    // Hyperion es irregular: el radio RMS conserva su radio medio volumétrico.
-    const sourceRadius = Math.sqrt(sumSquares / positions.count);
-    if (!sourceRadius) return;
-
-    const scale = this.radius / sourceRadius;
+    const scale = this.radius / rmsRadius;
     geometry.scale(scale, scale, scale);
     geometry.computeBoundingSphere();
 
@@ -74,6 +77,16 @@ export class HyperionSimulator extends MoonSimulatorBase {
       colorTexture.needsUpdate = true;
       this.mesh.material.uniforms.tColor.value = colorTexture;
     }
+
+    const normalTexture = surfaceMaterial?.normalMap;
+    if (normalTexture) {
+      normalTexture.colorSpace = THREE.LinearSRGBColorSpace;
+      normalTexture.wrapS = THREE.RepeatWrapping;
+      normalTexture.wrapT = THREE.RepeatWrapping;
+      normalTexture.needsUpdate = true;
+      this.mesh.material.uniforms.tNormal.value = normalTexture;
+    }
+
     this.mesh.material.uniforms.tAo.value = WHITE_TEXTURE;
   }
 }

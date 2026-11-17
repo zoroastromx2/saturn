@@ -1,13 +1,15 @@
 // src/core/CameraController.js
 import * as THREE from 'three';
 import { gsap } from 'gsap';
+import { prefersReducedMotion, transitionDuration } from './ReducedMotion.js';
 
 const TRANSITION_DURATION = 2.0;
 
 export class CameraController {
-  constructor(camera, controls) {
+  constructor(camera, controls, options = {}) {
     this.camera = camera;
     this.controls = controls;
+    this.reducedMotion = Boolean(options.reducedMotion ?? prefersReducedMotion());
 
     this.currentTarget = null;
     this.tween = null;
@@ -31,6 +33,10 @@ export class CameraController {
     this.activeOpticsMode = 0;
     this.surfaceMount = null;
     this.surfaceOrigin = new THREE.Vector3(0, 0, 0);
+  }
+
+  setReducedMotion(reduced) {
+    this.reducedMotion = Boolean(reduced);
   }
 
   setOpticsPass(opticsPass) {
@@ -87,11 +93,19 @@ export class CameraController {
   setInstrumentFov(fov, duration) {
     if (this.instrumentTween) {
       this.instrumentTween.kill();
+      this.instrumentTween = null;
+    }
+
+    const effectiveDuration = transitionDuration(duration, this.reducedMotion);
+    if (effectiveDuration === 0) {
+      this.camera.fov = fov;
+      this.camera.updateProjectionMatrix();
+      return;
     }
 
     this.instrumentTween = gsap.to(this.camera, {
       fov,
-      duration,
+      duration: effectiveDuration,
       ease: 'power2.out',
       onUpdate: () => this.camera.updateProjectionMatrix(),
       onComplete: () => {
@@ -123,7 +137,10 @@ export class CameraController {
 
   focusOn(targetMesh, distanceMultiplier, elevationBias = 0.35, duration = TRANSITION_DURATION) {
     if (!targetMesh) return;
-    const radius = targetMesh.geometry?.parameters?.radius ?? 1;
+    const radius =
+      targetMesh.geometry?.parameters?.radius ??
+      targetMesh.geometry?.boundingSphere?.radius ??
+      1;
     this.focusOnObject(targetMesh, radius * distanceMultiplier, elevationBias, duration);
   }
 
@@ -137,6 +154,7 @@ export class CameraController {
 
     if (this.tween) {
       this.tween.kill();
+      this.tween = null;
     }
 
     this.currentTarget = targetObject;
@@ -156,10 +174,18 @@ export class CameraController {
     this.offsetDirection.y += elevationBias;
     this.offsetDirection.normalize();
 
+    const effectiveDuration = transitionDuration(duration, this.reducedMotion);
+    if (effectiveDuration === 0) {
+      this.progress.value = 1;
+      this.applyTransition();
+      this.lastTargetPosition.copy(this.targetPosition);
+      return;
+    }
+
     this.progress.value = 0;
     this.tween = gsap.to(this.progress, {
       value: 1,
-      duration,
+      duration: effectiveDuration,
       ease: 'power3.inOut',
       onUpdate: () => this.applyTransition(),
       onComplete: () => {
@@ -203,6 +229,7 @@ export class CameraController {
 
     if (this.tween) {
       this.tween.kill();
+      this.tween = null;
     }
 
     this.currentTarget = targetSimulator.mesh;
@@ -210,13 +237,29 @@ export class CameraController {
     this.surfaceMount = mount;
     this.controls.enabled = false;
 
+    const completeLanding = () => {
+      mount.getWorldPosition(this.targetPosition);
+      this.camera.position.copy(this.targetPosition);
+      this.controls.target.copy(this.surfaceOrigin);
+      this.camera.lookAt(this.surfaceOrigin);
+      this.isSurfaceLocked = true;
+      this.controls.enabled = false;
+      this.tween = null;
+    };
+
+    const effectiveDuration = transitionDuration(TRANSITION_DURATION, this.reducedMotion);
+    if (effectiveDuration === 0) {
+      completeLanding();
+      return;
+    }
+
     this.startPosition.copy(this.camera.position);
     this.startTarget.copy(this.controls.target);
 
     this.progress.value = 0;
     this.tween = gsap.to(this.progress, {
       value: 1,
-      duration: TRANSITION_DURATION,
+      duration: effectiveDuration,
       ease: 'power3.inOut',
       onUpdate: () => {
         mount.getWorldPosition(this.targetPosition);
@@ -224,15 +267,7 @@ export class CameraController {
         this.controls.target.lerpVectors(this.startTarget, this.surfaceOrigin, this.progress.value);
         this.camera.lookAt(this.controls.target);
       },
-      onComplete: () => {
-        mount.getWorldPosition(this.targetPosition);
-        this.camera.position.copy(this.targetPosition);
-        this.controls.target.copy(this.surfaceOrigin);
-        this.camera.lookAt(this.surfaceOrigin);
-        this.isSurfaceLocked = true;
-        this.controls.enabled = false;
-        this.tween = null;
-      }
+      onComplete: completeLanding
     });
   }
 
