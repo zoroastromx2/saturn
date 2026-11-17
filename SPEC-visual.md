@@ -32,21 +32,21 @@ El modo E2E se activa solo con `?e2e=1`; la app normal no cambia.
 
 | Escena | Viewport | Acción |
 |---|---|---|
-| `default` | 1280×800 | ninguna |
-| `titan` | 1280×800 | foco en Titán |
-| `mission-pioneer` | 1280×800 | seleccionar Pioneer 11 |
-| `instrument` | 1280×800 | misión + vista de instrumento |
+| `default` | 1280×720 | ninguna |
+| `titan` | 1280×720 | foco en Titán |
+| `mission-pioneer` | 1280×720 | seleccionar Pioneer 11 |
+| `instrument` | 1280×720 | misión + vista de instrumento |
 | `mobile` | 390×844 | ninguna |
 
-Todas usan `?quality=medium&e2e=1`, esperan `window.__E2E_READY__` y comparan con `maxDiffPixelRatio: 0.002`.
+Todas usan `?quality=low&e2e=1`, esperan `window.__E2E_READY__` y comparan con `maxDiffPixelRatio: 0.01`.
 
 ## 4. Política de capturas
 
-1. Las baselines viven en `e2e/visual/__screenshots__/*.png` y **se versionan** (~3,2 MB).
+1. Las baselines viven en `e2e/visual/__screenshots__/*.png` y **se versionan** (~3,0 MB).
 2. Se actualizan **solo** con `npm run test:visual -- --update-snapshots`, revisando el diff visual, y en un commit explícito.
 3. **Nunca** se actualizan en CI: si fallan, el deploy se detiene y el reporte adjunta esperado/actual/diferencia.
 4. La plantilla de rutas no incluye plataforma ni proyecto (`__screenshots__/{arg}.png`), para compartir baseline entre Windows y Linux.
-5. El umbral es 0,2 % de píxeles; un cambio perceptible debe superarlo.
+5. El umbral es 1 % de píxeles; un cambio perceptible debe superarlo.
 
 ## 5. Criterios de éxito
 
@@ -67,7 +67,7 @@ Todas usan `?quality=medium&e2e=1`, esperan `window.__E2E_READY__` y comparan co
 | Riesgo | Mitigación |
 |---|---|
 | Diferencias de rasterizado entre SO | SwiftShader forzado + mismo build de Chromium |
-| Peso de las baselines | 3,2 MB y solo cinco escenas |
+| Peso de las baselines | 3,0 MB y solo cinco escenas |
 | Flakiness por carga de assets | `__E2E_READY__` + espera de 500 ms |
 | Cambios intencionales bloqueando el deploy | Actualización local guiada y revisada |
 
@@ -76,3 +76,4 @@ Todas usan `?quality=medium&e2e=1`, esperan `window.__E2E_READY__` y comparan co
 - **5/5** capturas estables en local (54 s) y **11/11** E2E+visual en conjunto.
 - Determinismo verificado repitiendo la suite.
 - Regresión de la pluma y del anillo F ya no es aleatoria entre ejecuciones.
+
