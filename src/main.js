@@ -15,6 +15,7 @@ import { MimasSimulator } from './core/MimasSimulator.js';
 import { TethysSimulator } from './core/TethysSimulator.js';
 import { DioneSimulator } from './core/DioneSimulator.js';
 import { RheaSimulator } from './core/RheaSimulator.js';
+import { HyperionSimulator } from './core/HyperionSimulator.js';
 import { IapetusSimulator } from './core/IapetusSimulator.js';
 import { FRingSimulator } from './core/FRingSimulator.js';
 import { MinorMoonsSimulator } from './core/MinorMoonsSimulator.js';
@@ -47,7 +48,7 @@ import './style.css';
 
 let scene, camera, renderer, composer, labelRenderer, controls, cameraController, listener;
 let saturnSim, titanSim, enceladusSim, mimasSim;
-let tethysSim, dioneSim, rheaSim, iapetusSim;
+let tethysSim, dioneSim, rheaSim, hyperionSim, iapetusSim;
 let fRingSim,
   minorMoonsSim,
   diffuseRingsSim,
@@ -337,6 +338,8 @@ async function bootstrapApp() {
     dioneSim.update(initialDaysSinceJ2000);
     rheaSim = new RheaSimulator(scene, saturnSim, saturnSim.scaleFactor, assets);
     rheaSim.update(initialDaysSinceJ2000);
+    hyperionSim = new HyperionSimulator(scene, saturnSim, saturnSim.scaleFactor, assets);
+    hyperionSim.update(initialDaysSinceJ2000);
     iapetusSim = new IapetusSimulator(scene, saturnSim, saturnSim.scaleFactor, assets);
     iapetusSim.update(initialDaysSinceJ2000);
     fRingSim = new FRingSimulator(scene, saturnSim, saturnSim.scaleFactor);
@@ -362,6 +365,7 @@ async function bootstrapApp() {
       tethysSim,
       dioneSim,
       rheaSim,
+      hyperionSim,
       titanSim,
       iapetusSim
     ]);
@@ -392,6 +396,7 @@ async function bootstrapApp() {
     const tethysBtn = document.getElementById('btn-tethys');
     const dioneBtn = document.getElementById('btn-dione');
     const rheaBtn = document.getElementById('btn-rhea');
+    const hyperionBtn = document.getElementById('btn-hyperion');
     const iapetusBtn = document.getElementById('btn-iapetus');
     const surfaceEnceladusBtn = document.getElementById('btn-surface-enceladus');
     const surfaceMimasBtn = document.getElementById('btn-surface-mimas');
@@ -503,6 +508,12 @@ async function bootstrapApp() {
     if (rheaBtn) {
       rheaBtn.addEventListener('click', () => {
         cameraController.focusOn(rheaSim.mesh, 5.0);
+      });
+    }
+
+    if (hyperionBtn) {
+      hyperionBtn.addEventListener('click', () => {
+        cameraController.focusOn(hyperionSim.mesh, 8.0);
       });
     }
 
@@ -911,6 +922,7 @@ async function bootstrapApp() {
       'Tethys',
       'Dione',
       'Rhea',
+      'Hyperion',
       'Iapetus',
       'Earth'
     ]);
@@ -995,6 +1007,7 @@ async function bootstrapApp() {
       tethysSim.label.element.textContent = t('body.tethys');
       dioneSim.label.element.textContent = t('body.dione');
       rheaSim.label.element.textContent = t('body.rhea');
+      hyperionSim.label.element.textContent = t('body.hyperion');
       iapetusSim.label.element.textContent = t('body.iapetus');
       comparisonMode.label.element.textContent = t('body.earth');
       if (missionSim?.activeMission && missionDescription) {
@@ -1068,6 +1081,7 @@ async function bootstrapApp() {
         titanSim?.applyTitanModel?.(assets.models.titan);
         enceladusSim?.applyEnceladusModel?.(assets.models.enceladus);
         mimasSim?.applyMimasModel?.(assets.models.mimas);
+        hyperionSim?.applyHyperionModel?.(assets.models.hyperion);
         missionSim?.setProbeModels?.(assets.models);
 
         if (!minorMoonsSim && assets.minorMoons?.length === 135) {
@@ -1150,6 +1164,9 @@ function tick() {
   }
   if (rheaSim) {
     rheaSim.update(daysSinceJ2000);
+  }
+  if (hyperionSim) {
+    hyperionSim.update(daysSinceJ2000);
   }
   if (iapetusSim) {
     iapetusSim.update(daysSinceJ2000);

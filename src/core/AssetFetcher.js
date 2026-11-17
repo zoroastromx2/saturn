@@ -55,7 +55,8 @@ export class AssetFetcher {
         cassiniHuygens: null,
         titan: null,
         mimas: null,
-        enceladus: null
+        enceladus: null,
+        hyperion: null
       }
     };
   }
@@ -147,7 +148,8 @@ export class AssetFetcher {
       cassiniHuygensModel,
       titanModel,
       mimasModel,
-      enceladusModel
+      enceladusModel,
+      hyperionModel
     ] = await Promise.all([
       this.loadMoonTextureSet('mimas'),
       this.loadMoonTextureSet('tethys'),
@@ -161,7 +163,8 @@ export class AssetFetcher {
       this.loadCassiniHuygensModel(),
       this.loadTitanModel(),
       this.loadMimasModel(),
-      this.loadEnceladusModel()
+      this.loadEnceladusModel(),
+      this.loadHyperionModel()
     ]);
 
     this.assets.mimasColor = mimas.color;
@@ -191,6 +194,7 @@ export class AssetFetcher {
     this.assets.models.titan = titanModel;
     this.assets.models.mimas = mimasModel;
     this.assets.models.enceladus = enceladusModel;
+    this.assets.models.hyperion = hyperionModel;
 
     return this.assets;
   }
@@ -447,6 +451,22 @@ export class AssetFetcher {
     } catch (error) {
       console.warn(
         'Modelo Enceladus no disponible, usando esfera procedural:',
+        error?.message || error
+      );
+      return null;
+    }
+  }
+
+  async loadHyperionModel() {
+    if (typeof window === 'undefined' && !this.hasCustomGltfLoader) {
+      return null;
+    }
+
+    try {
+      return await this.loadModel(this.assetUrl('models/hyperion.glb'));
+    } catch (error) {
+      console.warn(
+        'Modelo Hyperion no disponible, usando esfera procedural:',
         error?.message || error
       );
       return null;

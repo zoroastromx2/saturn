@@ -114,6 +114,17 @@ const BODY_DATA = {
     ...calculateApsides(CONSTANTS.RHEA.ORBIT_SEMI_MAJOR, CONSTANTS.RHEA.ORBIT_ECCENTRICITY),
     labelKey: 'body.rhea'
   },
+  Hyperion: {
+    radius: CONSTANTS.HYPERION.RADIUS,
+    period: CONSTANTS.HYPERION.ORBIT_PERIOD,
+    velocity: calculateOrbitalVelocity(
+      CONSTANTS.HYPERION.ORBIT_SEMI_MAJOR,
+      CONSTANTS.HYPERION.ORBIT_PERIOD
+    ),
+    eccentricity: CONSTANTS.HYPERION.ORBIT_ECCENTRICITY,
+    ...calculateApsides(CONSTANTS.HYPERION.ORBIT_SEMI_MAJOR, CONSTANTS.HYPERION.ORBIT_ECCENTRICITY),
+    labelKey: 'body.hyperion'
+  },
   Iapetus: {
     radius: CONSTANTS.IAPETUS.RADIUS,
     period: CONSTANTS.IAPETUS.ORBIT_PERIOD,

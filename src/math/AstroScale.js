@@ -61,6 +61,16 @@ export const CONSTANTS = {
     LAN: 0.0,
     MEAN_ANOMALY_EPOCH: 0.0
   },
+  HYPERION: {
+    RADIUS: 135.0, // Radio medio volumétrico (dimensiones ~360 × 266 × 206 km)
+    ORBIT_SEMI_MAJOR: 1500930.0,
+    ORBIT_PERIOD: 21.2766,
+    ORBIT_ECCENTRICITY: 0.1042,
+    ECCENTRICITY: 0.1042,
+    INCLINATION: 0.43,
+    LAN: 0.0,
+    MEAN_ANOMALY_EPOCH: 0.0
+  },
   IAPETUS: {
     RADIUS: 734.5,
     ORBIT_SEMI_MAJOR: 3560820.0,
